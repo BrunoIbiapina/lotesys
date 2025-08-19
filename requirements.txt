@@ -1,7 +1,6 @@
-wheel==0.45.1
-Django==5.2.5
-gunicorn==21.2.0
-whitenoise==6.7.0
-python-dateutil==2.9.0.post0
-dj-database-url==2.2.0
-psycopg2-binary==2.9.9
+Django>=5.0,<6.0
+gunicorn
+whitenoise
+psycopg2-binary
+dj-database-url
+django-jazzmin
