@@ -4,29 +4,36 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --log-file -"  # será substituído pelo Procfile
+
+    # 1) Instala as dependências e coleta estáticos no build
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput || true
+
+    # 2) No start: migra e sobe o gunicorn
+    startCommand: ./start.sh
+
     autoDeploy: true
+
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.13.5
       - key: DJANGO_DEBUG
         value: "False"
-      - key: DJANGO_SUPERUSER_USERNAME
-        value: admin
-      - key: DJANGO_SUPERUSER_EMAIL
-        value: admin@example.com
-      - key: DJANGO_SUPERUSER_PASSWORD
+      - key: DJANGO_SECRET_KEY
         generateValue: true
-      - key: SECRET_KEY
-        generateValue: true
-      # O Render injeta RENDER_EXTERNAL_HOSTNAME automaticamente; o settings.py usa isso para ALLOWED_HOSTS/CSRF
-      - key: DATABASE_URL
-        fromDatabase:
-          name: lotesys-db
-          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: "${RENDER_EXTERNAL_HOSTNAME}"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://${RENDER_EXTERNAL_HOSTNAME}"
+      # Se você ainda NÃO estiver usando banco externo, mantenha SQLite.
+      # Quando for usar Postgres, adicione DATABASE_URL aqui:
+      # - key: DATABASE_URL
+      #   fromDatabase:
+      #     name: lotesys-db
+      #     property: connectionString
 
-databases:
-  - name: lotesys-db
-    plan: free
-    region: oregon
+# Se quiser Postgres Free depois, descomente:
+# databases:
+#   - name: lotesys-db
+#     plan: free
+#     region: oregon
