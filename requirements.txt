@@ -1,6 +1,15 @@
+# Core
 Django>=5.0,<6.0
 gunicorn
 whitenoise
-psycopg2-binary
 dj-database-url
+psycopg2-binary
+
+# Admin theme
 django-jazzmin
+
+# Utilidades
+pillow   # caso use imagens em models/avatars
+python-decouple  # se quiser ler variáveis .env (opcional)
+
+# Outros (se você já usava)
