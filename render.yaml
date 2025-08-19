@@ -1,21 +1,26 @@
-# render.yaml
 services:
   - type: web
     name: lotesys
     env: python
     region: oregon
     plan: free
-    buildCommand: ./build.sh
-    startCommand: gunicorn config.wsgi:application --log-file -
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --log-file -"  # será substituído pelo Procfile
     autoDeploy: true
     envVars:
-      - key: DJANGO_SECRET_KEY
-        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.13.5
       - key: DJANGO_DEBUG
         value: "False"
-      - key: ALLOWED_HOSTS
-        # Render injeta o hostname público nessa variável:
-        value: "${RENDER_EXTERNAL_HOSTNAME}"
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: admin
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: admin@example.com
+      - key: DJANGO_SUPERUSER_PASSWORD
+        generateValue: true
+      - key: SECRET_KEY
+        generateValue: true
+      # O Render injeta RENDER_EXTERNAL_HOSTNAME automaticamente; o settings.py usa isso para ALLOWED_HOSTS/CSRF
       - key: DATABASE_URL
         fromDatabase:
           name: lotesys-db
