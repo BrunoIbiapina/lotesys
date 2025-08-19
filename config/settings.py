@@ -3,13 +3,29 @@ Django settings for config project.
 """
 
 from pathlib import Path
+import os
+import dj_database_url  # <- produção com Postgres (DATABASE_URL)
 
 # ===================== BASE =====================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-qigmwiful=y_&a_r+ar!@dvvz4nqs)^1*2p(8b$tl&4jq6pji3"
-DEBUG = True
+# Segurança: em produção use SECRET_KEY via variável de ambiente
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-qigmwiful=y_&a_r+ar!@dvvz4nqs)^1*2p(8b$tl&4jq6pji3")
+DEBUG = os.getenv("DEBUG", "True") == "True"
+
+# Hosts permitidos
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+# Render define esse hostname externamente
+_render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if _render_host:
+    ALLOWED_HOSTS.append(_render_host)
+
+# CSRF confiável quando atrás do proxy do Render
+RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
+if RENDER_EXTERNAL_URL:
+    CSRF_TRUSTED_ORIGINS = [RENDER_EXTERNAL_URL]
+else:
+    CSRF_TRUSTED_ORIGINS = []
 
 # ===================== APPS =====================
 INSTALLED_APPS = [
@@ -35,6 +51,10 @@ INSTALLED_APPS = [
 # ===================== MIDDLEWARE =====================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+
+    # WhiteNoise para servir estáticos em produção
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -67,12 +87,20 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # ===================== DATABASE =====================
+# Padrão local (SQLite)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+# Produção (DATABASE_URL -> Postgres)
+if os.getenv("DATABASE_URL"):
+    DATABASES["default"] = dj_database_url.parse(
+        os.environ["DATABASE_URL"],
+        conn_max_age=600,
+        ssl_require=True,
+    )
 
 # ===================== PASSWORDS =====================
 AUTH_PASSWORD_VALIDATORS = [
@@ -94,6 +122,13 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Desenvolvimento: servir ./static/
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# WhiteNoise: gerar manifest comprimido em produção
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    }
+}
 
 # ===================== DEFAULTS =====================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -154,3 +189,6 @@ JAZZMIN_UI_TWEAKS = {
     "layout_fixed": True,
     "show_sidebar": True,
 }
+
+# Reverso/SSL quando atrás de proxy (Render)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
