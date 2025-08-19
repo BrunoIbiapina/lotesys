@@ -7,22 +7,30 @@ import os
 # ===================== BASE =====================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-qigmwiful=y_&a_r+ar!@dvvz4nqs)^1*2p(8b$tl&4jq6pji3"
-DEBUG = os.environ.get("DEBUG", "True") == "True"
-
-# Hosts
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-RENDER_HOST = (
-    os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-    or os.environ.get("RENDER_EXTERNAL_URL", "")
-    .replace("https://", "")
-    .replace("http://", "")
-    .strip("/")
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-qigmwiful=y_&a_r+ar!@dvvz4nqs)^1*2p(8b$tl&4jq6pji3",
 )
+DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+
+# ===================== HOSTS =====================
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+
+# Render injeta o hostname público em RENDER_EXTERNAL_HOSTNAME
+RENDER_HOST = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_HOST:
     ALLOWED_HOSTS.append(RENDER_HOST)
 
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1", "http://localhost"]
+# Também suporta ALLOWED_HOSTS extra via env var
+EXTRA_ALLOWED = os.environ.get("ALLOWED_HOSTS")
+if EXTRA_ALLOWED:
+    ALLOWED_HOSTS.extend(EXTRA_ALLOWED.split(","))
+
+# CSRF
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1",
+    "http://localhost",
+]
 if RENDER_HOST:
     CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_HOST}")
 
@@ -35,7 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # WhiteNoise não precisa ser adicionado em INSTALLED_APPS
+    # apps do projeto
     "usuarios",
     "dashboard",
     "cadastros",
@@ -46,8 +54,7 @@ INSTALLED_APPS = [
 # ===================== MIDDLEWARE =====================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    # WhiteNoise abaixo da SecurityMiddleware
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # WhiteNoise logo após Security
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -78,13 +85,16 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # ===================== DATABASE =====================
-# Render: se você configurar um DATABASE_URL, o ideal é usar dj-database-url
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+# 🔹 Em produção, Render vai injetar DATABASE_URL.
+# Se quiser suportar Postgres:
+# import dj_database_url
+# DATABASES["default"] = dj_database_url.config(conn_max_age=600, ssl_require=True)
 
 # ===================== PASSWORDS =====================
 AUTH_PASSWORD_VALIDATORS = [
@@ -105,7 +115,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# WhiteNoise: servir estáticos no Render
+# WhiteNoise (servir estáticos no Render)
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
