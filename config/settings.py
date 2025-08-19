@@ -11,27 +11,17 @@ SECRET_KEY = "django-insecure-qigmwiful=y_&a_r+ar!@dvvz4nqs)^1*2p(8b$tl&4jq6pji3
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 # ===================== HOSTS =====================
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "lotesys.onrender.com",  # 🔥 fixo para evitar DisallowedHost
+]
 
-# 1. Se o Render/usuário definiu ALLOWED_HOSTS manualmente
-env_hosts = os.environ.get("ALLOWED_HOSTS")
-if env_hosts:
-    ALLOWED_HOSTS.extend([h.strip() for h in env_hosts.split(",") if h.strip()])
-
-# 2. Se o Render injeta RENDER_EXTERNAL_HOSTNAME
-render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-if render_host:
-    ALLOWED_HOSTS.append(render_host)
-
-# CSRF confiável
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1", "http://localhost"]
-if env_hosts:
-    for h in env_hosts.split(","):
-        h = h.strip()
-        if h:
-            CSRF_TRUSTED_ORIGINS.append(f"https://{h}")
-elif render_host:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{render_host}")
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1",
+    "http://localhost",
+    "https://lotesys.onrender.com",  # 🔥 adiciona CSRF
+]
 
 # ===================== APPS =====================
 INSTALLED_APPS = [
@@ -42,7 +32,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # apps do projeto
     "usuarios",
     "dashboard",
     "cadastros",
@@ -53,7 +42,7 @@ INSTALLED_APPS = [
 # ===================== MIDDLEWARE =====================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # WhiteNoise logo abaixo da Security
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
