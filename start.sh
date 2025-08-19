@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 set -e
-
-# Ajusta a porta padrão que o Render injeta
 export PORT="${PORT:-10000}"
 
 echo "🗃️ migrate..."
 python manage.py migrate --noinput
 
-# (Opcional) Criar superusuário automático se variáveis existirem
 if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then
   echo "👤 garantindo superusuário…"
   python manage.py shell <<'PY'
