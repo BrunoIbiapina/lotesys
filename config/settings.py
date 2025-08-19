@@ -7,22 +7,34 @@ import os
 # ===================== BASE =====================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-qigmwiful=y_&a_r+ar!@dvvz4nqs)^1*2p(8b$tl&4jq6pji3"
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-qigmwiful=y_&a_r+ar!@dvvz4nqs)^1*2p(8b$tl&4jq6pji3",
+)
 # Use a env var padronizada no Render
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
-# ===================== HOSTS =====================
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    "lotesys.onrender.com",   # host fixo do Render
-]
+# ===================== HOSTS / CSRF =====================
+# Host fixo + hostname injetado pelo Render (se existir)
+RENDER_HOST = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "lotesys.onrender.com"]
+if RENDER_HOST and RENDER_HOST not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_HOST)
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1",
     "http://localhost",
     "https://lotesys.onrender.com",
 ]
+if RENDER_HOST:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_HOST}")
+
+# Django atrás de proxy (Render/Cloudflare)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Cookies seguros quando em produção
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # ===================== APPS =====================
 INSTALLED_APPS = [
@@ -43,6 +55,7 @@ INSTALLED_APPS = [
 # ===================== MIDDLEWARE =====================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # WhiteNoise logo após SecurityMiddleware
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -66,6 +79,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+            # Filtros/templatetags compat em todos os templates (inclui admin/Jazzmin)
             "builtins": ["vendas.templatetags.compat"],
         },
     },
@@ -74,6 +88,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # ===================== DATABASE =====================
+# Mantém SQLite local e no Render (persistência: NÃO entre deploys gratuitos).
+# Quando migrar para Postgres, use dj-database-url lendo DATABASE_URL.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -100,6 +116,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
+# WhiteNoise para servir estáticos no Render
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
@@ -136,7 +153,7 @@ JAZZMIN_SETTINGS = {
         "vendas.Parcela": "fas fa-money-check-alt",
     },
     "order_with_respect_to": ["auth", "cadastros", "financeiro", "vendas"],
-    # >>> Corrigido: use URL fixa para evitar reverse que não existe
+    # Usa link fixo p/ evitar erro de reverse em produção
     "topmenu_links": [
         {"name": "Dashboard", "url": "/", "permissions": ["auth.view_user"]},
         {"name": "Extrato", "url": "financeiro:extrato"},
