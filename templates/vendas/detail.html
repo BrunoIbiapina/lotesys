@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load ui %}
+{% block title %}Venda #{{ venda.id }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-3xl font-semibold">Venda #{{ venda.id }}</h1>
+  <a href="{% url 'vendas:vendas_list' %}" class="text-sm underline">← Voltar para Vendas</a>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-4">
+    <div class="bg-white p-4 rounded-2xl shadow">
+      <h3 class="font-semibold mb-2">Resumo</h3>
+      <div class="grid md:grid-cols-2 gap-2 text-sm">
+        <div><span class="text-gray-500">Cliente:</span> {{ venda.cliente.nome }}</div>
+        <div><span class="text-gray-500">Data:</span> {{ venda.data_venda|date:'d/m/Y' }}</div>
+        <div><span class="text-gray-500">Empreendimento:</span> {{ venda.lote.empreendimento.nome }}</div>
+        <div><span class="text-gray-500">Quadra/Lote:</span> Q{{ venda.lote.quadra }} / L{{ venda.lote.numero }}</div>
+        <div><span class="text-gray-500">Forma:</span>
+          {% if venda.forma_pagamento == 'AVISTA' %}À vista{% else %}Parcelado ({{ venda.parcelas_total }}){% endif %}
+        </div>
+        <div><span class="text-gray-500">Valor total:</span> {{ venda.valor_total|brl }}</div>
+        <div><span class="text-gray-500">Entrada bruta:</span> {{ venda.entrada_bruta|brl }}</div>
+        <div><span class="text-gray-500">Desconto:</span> {{ venda.desconto|brl }}</div>
+        <div><span class="text-gray-500">Comissão (%):</span> {{ venda.comissao_percent }}%</div>
+        <div><span class="text-gray-500">Comissão (R$):</span> {{ venda.comissao_valor|brl }}</div>
+        <div><span class="text-gray-500">Entrada líquida:</span> {{ venda.entrada_liquida|brl }}</div>
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl shadow">
+      <h3 class="font-semibold mb-3">Parcelas</h3>
+      <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        {% for p in parcelas %}
+          <div class="border rounded-xl p-3">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-xs text-gray-600">#{{ p.numero }}/{{ venda.parcelas_total }}</span>
+              {% badge_status p.status %}
+            </div>
+            <div class="text-sm text-gray-500">Venc: {{ p.vencimento|date:'d/m/Y' }}</div>
+            {% if p.status == 'PAGO' and p.data_pagamento %}
+              <div class="text-xs text-emerald-700">Pago em {{ p.data_pagamento|date:'d/m/Y' }}</div>
+            {% endif %}
+            <div class="text-lg font-bold mt-2">{{ p.valor|brl }}</div>
+
+            {% if user.is_staff %}
+              <div class="mt-2">
+                {% if p.status == 'PENDENTE' %}
+                  <form action="{% url 'vendas:parcela_pagar' p.id %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button class="w-full px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
+                      Marcar como Pago
+                    </button>
+                  </form>
+                {% elif p.status == 'PAGO' %}
+                  <form action="{% url 'vendas:parcela_desfazer' p.id %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button class="w-full px-3 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700">
+                      Desfazer
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        {% empty %}
+          <p class="col-span-full text-gray-500">Sem parcelas.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-4">
+    <div class="bg-white p-4 rounded-2xl shadow">
+      <h3 class="font-semibold mb-2">Ações</h3>
+      <a href="{% url 'vendas:vendas_list' %}" class="text-sm underline">Voltar à lista</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

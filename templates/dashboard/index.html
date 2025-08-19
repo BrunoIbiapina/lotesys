@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% load ui %}
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-3xl font-semibold">Dashboard</h1>
+  <a href="/financeiro/extrato/"
+     class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition">
+     📊 Ver Extrato Detalhado
+  </a>
+</div>
+
+<form method="get" class="bg-white p-4 rounded-xl shadow mb-6">
+  <div class="grid sm:grid-cols-4 gap-4 items-end">
+    <div>
+      <label class="text-sm text-gray-600">Início</label>
+      <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="w-full border rounded p-2">
+    </div>
+    <div>
+      <label class="text-sm text-gray-600">Fim</label>
+      <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="w-full border rounded p-2">
+    </div>
+    <div class="sm:col-span-2">
+      <button class="px-4 py-2 rounded bg-gray-900 text-white">Aplicar filtros</button>
+      <a href="?" class="ml-2 text-sm underline">Limpar</a>
+    </div>
+  </div>
+</form>
+
+{# ===================== RESUMO DE HOJE ===================== #}
+<div class="grid md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">Entradas HOJE</div>
+    <div class="text-2xl font-bold text-emerald-700">{{ entradas_hoje|brl }}</div>
+    <div class="text-xs text-gray-500 mt-1">Parcelas pagas hoje + entradas líquidas de vendas de hoje</div>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">Despesas PAGAS HOJE</div>
+    <div class="text-2xl font-bold text-red-600">{{ despesas_hoje|brl }}</div>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">Fluxo Líquido HOJE</div>
+    <div class="text-2xl font-bold text-blue-700">{{ fluxo_hoje|brl }}</div>
+  </div>
+</div>
+
+{% if vencidas_qtd or prox7_qtd %}
+<div class="grid md:grid-cols-2 gap-4 mb-6">
+  {% if vencidas_qtd %}
+  <div class="bg-red-50 border border-red-200 text-red-800 p-4 rounded-2xl">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="font-semibold">⚠️ Parcelas vencidas</div>
+        <div class="text-sm text-red-700 mt-1">
+          {{ vencidas_qtd }} parcela(s) em atraso — total {{ vencidas_valor|brl }}
+        </div>
+      </div>
+      <a href="/financeiro/extrato/?inicio=&fim=" class="text-sm underline">ver no extrato</a>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if prox7_qtd %}
+  <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="font-semibold">⏳ Vencem em 7 dias</div>
+        <div class="text-sm text-amber-700 mt-1">
+          {{ prox7_qtd }} parcela(s) — total {{ prox7_valor|brl }}
+        </div>
+      </div>
+      <a href="/financeiro/extrato/?inicio=&fim=" class="text-sm underline">ver no extrato</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ===================== KPIs DO PERÍODO ===================== #}
+<div class="grid lg:grid-cols-3 gap-4 mb-8">
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">À receber ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</div>
+    <div class="text-3xl font-bold">{{ a_receber|brl }}</div>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">Vencidas (até hoje)</div>
+    <div class="text-3xl font-bold">{{ vencidas|brl }}</div>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">Pagas no período</div>
+    <div class="text-3xl font-bold">{{ pagas|brl }}</div>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">Entradas líquidas (vendas)</div>
+    <div class="text-3xl font-bold">{{ entradas_liquidas|brl }}</div>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">Despesas PAGAS no período</div>
+    <div class="text-3xl font-bold">{{ despesas_pagas|brl }}</div>
+    <div class="text-xs text-gray-500 mt-1">Previstas: {{ despesas_previstas|brl }}</div>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">Fluxo líquido do período</div>
+    <div class="text-3xl font-bold">{{ fluxo_liquido|brl }}</div>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6 mb-8">
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <h3 class="font-semibold mb-3">✔️ Recebido vs ❌ Despesa (últimos 6 meses)</h3>
+    <canvas id="barChart"></canvas>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <h3 class="font-semibold mb-3">📈 Fluxo Líquido (últimos 6 meses)</h3>
+    <canvas id="lineChart"></canvas>
+  </div>
+</div>
+
+<h2 class="text-xl font-semibold mb-3">Últimas parcelas</h2>
+<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for p in ultimas_parcelas %}
+    <div class="relative bg-white p-4 rounded-xl shadow flex flex-col justify-between {% if p.status == 'VENCIDO' %}ring-1 ring-red-200{% endif %}">
+      <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="absolute inset-0" aria-label="Abrir venda {{ p.venda_id }}"></a>
+
+      <div class="flex justify-between items-center mb-2 relative">
+        <span class="text-sm text-gray-600">Venda {{ p.venda_id }}</span>
+        <span class="px-2 py-0.5 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">
+          {{ p.numero }}/{{ p.venda.parcelas_total }}
+        </span>
+      </div>
+
+      <div class="text-sm font-medium truncate mb-2 relative" title="{{ p.venda.cliente.nome }}">
+        {{ p.venda.cliente.nome }}
+      </div>
+
+      <div class="text-gray-500 text-sm mb-1 relative">
+        Venc: {{ p.vencimento|date:'d/m/Y' }}
+        {% if p.status == 'VENCIDO' %}
+          <span class="ml-2 inline-flex items-center text-red-700 text-xs">● em atraso</span>
+        {% endif %}
+      </div>
+
+      {% if p.status == 'PAGO' and p.data_pagamento %}
+        <div class="text-xs text-emerald-700 mb-1 relative">
+          Pago em {{ p.data_pagamento|date:'d/m/Y' }}
+        </div>
+      {% endif %}
+
+      <div class="text-lg font-bold mb-3 relative">{{ p.valor|brl }}</div>
+
+      <div class="relative">
+        {% if user.is_staff and p.status == 'PENDENTE' %}
+          <form action="{% url 'vendas:parcela_pagar' p.id %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="w-full px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 relative z-10">
+              Marcar como Pago
+            </button>
+          </form>
+        {% elif user.is_staff and p.status == 'PAGO' %}
+          <form action="{% url 'vendas:parcela_desfazer' p.id %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="w-full px-3 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 relative z-10">
+              Desfazer
+            </button>
+          </form>
+        {% else %}
+          <div class="mt-1 relative">{% badge_status p.status %}</div>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <p class="col-span-full text-gray-500">Nenhum registro no período.</p>
+  {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Dados do backend
+  const labels = {{ labels|safe }};
+  const recebido = {{ recebido_series|safe }};
+  const gasto = {{ gasto_series|safe }};
+  const fluxo = {{ fluxo_series|safe }};
+
+  // Paleta fixa
+  const COLORS = {
+    green: 'rgba(16, 185, 129, 0.85)',   // emerald-500
+    red: 'rgba(239, 68, 68, 0.85)',      // red-500
+    blue: 'rgba(59, 130, 246, 1)',       // blue-500
+    blueFill: 'rgba(59, 130, 246, 0.2)'
+  };
+
+  // Bar: Recebido (parcelas pagas) vs Despesa
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '✔️ Recebido', data: recebido, backgroundColor: COLORS.green },
+        { label: '❌ Despesa', data: gasto, backgroundColor: COLORS.red }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Line: Fluxo Líquido
+  new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '📈 Fluxo Líquido',
+        data: fluxo,
+        borderColor: COLORS.blue,
+        backgroundColor: COLORS.blueFill,
+        fill: true,
+        tension: 0.35
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,4 @@
+Django==5.2.5
+python-dateutil==2.9.0.post0
+django-jazzmin==3.0.0
+wheel==0.45.1

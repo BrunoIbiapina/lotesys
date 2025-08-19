@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load ui %}
+{% block title %}Vendas{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-3xl font-semibold">Vendas</h1>
+  <a href="/" class="text-sm underline">← Voltar ao Dashboard</a>
+</div>
+
+<form method="get" action="{% url 'vendas:vendas_list' %}" class="bg-white p-4 rounded-2xl shadow mb-6">
+  <div class="grid md:grid-cols-6 gap-4 items-end">
+    <div class="md:col-span-2">
+      <label class="text-sm text-gray-600">Buscar (cliente / lote)</label>
+      <input type="text" name="q" value="{{ q }}" placeholder="ex.: Maria, Q3, Lote 10"
+             class="w-full border rounded p-2">
+    </div>
+
+    <div>
+      <label class="text-sm text-gray-600">Mês</label>
+      <select name="mes" class="w-full border rounded p-2">
+        <option value="">Todos</option>
+        {% for v,label in months %}
+          <option value="{{ v }}" {% if mes_str == v %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="text-sm text-gray-600">Ano</label>
+      <select name="ano" class="w-full border rounded p-2">
+        <option value="">Todos</option>
+        {% for y in years %}
+          <option value="{{ y }}" {% if ano == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="md:col-span-2">
+      <button class="px-4 py-2 rounded bg-gray-900 text-white">Aplicar</button>
+      <a href="{% url 'vendas:vendas_list' %}" class="ml-2 text-sm underline">Limpar</a>
+    </div>
+  </div>
+</form>
+
+<div class="overflow-auto bg-white rounded-2xl shadow">
+  <table class="min-w-full">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="text-left p-2">Data</th>
+        <th class="text-left p-2">Cliente</th>
+        <th class="text-left p-2">Lote</th>
+        <th class="text-left p-2">Valor Total</th>
+        <th class="text-left p-2">Entrada líquida</th>
+        <th class="text-left p-2">Parcelas</th>
+        <th class="text-left p-2"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in vendas %}
+        <tr class="border-t">
+          <td class="p-2">{{ v.data_venda|date:'d/m/Y' }}</td>
+          <td class="p-2">{{ v.cliente.nome }}</td>
+          <td class="p-2">Q{{ v.lote.quadra }} - Lote {{ v.lote.numero }}</td>
+          <td class="p-2">{{ v.valor_total|brl }}</td>
+          <td class="p-2">{{ v.entrada_liquida|brl }}</td>
+          <td class="p-2">{{ v.parcelas_total }}</td>
+          <td class="p-2">
+            <a class="text-indigo-600 hover:underline" href="{% url 'vendas:venda_detail' v.id %}">ver</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td class="p-4" colspan="7">Nenhuma venda encontrada.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

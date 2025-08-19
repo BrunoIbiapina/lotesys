@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Venda #{{ venda.id }}{% endblock %}
+{% block content %}
+{% load ui %}
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-3xl font-semibold">Venda #{{ venda.id }}</h1>
+  <a href="{% url 'vendas:vendas_list' %}" class="text-sm underline">← Voltar à lista</a>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6 mb-6">
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <h3 class="font-semibold mb-3">Dados</h3>
+    <div class="space-y-1 text-sm">
+      <div><span class="text-gray-500">Data:</span> {{ venda.data_venda|date:'d/m/Y' }}</div>
+      <div><span class="text-gray-500">Cliente:</span> {{ venda.cliente.nome }}</div>
+      <div><span class="text-gray-500">Lote:</span> {{ venda.lote.empreendimento }} — Q{{ venda.lote.quadra }} L{{ venda.lote.numero }}</div>
+      <div><span class="text-gray-500">Valor total:</span> {{ venda.valor_total|brl }}</div>
+      <div><span class="text-gray-500">Desconto:</span> {{ venda.desconto|brl }}</div>
+      <div><span class="text-gray-500">Entrada bruta:</span> {{ venda.entrada_bruta|brl }}</div>
+      <div><span class="text-gray-500">Entrada líquida:</span> {{ venda.entrada_liquida|brl }}</div>
+      <div><span class="text-gray-500">Parcelas:</span> {{ venda.parcelas_total }}x</div>
+      <div><span class="text-gray-500">Forma:</span> {{ venda.get_forma_pagamento_display }}</div>
+    </div>
+  </div>
+
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <h3 class="font-semibold mb-3">Resumo de Parcelas</h3>
+    <div class="flex flex-wrap gap-2">
+      {% for p in parcelas %}
+        {% if p.status == 'PAGO' %}
+          <span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
+            {{ p.numero }}/{{ venda.parcelas_total }}
+          </span>
+        {% elif p.status == 'VENCIDO' %}
+          <span class="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">
+            {{ p.numero }}/{{ venda.parcelas_total }}
+          </span>
+        {% else %}
+          <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full">
+            {{ p.numero }}/{{ venda.parcelas_total }}
+          </span>
+        {% endif %}
+      {% empty %}
+        <span class="text-sm text-gray-500">Sem parcelas.</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="bg-white p-5 rounded-2xl shadow">
+  <h3 class="font-semibold mb-3">Parcelas (detalhado)</h3>
+  <div class="overflow-auto">
+    <table class="min-w-full">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="text-left p-2">#</th>
+          <th class="text-left p-2">Vencimento</th>
+          <th class="text-left p-2">Valor</th>
+          <th class="text-left p-2">Status</th>
+          <th class="text-left p-2">Pagamento</th>
+          <th class="text-left p-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in parcelas %}
+        <tr class="border-t">
+          <td class="p-2">{{ p.numero }}/{{ venda.parcelas_total }}</td>
+          <td class="p-2">{{ p.vencimento|date:'d/m/Y' }}</td>
+          <td class="p-2">{{ p.valor|brl }}</td>
+          <td class="p-2">{% badge_status p.status %}</td>
+          <td class="p-2">
+            {% if p.data_pagamento %}{{ p.data_pagamento|date:'d/m/Y' }}{% else %}—{% endif %}
+          </td>
+          <td class="p-2">
+            {% if user.is_staff and p.status == 'PENDENTE' %}
+              <a class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                 href="{% url 'vendas:parcela_pagar' p.id %}?next={% url 'vendas:venda_detail' venda.id %}">
+                 Marcar como Pago
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td class="p-4" colspan="6">Sem parcelas.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

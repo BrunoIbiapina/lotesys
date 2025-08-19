@@ -1,0 +1,161 @@
+/* ====== Global tweaks ====== */
+
+/* Remove avatar redondo padrão do Jazzmin (logo do topo e foto do user) */
+.brand-link .brand-image,
+.navbar .user-panel .image img {
+  display: none !important;
+}
+
+/* Marca (texto) mais limpa no topo */
+.brand-link .brand-text {
+  margin-left: 0 !important;
+  font-weight: 600;
+  letter-spacing: .3px;
+}
+
+/* Navbar mais clean */
+.main-header.navbar {
+  box-shadow: none !important;
+}
+
+/* Cantos suaves em áreas principais */
+.card,
+.table,
+.content-wrapper,
+.main-footer,
+.main-sidebar {
+  border-radius: 10px !important;
+}
+
+/* Espaçamento mais confortável em cards de listas */
+.card .card-body,
+.card .card-header,
+.card .card-footer {
+  border-radius: 10px !important;
+}
+
+/* ====== Tabelas ====== */
+
+.table thead th {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table td, .table th {
+  vertical-align: middle;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  filter: brightness(1.02);
+}
+
+/* Hover suave nas linhas */
+.table tbody tr:hover {
+  background: rgba(148, 163, 184, .12) !important; /* slate-300/12 */
+}
+
+/* ====== Badges / Status ====== */
+
+.badge-success { background: #10b981 !important; }  /* emerald-500 */
+.badge-warning { background: #f59e0b !important; color: #1f2937 !important; } /* amber-500 / slate-800 */
+.badge-danger  { background: #ef4444 !important; }  /* red-500 */
+.badge-info    { background: #3b82f6 !important; }  /* blue-500 */
+
+/* ====== Topmenu ====== */
+
+.navbar-nav .nav-link {
+  border-radius: 999px;
+  padding: .4rem .8rem;
+  transition: opacity .15s ease, background-color .15s ease;
+}
+
+.navbar-nav .nav-link:hover { opacity: .9; }
+
+/* ====== Sidebar ====== */
+
+[class*="sidebar"] .nav-link {
+  border-radius: 8px;
+  margin: 2px 6px;
+}
+
+[class*="sidebar"] .nav-link.active {
+  font-weight: 600;
+}
+
+/* ====== Formulários ====== */
+
+.form-control,
+.select2-container--default .select2-selection--single,
+.input-group .form-control {
+  border-radius: .6rem !important;
+  min-height: 2.35rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: 2.35rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 2.35rem;
+}
+
+/* Campos somente leitura com leve contraste */
+.form-control[readonly], .form-control:disabled {
+  opacity: .9;
+}
+
+/* ====== Botões ====== */
+
+.btn {
+  border-radius: .6rem !important;
+}
+
+.btn-primary {
+  background: #6366f1 !important;   /* indigo-500 */
+  border-color: #6366f1 !important;
+}
+
+.btn-primary:hover {
+  background: #4f46e5 !important;   /* indigo-600 */
+  border-color: #4f46e5 !important;
+}
+
+.btn-outline-secondary {
+  border-radius: .6rem !important;
+}
+
+/* ====== Login ====== */
+
+.login-page .card,
+.login-page .login-box,
+.login-page .register-box {
+  border-radius: 14px !important;
+}
+
+.login-page .input-group .form-control {
+  border-radius: .6rem !important;
+}
+
+/* ====== Footer ====== */
+
+.main-footer {
+  font-size: .875rem;
+  opacity: .9;
+}
+
+/* ====== Ajustes finos ====== */
+
+/* Evita quebra feia de ícones/labels no changelist */
+.action-select,
+.column-action-checkbox {
+  width: 2.25rem;
+}
+
+.object-tools a, .object-tools button {
+  border-radius: .6rem !important;
+}
+
+/* Deixa o “Add another” inline forms mais alinhado */
+.inline-group .tabular tr.has_original td.original p {
+  margin: .2rem 0;
+}
