@@ -8,19 +8,20 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-qigmwiful=y_&a_r+ar!@dvvz4nqs)^1*2p(8b$tl&4jq6pji3"
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+# Use a env var padronizada no Render
+DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
 # ===================== HOSTS =====================
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
-    "lotesys.onrender.com",  # 🔥 fixo para evitar DisallowedHost
+    "lotesys.onrender.com",   # host fixo do Render
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1",
     "http://localhost",
-    "https://lotesys.onrender.com",  # 🔥 adiciona CSRF
+    "https://lotesys.onrender.com",
 ]
 
 # ===================== APPS =====================
@@ -135,10 +136,11 @@ JAZZMIN_SETTINGS = {
         "vendas.Parcela": "fas fa-money-check-alt",
     },
     "order_with_respect_to": ["auth", "cadastros", "financeiro", "vendas"],
+    # >>> Corrigido: use URL fixa para evitar reverse que não existe
     "topmenu_links": [
         {"name": "Dashboard", "url": "/", "permissions": ["auth.view_user"]},
         {"name": "Extrato", "url": "financeiro:extrato"},
-        {"name": "Vendas", "url": "vendas:list"},
+        {"name": "Vendas", "url": "/vendas/"},
     ],
     "copyright": "LoteSys",
 }
