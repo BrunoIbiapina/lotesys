@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # build.sh
-set -o errexit  # interrompe se qualquer comando falhar
 
-# 1) deps
-pip install -r requirements.txt
-
-# 2) assets estáticos
-python manage.py collectstatic --noinput
-
-# 3) migrações
+echo "🚀 Rodando migrações..."
 python manage.py migrate --noinput
+
+echo "👤 Criando superusuário padrão (se não existir)..."
+echo "
+from django.contrib.auth import get_user_model;
+User = get_user_model();
+if not User.objects.filter(username='admin').exists():
+    User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
+" | python manage.py shell
+
+echo "✅ Build finalizado!"
