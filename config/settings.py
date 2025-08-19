@@ -88,14 +88,25 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # ===================== DATABASE =====================
-# Mantém SQLite local e no Render (persistência: NÃO entre deploys gratuitos).
-# Quando migrar para Postgres, use dj-database-url lendo DATABASE_URL.
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+import dj_database_url
+
+if os.getenv("DATABASE_URL"):
+    # Postgres do Render (persistente)
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.environ["DATABASE_URL"],
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+else:
+    # SQLite local (não persiste no Render)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ===================== PASSWORDS =====================
 AUTH_PASSWORD_VALIDATORS = [
