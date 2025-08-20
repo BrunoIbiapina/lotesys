@@ -135,6 +135,10 @@ STORAGES = {
     },
 }
 
+# ===================== MEDIA (uploads) =====================
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # ===================== DEFAULTS =====================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

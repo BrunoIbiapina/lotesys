@@ -257,6 +257,7 @@
           <th class="text-left p-2">Origem</th>
           <th class="text-left p-2">Status</th>
           <th class="text-left p-2">Valor</th>
+          <th class="text-left p-2">Comprovante</th>
         </tr>
       </thead>
       <tbody>
@@ -278,9 +279,18 @@
           </td>
           <td class="p-2">{% badge_status d.status %}</td>
           <td class="p-2">{{ d.valor|brl }}</td>
+          <td class="p-2 text-sm">
+            {% if d.comprovante %}
+              <a href="{{ d.comprovante.url }}" target="_blank" class="inline-flex items-center gap-1 underline text-indigo-600 hover:text-indigo-800">
+                Ver comprovante
+              </a>
+            {% else %}
+              —
+            {% endif %}
+          </td>
         </tr>
       {% empty %}
-        <tr><td class="p-4" colspan="6">Nenhuma despesa no período.</td></tr>
+        <tr><td class="p-4" colspan="7">Nenhuma despesa no período.</td></tr>
       {% endfor %}
       </tbody>
     </table>
