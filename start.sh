@@ -1,10 +1,28 @@
 #!/usr/bin/env bash
 set -e
+
+# Porta padrão local; no Render a variável PORT já vem setada.
 export PORT="${PORT:-10000}"
 
-echo "🗃️ migrate..."
+echo "🔧 ambiente"
+echo " - PYTHON: $(python --version 2>/dev/null || true)"
+echo " - DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings}"
+echo " - PORT: $PORT"
+echo " - WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}"
+
+# Coleta de estáticos (idempotente). Se já tiver sido feito no build, isso termina rápido.
+echo "🎒 collectstatic (idempotente)…"
+python manage.py collectstatic --noinput || true
+
+# Migrações
+echo "🗃️ migrate…"
 python manage.py migrate --noinput
 
+# Garante diretório de uploads (não dá persistência no Render Free, apenas evita 404 locais)
+echo "📂 preparando /media (uploads)…"
+mkdir -p "${MEDIA_ROOT:-./media}"
+
+# Criação/garantia de superusuário
 echo "👤 garantindo superusuário…"
 python manage.py shell <<'PY'
 import os
@@ -25,16 +43,24 @@ if created:
     u.save()
     print(f"✅ superusuário criado: {username}")
 else:
-    # Garante flags corretas caso alguém tenha mudado depois
     changed = False
-    if not u.is_staff: 
+    if not u.is_staff:
         u.is_staff = True; changed = True
-    if not u.is_superuser: 
+    if not u.is_superuser:
         u.is_superuser = True; changed = True
-    if changed: 
+    if changed:
         u.save()
     print(f"ℹ️ superusuário já existe: {username}")
 PY
 
+# Inicia o Gunicorn
+# - WEB_CONCURRENCY permite escalar workers sem mexer no script
+# - worker-tmp-dir=/dev/shm ajuda em sistemas com disco lento
+# - timeout maior evita matar requests de migração/boot mais demorados
 echo "🚀 gunicorn…"
-exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --log-file -
+exec gunicorn config.wsgi:application \
+  --bind "0.0.0.0:${PORT}" \
+  --workers "${WEB_CONCURRENCY:-2}" \
+  --worker-tmp-dir "/dev/shm" \
+  --timeout 120 \
+  --log-file -

@@ -14,12 +14,13 @@ services:
     autoDeploy: true
 
     envVars:
+      # Django
       - key: DJANGO_DEBUG
         value: "False"
       - key: DJANGO_SECRET_KEY
         generateValue: true
 
-      # cria o admin automático (opcional – pode ajustar depois)
+      # (Opcional) Criar admin automaticamente no primeiro boot
       - key: DJANGO_SUPERUSER_USERNAME
         value: admin
       - key: DJANGO_SUPERUSER_EMAIL
@@ -27,11 +28,16 @@ services:
       - key: DJANGO_SUPERUSER_PASSWORD
         value: admin123
 
-      # Host/CSRF do Render
+      # Host/CSRF — você já cobre no settings o RENDER_EXTERNAL_HOSTNAME.
+      # Manter estes dois ajuda a não quebrar se o hostname fixo mudar.
       - key: ALLOWED_HOSTS
         value: "lotesys.onrender.com,127.0.0.1,localhost"
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://lotesys.onrender.com"
+
+      # Servir /media/ no Render (só ative se tiver disco persistente OU usar storage externo)
+      - key: SERVE_MEDIA
+        value: "True"
 
       # Postgres Free do Render
       - key: DATABASE_URL
