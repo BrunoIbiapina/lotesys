@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+
 {% block title %}
   Extrato Financeiro
 {% endblock %}
+
 {% block content %}
   {% load ui %}
 
@@ -49,7 +51,7 @@
         <div class="text-2xl font-bold">{{ total_parcelas_pagas|brl }}</div>
       </div>
 
-      <!-- Entradas líquidas de vendas (com lista destacada) -->
+      <!-- Entradas líquidas de vendas (com resumo expandível) -->
       <div>
         <div class="text-sm text-gray-600">Entradas líquidas de vendas</div>
         <div class="text-2xl font-bold">{{ total_entradas_liquidas|brl }}</div>
@@ -57,7 +59,9 @@
         {% if entradas_detalhe %}
           <div class="mt-2 border border-gray-200 rounded-lg overflow-hidden">
             <div class="bg-gray-50 px-3 py-1.5 text-xs text-gray-600">Resumo das entradas</div>
-            <ul class="divide-y divide-gray-100">
+
+            {# — Top 4 — #}
+            <ul class="divide-y divide-gray-100" id="entradas-top4">
               {% for e in entradas_detalhe|slice:':4' %}
                 <li class="px-3 py-2 text-sm flex items-center justify-between gap-3">
                   <div class="min-w-0">
@@ -72,9 +76,48 @@
                 </li>
               {% endfor %}
             </ul>
+
+            {# — Botão de expandir/fechar — #}
             {% if entradas_detalhe|length > 4 %}
-              <a href="#detalhe-entradas" class="block px-3 py-1.5 text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 transition">+{{ entradas_detalhe|length|add:'-4' }} mais… Ver tudo</a>
+              <button
+                type="button"
+                id="btn-entradas-ver-mais"
+                class="w-full text-left px-3 py-1.5 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition"
+                onclick="(function(){
+                  const box = document.getElementById('entradas-detalhe-inline');
+                  const btn = document.getElementById('btn-entradas-ver-mais');
+                  const isHidden = box.classList.contains('hidden');
+                  box.classList.toggle('hidden');
+                  btn.innerHTML = isHidden
+                    ? 'Fechar resumo completo'
+                    : '+{{ entradas_detalhe|length|add:\'-4\' }} mais… <span class=&quot;underline&quot;>Ver tudo</span>';
+                  if (isHidden) { box.scrollIntoView({behavior:'smooth', block:'start'}); }
+                })()"
+              >
+                +{{ entradas_detalhe|length|add:"-4" }} mais… <span class="underline">Ver tudo</span>
+              </button>
             {% endif %}
+
+            {# — Restante (5º em diante) — #}
+            <div id="entradas-detalhe-inline" class="hidden border-t border-gray-200">
+              <ul class="divide-y divide-gray-100">
+                {% for e in entradas_detalhe|slice:'4:' %}
+                  <li class="px-3 py-2 text-sm flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                      {% if e.venda.id %}
+                        <a href="{% url 'vendas:venda_detail' e.venda.id %}" class="font-medium text-gray-800 hover:underline">
+                          Venda #{{ e.venda.id }}
+                        </a>
+                      {% else %}
+                        <span class="font-medium text-gray-800">Venda</span>
+                      {% endif %}
+                      <div class="text-xs text-gray-500 truncate">{{ e.venda.cliente.nome }}</div>
+                    </div>
+                    <div class="shrink-0 font-semibold text-emerald-700">{{ e.entrada_liquida|brl }}</div>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
           </div>
         {% endif %}
       </div>
@@ -178,7 +221,7 @@
   {% endif %}
 
   {% if entradas_detalhe %}
-    <h3 class="font-semibold mt-4 mb-2">Detalhe — Entradas de vendas</h3>
+    <h3 id="entradas-detalhe" class="font-semibold mt-4 mb-2">Detalhe — Entradas de vendas</h3>
     <div class="overflow-auto mb-6">
       <table class="min-w-full">
         <thead class="bg-gray-100">
@@ -262,7 +305,6 @@
               </td>
               <td class="p-2">{{ d.valor|brl }}</td>
               <td class="p-2 text-sm">
-                <!-- Ícone inline para comprovante (Heroicon "document-text") -->
                 {% if d.comprovante %}
                   <a href="{{ d.comprovante.url }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100" title="Abrir comprovante">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5 text-indigo-600">
@@ -271,7 +313,6 @@
                   </a>
                 {% else %}
                   <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg text-gray-300" title="Sem comprovante">
-                    <!-- mesmo SVG, porém cinza claro -->
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 12h6m-6 4h6M9 8h3m2-5H8a2 2 0 00-2 2v14a2 2 0 002 2h8a2 2 0 002-2V7l-4-4z" />
                     </svg>
