@@ -20,6 +20,9 @@ urlpatterns = [
 
     # Vendas
     path("vendas/", include(("vendas.urls", "vendas"), namespace="vendas")),
+    
+    #Mural
+    path("mural/", include(("mural.urls", "mural"), namespace="mural")),
 ]
 
 # Desenvolvimento: serve /media/ via Django

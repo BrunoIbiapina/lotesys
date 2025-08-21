@@ -50,7 +50,11 @@ INSTALLED_APPS = [
     "cadastros",
     "vendas.apps.VendasConfig",
     "financeiro",
+    "mural.apps.MuralConfig",
+   
 ]
+
+
 
 # ===================== MIDDLEWARE =====================
 MIDDLEWARE = [
@@ -78,9 +82,11 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "mural.context_processors.mural_badge",
+                
             ],
             # Filtros/templatetags compat em todos os templates (inclui admin/Jazzmin)
-            "builtins": ["vendas.templatetags.compat"],
+            "builtins": ["vendas.templatetags.compat","mural.templatetags.mural_ui", ],
         },
     },
 ]
@@ -185,3 +191,4 @@ JAZZMIN_UI_TWEAKS = {
     "layout_fixed": True,
     "show_sidebar": True,
 }
+

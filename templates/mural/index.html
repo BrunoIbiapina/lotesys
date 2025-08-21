@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load mural_ui %}
+{% block title %}Mural{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <h1 class="text-3xl font-semibold">Mural</h1>
+
+  <div class="flex items-center gap-2">
+    <!-- link para admin criar mensagem (ajuste a rota se tiver view própria) -->
+    {% if user.is_staff %}
+      <a href="/admin/mural/mensagem/add/"
+         class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-black">
+        <span class="text-lg leading-none">＋</span>
+        Nova mensagem
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+{# FIXADAS #}
+{% if fixadas %}
+  <div class="mb-6">
+    <div class="text-sm font-medium text-gray-600 mb-2">Fixadas</div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for m in fixadas %}
+        <article
+          class="rounded-2xl shadow-sm hover:shadow-md transition-shadow p-4 border {{ m.tipo|tipo_card }}">
+          <header class="flex items-start gap-3">
+            <span class="inline-flex w-9 h-9 shrink-0 items-center justify-center rounded-full ring-1 {{ m.tipo|tipo_iconwrap }}">
+              <span class="text-base">{{ m.tipo|tipo_icon }}</span>
+            </span>
+            <div class="min-w-0">
+              <h3 class="font-semibold text-lg leading-tight {{ m.tipo|tipo_title }} truncate">
+                {{ m.titulo }}
+              </h3>
+              <div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                <span class="px-2 py-0.5 rounded-full {{ m.tipo|tipo_chip }}">{{ m.tipo|capfirst }}</span>
+                <span>•</span>
+                <span>{{ m.criada_em|date:"d/m/Y H:i" }}</span>
+                {% if m.autor %}<span>•</span><span>por {{ m.autor.get_full_name|default:m.autor.username }}</span>{% endif %}
+              </div>
+            </div>
+          </header>
+          {% if m.conteudo %}
+            <p class="mt-3 text-gray-700 text-sm whitespace-pre-line">
+              {{ m.conteudo }}
+            </p>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+{# RECENTES (não fixadas) #}
+<div>
+  <div class="text-sm font-medium text-gray-600 mb-2">Recentes</div>
+
+  {% if recentes %}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for m in recentes %}
+        <article
+          class="rounded-2xl shadow-sm hover:shadow-md transition-shadow p-4 border {{ m.tipo|tipo_card }}">
+          <header class="flex items-start gap-3">
+            <span class="inline-flex w-9 h-9 shrink-0 items-center justify-center rounded-full ring-1 {{ m.tipo|tipo_iconwrap }}">
+              <span class="text-base">{{ m.tipo|tipo_icon }}</span>
+            </span>
+            <div class="min-w-0">
+              <h3 class="font-semibold text-lg leading-tight {{ m.tipo|tipo_title }} truncate">
+                {{ m.titulo }}
+              </h3>
+              <div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                <span class="px-2 py-0.5 rounded-full {{ m.tipo|tipo_chip }}">{{ m.tipo|capfirst }}</span>
+                <span>•</span>
+                <span>{{ m.criada_em|date:"d/m/Y H:i" }}</span>
+                {% if m.autor %}<span>•</span><span>por {{ m.autor.get_full_name|default:m.autor.username }}</span>{% endif %}
+              </div>
+            </div>
+          </header>
+          {% if m.conteudo %}
+            <p class="mt-3 text-gray-700 text-sm whitespace-pre-line">
+              {{ m.conteudo }}
+            </p>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="rounded-2xl border bg-white p-8 text-center text-gray-600">
+      Nenhuma mensagem recente.
+      {% if user.is_staff %}
+        <a href="/admin/mural/mensagem/add/" class="inline-block ml-1 underline">Criar agora</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

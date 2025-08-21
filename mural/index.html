@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load ui %}
+{% load mural_ui %}
+
+{% block title %}Mural{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-3xl font-semibold">Mural</h1>
+  <a href="/" class="text-sm underline">← Voltar</a>
+</div>
+
+<div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm">
+  <h2 class="text-xl font-semibold mb-3">Mensagens recentes</h2>
+
+  {% if mensagens %}
+    <div class="space-y-3"> {# espaçamento menor entre cards #}
+      {% for m in mensagens %}
+        <article class="{{ m.tipo|card_classes }}">
+          <div class="p-3 md:p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-semibold text-gray-900 truncate">{{ m.titulo }}</h3>
+                  {% if m.is_novo %}
+                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-600 text-white">novo</span>
+                  {% endif %}
+                </div>
+                {% if m.conteudo %}
+                  <p class="mt-1 text-sm text-gray-700 leading-snug break-words">
+                    {{ m.conteudo }}
+                  </p>
+                {% endif %}
+                <div class="mt-2 text-xs text-gray-500">
+                  por {{ m.autor.username }} • {{ m.criado_em|date:"d/m/Y H:i" }}
+                </div>
+              </div>
+
+              <div class="shrink-0">
+                <span class="{{ m.tipo|badge_classes }}">
+                  {{ m.tipo|title }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-sm text-gray-500">Sem mensagens por aqui.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{# templates/mural/_badge.html #}
+{% comment %}
+Se count > 0: mostra um badge com número (estilo notificação)
+Senão: mostra só um pontinho discreto (ou nada, se preferir remover).
+{% endcomment %}
+
+{% if qtd and qtd|add:0 > 0 %}
+  <span class="absolute -top-1 -right-1 inline-flex items-center justify-center
+              text-[10px] leading-none font-bold rounded-full bg-red-600 text-white
+              w-4 h-4">
+    {{ qtd }}
+  </span>
+{% endif %}
+  <span class="ml-1 inline-block w-2 h-2 rounded-full bg-gray-300 align-middle"></span>
+{% endif %}

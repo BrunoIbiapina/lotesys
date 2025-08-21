@@ -1,96 +1,111 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-br">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{% block title %}CONCIL{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>
+      {% block title %}
+        CONCIL
+      {% endblock %}
+    </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50">
+    {% load mural_ui %}
 
-  <!-- HEADER -->
-  <header class="bg-white border-b">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-      <!-- Marca / home -->
-      <a href="/" class="font-semibold text-lg tracking-tight">CONCIL</a>
+    <!-- HEADER -->
+    <header class="bg-white border-b">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <!-- Marca / home -->
+        <a href="/" class="font-semibold text-lg tracking-tight">CONCIL</a>
 
-      <!-- Navegação principal -->
-      <nav class="flex items-center gap-2">
-        <!-- Extrato -->
-        <a
-          href="{% url 'financeiro:extrato' %}"
-          class="px-3 py-1.5 rounded-full text-sm
+        <!-- Navegação principal -->
+        <nav class="flex items-center gap-2">
+          <!-- Extrato -->
+          <a href="{% url 'financeiro:extrato' %}"
+            class="px-3 py-1.5 rounded-full text-sm
                  {% if request.path|slice:':11' == '/financeiro' %}
+              
                    bg-indigo-600 text-white
-                 {% else %}
-                   text-gray-700 hover:bg-gray-100
-                 {% endif %}">
-          Extrato
-        </a>
 
-        <!-- Vendas -->
-        <a
-          href="{% url 'vendas:vendas_list' %}"
-          class="px-3 py-1.5 rounded-full text-sm
+            {% else %}
+              
+                   text-gray-700 hover:bg-gray-100
+
+            {% endif %}">
+            Extrato
+          </a>
+
+          <!-- Vendas -->
+          <a href="{% url 'vendas:vendas_list' %}"
+            class="px-3 py-1.5 rounded-full text-sm
                  {% if request.path|slice:':8' == '/vendas/' or request.path == '/vendas' %}
+              
                    bg-indigo-600 text-white
-                 {% else %}
+
+            {% else %}
+              
                    text-gray-700 hover:bg-gray-100
-                 {% endif %}">
-          Vendas
-        </a>
 
-        <!-- Admin (apenas staff) -->
-        {% if user.is_staff %}
-          <a
-            href="/admin/"
-            class="px-3 py-1.5 rounded-full text-sm text-gray-700 hover:bg-gray-100">
-            Admin
+            {% endif %}">
+            Vendas
           </a>
-        {% endif %}
-      </nav>
 
-      <!-- Usuário / Auth -->
-      <div class="flex items-center gap-3">
-        {% if user.is_authenticated %}
-          <!-- Dropdown simples sem JS -->
-          <details class="relative">
-            <summary class="list-none cursor-pointer flex items-center gap-2 select-none">
-              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 text-sm">
-                {{ user.get_full_name|default:user.username|slice:":1"|upper }}
-              </span>
-              <span class="hidden sm:inline text-sm text-gray-800">
-                {{ user.get_full_name|default:user.username }}
-              </span>
-            </summary>
-            <ul class="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg overflow-hidden text-sm z-10">
-              <li><span class="block px-3 py-2 text-gray-500">Conectado</span></li>
-              <li class="border-t">
-                <!-- Logout via POST para evitar 405 -->
-                <form method="post" action="{% url 'usuarios:logout' %}">
-                  {% csrf_token %}
-                  <button type="submit" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-700">
-                    Sair
-                  </button>
-                </form>
-              </li>
-            </ul>
-          </details>
-        {% else %}
-          <a
-            href="{% url 'usuarios:login' %}"
-            class="px-3 py-1.5 rounded-full text-sm bg-indigo-600 text-white hover:bg-indigo-700">
-            Entrar
+          <!-- Mural -->
+          <a href="{% url 'mural:index' %}"
+            class="px-3 py-1.5 rounded-full text-sm relative
+          {% if request.path|slice:':7' == '/mural/' or request.path == '/mural' %}
+              
+            bg-indigo-600 text-white
+
+            {% else %}
+              
+            text-gray-700 hover:bg-gray-100
+
+            {% endif %}">
+            Mural{% mural_badge recentes_dias=7 %}
           </a>
-        {% endif %}
+
+          <!-- Admin (apenas staff) -->
+          {% if user.is_staff %}
+            <a href="/admin/" class="px-3 py-1.5 rounded-full text-sm text-gray-700 hover:bg-gray-100">Admin</a>
+          {% endif %}
+        </nav>
+
+        <!-- Usuário / Auth -->
+        <div class="flex items-center gap-3">
+          {% if user.is_authenticated %}
+            <!-- Dropdown simples sem JS -->
+            <details class="relative">
+              <summary class="list-none cursor-pointer flex items-center gap-2 select-none">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 text-sm">{{ user.get_full_name|default:user.username|slice:':1'|upper }}</span>
+                <span class="hidden sm:inline text-sm text-gray-800">{{ user.get_full_name|default:user.username }}</span>
+              </summary>
+              <ul class="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg overflow-hidden text-sm z-10">
+                <li>
+                  <span class="block px-3 py-2 text-gray-500">Conectado</span>
+                </li>
+                <li class="border-t">
+                  <!-- Logout via POST para evitar 405 -->
+                  <form method="post" action="{% url 'usuarios:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-700">Sair</button>
+                  </form>
+                </li>
+              </ul>
+            </details>
+          {% else %}
+            <a href="{% url 'usuarios:login' %}" class="px-3 py-1.5 rounded-full text-sm bg-indigo-600 text-white hover:bg-indigo-700">Entrar</a>
+          {% endif %}
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- CONTEÚDO -->
-  <main class="max-w-6xl mx-auto p-4">
-    {% block content %}{% endblock %}
-  </main>
+    <!-- CONTEÚDO -->
+    <main class="max-w-6xl mx-auto p-4">
+      {% block content %}
 
-</body>
+      {% endblock %}
+    </main>
+  </body>
 </html>
