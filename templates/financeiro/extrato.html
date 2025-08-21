@@ -1,362 +1,367 @@
 {% extends 'base.html' %}
-{% block title %}
-  Extrato Financeiro
-{% endblock %}
+{% block title %}Extrato Financeiro{% endblock %}
 {% block content %}
-  {% load ui %}
+{% load ui %}
 
-  <div class="flex items-center justify-between mb-4">
-    <h1 class="text-3xl font-semibold">Extrato Financeiro</h1>
-    <a href="/" class="text-sm underline">← Voltar ao Dashboard</a>
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-3xl font-semibold">Extrato Financeiro</h1>
+  <a href="/" class="text-sm underline">← Voltar ao Dashboard</a>
+</div>
+
+<form method="get" class="bg-white p-4 rounded-2xl shadow mb-6">
+  <div class="grid md:grid-cols-4 gap-4 items-end">
+    <div>
+      <label class="text-sm text-gray-600">Início</label>
+      <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="w-full border rounded p-2">
+    </div>
+    <div>
+      <label class="text-sm text-gray-600">Fim</label>
+      <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="w-full border rounded p-2">
+    </div>
+    <div class="md:col-span-2">
+      <button class="px-4 py-2 rounded bg-gray-900 text-white">Aplicar</button>
+      <a href="?" class="ml-2 text-sm underline">Limpar</a>
+    </div>
   </div>
+</form>
 
-  <form method="get" class="bg-white p-4 rounded-2xl shadow mb-6">
-    <div class="grid md:grid-cols-4 gap-4 items-end">
-      <div>
-        <label class="text-sm text-gray-600">Início</label>
-        <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="w-full border rounded p-2" />
-      </div>
-      <div>
-        <label class="text-sm text-gray-600">Fim</label>
-        <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="w-full border rounded p-2" />
-      </div>
-      <div class="md:col-span-2">
-        <button class="px-4 py-2 rounded bg-gray-900 text-white">Aplicar</button>
-        <a href="?" class="ml-2 text-sm underline">Limpar</a>
+{# ===== Banner-resumo de vencidas (opcional) ===== #}
+{% if vencidas %}
+  <div class="mb-4 bg-red-50 border border-red-200 text-red-800 p-4 rounded-2xl flex items-center justify-between">
+    <div>
+      <div class="font-semibold">⚠️ Parcelas vencidas</div>
+      <div class="text-sm mt-1">
+        {{ vencidas|length }} parcela(s) — total {{ total_vencidas|brl }}
       </div>
     </div>
-  </form>
+    <a href="#vencidas" class="text-sm underline">ir para a lista</a>
+  </div>
+{% endif %}
 
-  {# ===== Banner-resumo de vencidas (opcional) ===== #}
-  {% if vencidas %}
-    <div class="mb-4 bg-red-50 border border-red-200 text-red-800 p-4 rounded-2xl flex items-center justify-between">
-      <div>
-        <div class="font-semibold">⚠️ Parcelas vencidas</div>
-        <div class="text-sm mt-1">{{ vencidas|length }} parcela(s) — total {{ total_vencidas|brl }}</div>
-      </div>
-      <a href="#vencidas" class="text-sm underline">ir para a lista</a>
-    </div>
-  {% endif %}
+<!-- ===================== RECEITAS ===================== -->
+<div class="bg-white p-5 rounded-2xl shadow mb-8">
+  <h2 class="text-xl font-semibold mb-2">
+    Receitas ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})
+  </h2>
 
-  <!-- ===================== RECEITAS ===================== -->
-  <div class="bg-white p-5 rounded-2xl shadow mb-8">
-    <h2 class="text-xl font-semibold mb-2">Receitas ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</h2>
-
-    <div class="grid sm:grid-cols-3 gap-4 mb-4">
-      <!-- Parcelas pagas -->
-      <div>
-        <div class="text-sm text-gray-600">Parcelas PAGAS</div>
-        <div class="text-2xl font-bold">{{ total_parcelas_pagas|brl }}</div>
-      </div>
-
-      <!-- Entradas líquidas de vendas (com lista destacada) -->
-      <div>
-        <div class="text-sm text-gray-600">Entradas líquidas de vendas</div>
-        <div class="text-2xl font-bold">{{ total_entradas_liquidas|brl }}</div>
-
-        {% if entradas_detalhe %}
-          <div class="mt-2 border border-gray-200 rounded-lg overflow-hidden">
-            <div class="bg-gray-50 px-3 py-1.5 text-xs text-gray-600">Resumo das entradas</div>
-            <ul class="divide-y divide-gray-100">
-              {% for e in entradas_detalhe|slice:':4' %}
-                <li class="px-3 py-2 text-sm flex items-center justify-between gap-3">
-                  <div class="min-w-0">
-                    {% if e.venda.id %}
-                      <a href="{% url 'vendas:venda_detail' e.venda.id %}" class="font-medium text-gray-800 hover:underline">Venda #{{ e.venda.id }}</a>
-                    {% else %}
-                      <span class="font-medium text-gray-800">Venda</span>
-                    {% endif %}
-                    <div class="text-xs text-gray-500 truncate">{{ e.venda.cliente.nome }}</div>
-                  </div>
-                  <div class="shrink-0 font-semibold text-emerald-700">{{ e.entrada_liquida|brl }}</div>
-                </li>
-              {% endfor %}
-            </ul>
-            {% if entradas_detalhe|length > 4 %}
-              <div class="px-3 py-1.5 text-xs text-gray-500 bg-gray-50">+{{ entradas_detalhe|length|add:'-4' }} mais…</div>
-            {% endif %}
-          </div>
-        {% endif %}
-      </div>
-
-      <!-- Total de receitas -->
-      <div>
-        <div class="text-sm text-gray-600">Total de Receitas</div>
-        <div class="text-2xl font-bold">{{ total_receitas|brl }}</div>
-      </div>
+  <div class="grid sm:grid-cols-3 gap-4 mb-4">
+    <!-- Parcelas pagas -->
+    <div>
+      <div class="text-sm text-gray-600">Parcelas PAGAS</div>
+      <div class="text-2xl font-bold">{{ total_parcelas_pagas|brl }}</div>
     </div>
 
-    <!-- === RECEITAS — PARCELAS PAGAS (destacado) === -->
-    <div class="bg-white p-4 rounded-2xl shadow mb-2 border border-gray-100">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold">Receitas — Parcelas pagas</h3>
-        <div class="flex items-center gap-2 text-sm">
-          <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">Total: <strong class="ml-1">{{ total_parcelas_pagas|brl }}</strong></span>
-          <span class="px-2 py-1 rounded-full bg-gray-100 text-gray-700">Itens: <strong class="ml-1">{{ parcelas_pagas|length }}</strong></span>
+    <!-- Entradas líquidas de vendas (com lista destacada) -->
+    <div>
+      <div class="text-sm text-gray-600">Entradas líquidas de vendas</div>
+      <div class="text-2xl font-bold">{{ total_entradas_liquidas|brl }}</div>
+
+      {% if entradas_detalhe %}
+        <div class="mt-2 border border-gray-200 rounded-lg overflow-hidden">
+          <div class="bg-gray-50 px-3 py-1.5 text-xs text-gray-600">Resumo das entradas</div>
+          <ul class="divide-y divide-gray-100">
+            {% for e in entradas_detalhe|slice:":4" %}
+              <li class="px-3 py-2 text-sm flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  {% if e.venda.id %}
+                    <a href="{% url 'vendas:venda_detail' e.venda.id %}" class="font-medium text-gray-800 hover:underline">
+                      Venda #{{ e.venda.id }}
+                    </a>
+                  {% else %}
+                    <span class="font-medium text-gray-800">Venda</span>
+                  {% endif %}
+                  <div class="text-xs text-gray-500 truncate">{{ e.venda.cliente.nome }}</div>
+                </div>
+                <div class="shrink-0 font-semibold text-emerald-700">{{ e.entrada_liquida|brl }}</div>
+              </li>
+            {% endfor %}
+          </ul>
+          {% if entradas_detalhe|length > 4 %}
+            <div class="px-3 py-1.5 text-xs text-gray-500 bg-gray-50">
+              +{{ entradas_detalhe|length|add:"-4" }} mais…
+            </div>
+          {% endif %}
         </div>
-      </div>
+      {% endif %}
+    </div>
 
-      <div class="overflow-auto">
-        <table class="min-w-full">
-          <thead class="bg-gray-100 text-sm">
-            <tr>
-              <th class="text-left p-2 w-32">Data</th>
-              <th class="text-left p-2">Venda / Cliente</th>
-              <th class="text-left p-2 w-28">Parcela</th>
-              <th class="text-left p-2 w-40">Valor</th>
-              <th class="text-left p-2 w-24">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for p in parcelas_pagas %}
-              <tr class="border-t">
-                <td class="p-2 text-sm text-gray-600">{{ p.data_pagamento|date:'d/m/Y' }}</td>
-                <td class="p-2">
-                  <div class="text-sm">
-                    <div class="font-medium">
-                      <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="hover:underline">Venda #{{ p.venda_id }}</a>
-                    </div>
-                    <div class="text-gray-500 truncate">{{ p.venda.cliente.nome }}</div>
-                  </div>
-                </td>
-                <td class="p-2">
-                  <span class="px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full">{{ p.numero }}/{{ p.venda.parcelas_total }}</span>
-                </td>
-                <td class="p-2 font-semibold text-emerald-700">{{ p.valor|brl }}</td>
-                <td class="p-2">
-                  {% badge_status p.status %}
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td class="p-6 text-gray-500 text-sm" colspan="5">Nenhuma parcela paga no período.</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+    <!-- Total de receitas -->
+    <div>
+      <div class="text-sm text-gray-600">Total de Receitas</div>
+      <div class="text-2xl font-bold">{{ total_receitas|brl }}</div>
     </div>
   </div>
 
-  {# ===================== PARCELAS VENCIDAS (lista detalhada) ===================== #}
-  {% if vencidas %}
-    <div id="vencidas" class="bg-white p-5 rounded-2xl shadow mb-8 border border-red-200">
-      <h2 class="text-xl font-semibold mb-2 text-red-700">⚠️ Parcelas vencidas</h2>
-      <div class="text-sm text-red-600 mb-4">{{ vencidas|length }} parcela(s) em atraso — total {{ total_vencidas|brl }}</div>
-
-      <div class="overflow-auto">
-        <table class="min-w-full">
-          <thead class="bg-red-50">
-            <tr>
-              <th class="text-left p-2">Vencimento</th>
-              <th class="text-left p-2">Venda</th>
-              <th class="text-left p-2">Cliente</th>
-              <th class="text-left p-2">#</th>
-              <th class="text-left p-2">Valor</th>
-              <th class="text-left p-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for p in vencidas %}
-              <tr class="border-t">
-                <td class="p-2">{{ p.vencimento|date:'d/m/Y' }}</td>
-                <td class="p-2">{{ p.venda_id }}</td>
-                <td class="p-2">{{ p.venda.cliente.nome }}</td>
-                <td class="p-2">
-                  <span class="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-800 rounded-full">{{ p.numero }}/{{ p.venda.parcelas_total }}</span>
-                </td>
-                <td class="p-2">{{ p.valor|brl }}</td>
-                <td class="p-2">
-                  {% badge_status 'VENCIDO' %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  {% endif %}
-
-  {% if entradas_detalhe %}
-    <h3 class="font-semibold mt-4 mb-2">Detalhe — Entradas de vendas</h3>
-    <div class="overflow-auto mb-6">
-      <table class="min-w-full">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="text-left p-2">Venda</th>
-            <th class="text-left p-2">Cliente</th>
-            <th class="text-left p-2">Entrada bruta</th>
-            <th class="text-left p-2">Comissão</th>
-            <th class="text-left p-2">Entrada líquida</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for e in entradas_detalhe %}
-            <tr class="border-t">
-              <td class="p-2">
-                <a href="{% url 'vendas:venda_detail' e.venda.id %}" class="hover:underline">#{{ e.venda.id }}</a>
-              </td>
-              <td class="p-2">{{ e.venda.cliente.nome }}</td>
-              <td class="p-2">{{ e.entrada_bruta|brl }}</td>
-              <td class="p-2 text-red-600">-{{ e.comissao|brl }}</td>
-              <td class="p-2 font-bold">{{ e.entrada_liquida|brl }}</td>
-            </tr>
-          {% endfor %}
-          <tr class="border-t bg-gray-50 font-medium">
-            <td class="p-2" colspan="2">Totais</td>
-            <td class="p-2">{{ total_entradas_brutas|brl }}</td>
-            <td class="p-2 text-red-600">-{{ total_comissoes|brl }}</td>
-            <td class="p-2">{{ total_entradas_liquidas|brl }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  {% endif %}
-
-  <!-- ===================== DESPESAS ===================== -->
-  <div class="bg-white p-5 rounded-2xl shadow mb-8">
-    <h2 class="text-xl font-semibold mb-2">Despesas ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</h2>
-
-    <div class="grid sm:grid-cols-2 gap-4 mb-4">
-      <div>
-        <div class="text-sm text-gray-600">PAGAS</div>
-        <div class="text-2xl font-bold">{{ total_despesas_pagas|brl }}</div>
-      </div>
-      <div>
-        <div class="text-sm text-gray-600">PREVISTAS</div>
-        <div class="text-2xl font-bold">{{ total_despesas_previstas|brl }}</div>
+  <!-- === RECEITAS — PARCELAS PAGAS (destacado) === -->
+  <div class="bg-white p-4 rounded-2xl shadow mb-2 border border-gray-100">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-semibold">Receitas — Parcelas pagas</h3>
+      <div class="flex items-center gap-2 text-sm">
+        <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">
+          Total: <strong class="ml-1">{{ total_parcelas_pagas|brl }}</strong>
+        </span>
+        <span class="px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+          Itens: <strong class="ml-1">{{ parcelas_pagas|length }}</strong>
+        </span>
       </div>
     </div>
 
-    <h3 class="font-semibold mb-2">Detalhe — Despesas</h3>
     <div class="overflow-auto">
       <table class="min-w-full">
-        <thead class="bg-gray-100">
+        <thead class="bg-gray-100 text-sm">
           <tr>
-            <th class="text-left p-2">Data</th>
-            <th class="text-left p-2">Categoria</th>
-            <th class="text-left p-2">Descrição</th>
-            <th class="text-left p-2">Origem</th>
-            <th class="text-left p-2">Status</th>
-            <th class="text-left p-2">Valor</th>
-            <th class="text-left p-2">Comprovante</th>
+            <th class="text-left p-2 w-32">Data</th>
+            <th class="text-left p-2">Venda / Cliente</th>
+            <th class="text-left p-2 w-28">Parcela</th>
+            <th class="text-left p-2 w-40">Valor</th>
+            <th class="text-left p-2 w-24">Status</th>
           </tr>
         </thead>
         <tbody>
-          {% for d in despesas %}
-            <tr class="border-t">
-              <td class="p-2">{{ d.data|date:'d/m/Y' }}</td>
-              <td class="p-2">
-                <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full whitespace-nowrap truncate max-w-[160px] inline-block">{{ d.get_categoria_display }}</span>
-              </td>
-              <td class="p-2">{{ d.descricao }}</td>
-              <td class="p-2">
-                {% if d.origem %}
-                  <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full whitespace-nowrap truncate max-w-[120px] inline-block">{{ d.origem }}</span>
-                {% else %}
-                  —
-                {% endif %}
-              </td>
-              <td class="p-2">
-                {% badge_status d.status %}
-              </td>
-              <td class="p-2">{{ d.valor|brl }}</td>
-              <td class="p-2 text-sm">
-                <!-- Ícone inline para comprovante (Heroicon "document-text") -->
-                {% if d.comprovante %}
-                  <a href="{{ d.comprovante.url }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100" title="Abrir comprovante">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5 text-indigo-600">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 12h6m-6 4h6M9 8h3m2-5H8a2 2 0 00-2 2v14a2 2 0 002 2h8a2 2 0 002-2V7l-4-4z" />
-                    </svg>
+        {% for p in parcelas_pagas %}
+          <tr class="border-t">
+            <td class="p-2 text-sm text-gray-600">{{ p.data_pagamento|date:'d/m/Y' }}</td>
+            <td class="p-2">
+              <div class="text-sm">
+                <div class="font-medium">
+                  <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="hover:underline">
+                    Venda #{{ p.venda_id }}
                   </a>
-                {% else %}
-                  <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg text-gray-300" title="Sem comprovante">
-                    <!-- mesmo SVG, porém cinza claro -->
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 12h6m-6 4h6M9 8h3m2-5H8a2 2 0 00-2 2v14a2 2 0 002 2h8a2 2 0 002-2V7l-4-4z" />
-                    </svg>
-                  </span>
-                {% endif %}
-              </td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td class="p-4" colspan="7">Nenhuma despesa no período.</td>
-            </tr>
-          {% endfor %}
+                </div>
+                <div class="text-gray-500 truncate">{{ p.venda.cliente.nome }}</div>
+              </div>
+            </td>
+            <td class="p-2">
+              <span class="px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full">
+                {{ p.numero }}/{{ p.venda.parcelas_total }}
+              </span>
+            </td>
+            <td class="p-2 font-semibold text-emerald-700">{{ p.valor|brl }}</td>
+            <td class="p-2">{% badge_status p.status %}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td class="p-6 text-gray-500 text-sm" colspan="5">
+              Nenhuma parcela paga no período.
+            </td>
+          </tr>
+        {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+</div>
 
-  <!-- ===================== PROJEÇÃO ===================== -->
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <h2 class="text-xl font-semibold mb-2">Projeção — A receber (pendentes)</h2>
-    <div class="mb-3 text-gray-600 text-sm">A partir de {{ hoje|date:'d/m/Y' }}</div>
+{# ===================== PARCELAS VENCIDAS (lista detalhada) ===================== #}
+{% if vencidas %}
+<div id="vencidas" class="bg-white p-5 rounded-2xl shadow mb-8 border border-red-200">
+  <h2 class="text-xl font-semibold mb-2 text-red-700">⚠️ Parcelas vencidas</h2>
+  <div class="text-sm text-red-600 mb-4">
+    {{ vencidas|length }} parcela(s) em atraso — total {{ total_vencidas|brl }}
+  </div>
 
-    <div class="mb-4">
-      <span class="text-sm text-gray-600">Total a receber</span>
-      <div class="text-2xl font-bold">{{ total_a_receber|brl }}</div>
+  <div class="overflow-auto">
+    <table class="min-w-full">
+      <thead class="bg-red-50">
+        <tr>
+          <th class="text-left p-2">Vencimento</th>
+          <th class="text-left p-2">Venda</th>
+          <th class="text-left p-2">Cliente</th>
+          <th class="text-left p-2">#</th>
+          <th class="text-left p-2">Valor</th>
+          <th class="text-left p-2">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in vencidas %}
+        <tr class="border-t">
+          <td class="p-2">{{ p.vencimento|date:'d/m/Y' }}</td>
+          <td class="p-2">{{ p.venda_id }}</td>
+          <td class="p-2">{{ p.venda.cliente.nome }}</td>
+          <td class="p-2">
+            <span class="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-800 rounded-full">
+              {{ p.numero }}/{{ p.venda.parcelas_total }}
+            </span>
+          </td>
+          <td class="p-2">{{ p.valor|brl }}</td>
+          <td class="p-2">{% badge_status 'VENCIDO' %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if entradas_detalhe %}
+  <h3 class="font-semibold mt-4 mb-2">Detalhe — Entradas de vendas</h3>
+  <div class="overflow-auto mb-6">
+    <table class="min-w-full">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="text-left p-2">Venda</th>
+          <th class="text-left p-2">Cliente</th>
+          <th class="text-left p-2">Entrada bruta</th>
+          <th class="text-left p-2">Comissão</th>
+          <th class="text-left p-2">Entrada líquida</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for e in entradas_detalhe %}
+        <tr class="border-t">
+          <td class="p-2">
+            <a href="{% url 'vendas:venda_detail' e.venda.id %}" class="hover:underline">#{{ e.venda.id }}</a>
+          </td>
+          <td class="p-2">{{ e.venda.cliente.nome }}</td>
+          <td class="p-2">{{ e.entrada_bruta|brl }}</td>
+          <td class="p-2 text-red-600">-{{ e.comissao|brl }}</td>
+          <td class="p-2 font-bold">{{ e.entrada_liquida|brl }}</td>
+        </tr>
+      {% endfor %}
+        <tr class="border-t bg-gray-50 font-medium">
+          <td class="p-2" colspan="2">Totais</td>
+          <td class="p-2">{{ total_entradas_brutas|brl }}</td>
+          <td class="p-2 text-red-600">-{{ total_comissoes|brl }}</td>
+          <td class="p-2">{{ total_entradas_liquidas|brl }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+<!-- ===================== DESPESAS ===================== -->
+<div class="bg-white p-5 rounded-2xl shadow mb-8">
+  <h2 class="text-xl font-semibold mb-2">
+    Despesas ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})
+  </h2>
+
+  <div class="grid sm:grid-cols-2 gap-4 mb-4">
+    <div>
+      <div class="text-sm text-gray-600">PAGAS</div>
+      <div class="text-2xl font-bold">{{ total_despesas_pagas|brl }}</div>
     </div>
-
-    <h3 class="font-semibold mb-2">Por mês</h3>
-    <div class="overflow-auto mb-6">
-      <table class="min-w-full">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="text-left p-2">Mês</th>
-            <th class="text-left p-2">Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for m in por_mes %}
-            <tr class="border-t">
-              <td class="p-2">{{ m.mes_label }}</td>
-              <td class="p-2">{{ m.valor|brl }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td class="p-4" colspan="2">Sem parcelas pendentes futuras.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <h3 class="font-semibold mb-2">Lista de parcelas pendentes</h3>
-    <div class="overflow-auto">
-      <table class="min-w-full">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="text-left p-2">Vencimento</th>
-            <th class="text-left p-2">Venda</th>
-            <th class="text-left p-2">Cliente</th>
-            <th class="text-left p-2">#</th>
-            <th class="text-left p-2">Valor</th>
-            <th class="text-left p-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in pendentes %}
-            <tr class="border-t">
-              <td class="p-2">{{ p.vencimento|date:'d/m/Y' }}</td>
-              <td class="p-2">{{ p.venda_id }}</td>
-              <td class="p-2">{{ p.venda.cliente.nome }}</td>
-              <td class="p-2">
-                <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full whitespace-nowrap">{{ p.numero }}/{{ p.venda.parcelas_total }}</span>
-              </td>
-              <td class="p-2">{{ p.valor|brl }}</td>
-              <td class="p-2">
-                {% badge_status p.status %}
-              </td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td class="p-4" colspan="6">Nenhuma parcela pendente.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div>
+      <div class="text-sm text-gray-600">PREVISTAS</div>
+      <div class="text-2xl font-bold">{{ total_despesas_previstas|brl }}</div>
     </div>
   </div>
+
+  <h3 class="font-semibold mb-2">Detalhe — Despesas</h3>
+  <div class="overflow-auto">
+    <table class="min-w-full">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="text-left p-2">Data</th>
+          <th class="text-left p-2">Categoria</th>
+          <th class="text-left p-2">Descrição</th>
+          <th class="text-left p-2">Origem</th>
+          <th class="text-left p-2">Status</th>
+          <th class="text-left p-2">Valor</th>
+          <th class="text-left p-2">Comprovante</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for d in despesas %}
+        <tr class="border-t">
+          <td class="p-2">{{ d.data|date:'d/m/Y' }}</td>
+          <td class="p-2">
+            <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full whitespace-nowrap truncate max-w-[160px] inline-block">
+              {{ d.get_categoria_display }}
+            </span>
+          </td>
+          <td class="p-2">{{ d.descricao }}</td>
+          <td class="p-2">
+            {% if d.origem %}
+              <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full whitespace-nowrap truncate max-w-[120px] inline-block">
+                {{ d.origem }}
+              </span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="p-2">{% badge_status d.status %}</td>
+          <td class="p-2">{{ d.valor|brl }}</td>
+          <td class="p-2 text-sm">
+            {% if d.comprovante %}
+              <a href="{{ d.comprovante.url }}" target="_blank" class="inline-flex items-center gap-1 underline text-indigo-600 hover:text-indigo-800">
+                Ver comprovante
+              </a>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td class="p-4" colspan="7">Nenhuma despesa no período.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===================== PROJEÇÃO ===================== -->
+<div class="bg-white p-5 rounded-2xl shadow">
+  <h2 class="text-xl font-semibold mb-2">Projeção — A receber (pendentes)</h2>
+  <div class="mb-3 text-gray-600 text-sm">A partir de {{ hoje|date:'d/m/Y' }}</div>
+
+  <div class="mb-4">
+    <span class="text-sm text-gray-600">Total a receber</span>
+    <div class="text-2xl font-bold">{{ total_a_receber|brl }}</div>
+  </div>
+
+  <h3 class="font-semibold mb-2">Por mês</h3>
+  <div class="overflow-auto mb-6">
+    <table class="min-w-full">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="text-left p-2">Mês</th>
+          <th class="text-left p-2">Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for m in por_mes %}
+        <tr class="border-t">
+          <td class="p-2">{{ m.mes_label }}</td>
+          <td class="p-2">{{ m.valor|brl }}</td>
+        </tr>
+      {% empty %}
+        <tr><td class="p-4" colspan="2">Sem parcelas pendentes futuras.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="font-semibold mb-2">Lista de parcelas pendentes</h3>
+  <div class="overflow-auto">
+    <table class="min-w-full">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="text-left p-2">Vencimento</th>
+          <th class="text-left p-2">Venda</th>
+          <th class="text-left p-2">Cliente</th>
+          <th class="text-left p-2">#</th>
+          <th class="text-left p-2">Valor</th>
+          <th class="text-left p-2">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in pendentes %}
+        <tr class="border-t">
+          <td class="p-2">{{ p.vencimento|date:'d/m/Y' }}</td>
+          <td class="p-2">{{ p.venda_id }}</td>
+          <td class="p-2">{{ p.venda.cliente.nome }}</td>
+          <td class="p-2">
+            <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full whitespace-nowrap">
+              {{ p.numero }}/{{ p.venda.parcelas_total }}
+            </span>
+          </td>
+          <td class="p-2">{{ p.valor|brl }}</td>
+          <td class="p-2">{% badge_status p.status %}</td>
+        </tr>
+      {% empty %}
+        <tr><td class="p-4" colspan="6">Nenhuma parcela pendente.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 {% endblock %}
