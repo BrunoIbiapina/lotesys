@@ -73,7 +73,7 @@
               {% endfor %}
             </ul>
             {% if entradas_detalhe|length > 4 %}
-              <div class="px-3 py-1.5 text-xs text-gray-500 bg-gray-50">+{{ entradas_detalhe|length|add:'-4' }} mais…</div>
+              <a href="#detalhe-entradas" class="block px-3 py-1.5 text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 transition">+{{ entradas_detalhe|length|add:'-4' }} mais… Ver tudo</a>
             {% endif %}
           </div>
         {% endif %}
