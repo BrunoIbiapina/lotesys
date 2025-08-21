@@ -135,6 +135,10 @@ STORAGES = {
     },
 }
 
+# ===================== MEDIA (uploads) =====================
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # ===================== DEFAULTS =====================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -167,7 +171,7 @@ JAZZMIN_SETTINGS = {
     # Usa link fixo p/ evitar erro de reverse em produção
     "topmenu_links": [
         {"name": "Dashboard", "url": "/", "permissions": ["auth.view_user"]},
-        {"name": "Extrato", "url": "financeiro:extrato"},
+        {"name": "Extrato", "url": "/financeiro/extrato/"},
         {"name": "Vendas", "url": "/vendas/"},
     ],
     "copyright": "LoteSys",
