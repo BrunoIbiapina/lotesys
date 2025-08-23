@@ -19,7 +19,7 @@ services:
       - key: DJANGO_SECRET_KEY
         generateValue: true
 
-      # Cria admin automático (opcional)
+      # Admin automático (opcional)
       - key: DJANGO_SUPERUSER_USERNAME
         value: admin
       - key: DJANGO_SUPERUSER_EMAIL
@@ -33,23 +33,43 @@ services:
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://lotesys.onrender.com"
 
-      # Postgres Free do Render
+      # Banco do Render
       - key: DATABASE_URL
         fromDatabase:
           name: lotesys-db
           property: connectionString
 
-      # Habilita servir /media/ via Django no Render
+      # Servir /media/
       - key: SERVE_MEDIA
         value: "True"
 
-    # Monta um disco persistente na pasta do MEDIA_ROOT
+      # Telegram (também no web, caso você queira disparar manual pelo shell)
+      - key: TELEGRAM_BOT_TOKEN
+        value: "COLOQUE_AQUI_O_TOKEN_8390..."
+      - key: TELEGRAM_CHAT_IDS
+        value: "842553869"
+
     disks:
       - name: media
         mountPath: /opt/render/project/src/media
-        sizeGB: 1   # pode ajustar depois
-    
-    
+        sizeGB: 1
+
+  # === CRON JOB para avisos do Telegram ===
+  - type: cron
+    name: avisos-telegram
+    env: python
+    region: oregon
+    plan: free
+    schedule: "0 11 * * *"   # 11:00 UTC = 08:00 America/Recife
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: python manage.py avisos_telegram
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        value: "COLOQUE_AQUI_O_TOKEN_8390..."
+      - key: TELEGRAM_CHAT_IDS
+        value: "842553869"
 
 databases:
   - name: lotesys-db

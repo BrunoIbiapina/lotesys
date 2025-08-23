@@ -34,4 +34,5 @@ if settings.DEBUG:
 if os.getenv("SERVE_MEDIA", "False") == "True":
     urlpatterns += [
         re_path(r"^media/(?P<path>.*)$", media_serve, {"document_root": settings.MEDIA_ROOT}),
+        path("bot/telegram/", include(("notificacoes.urls", "notificacoes"), namespace="tg")),
     ]

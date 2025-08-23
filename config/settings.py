@@ -2,7 +2,10 @@
 Django settings for config project.
 """
 from pathlib import Path
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 # ===================== BASE =====================
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -51,6 +54,7 @@ INSTALLED_APPS = [
     "vendas.apps.VendasConfig",
     "financeiro",
     "mural.apps.MuralConfig",
+    "notificacoes.apps.NotificacoesConfig",
    
 ]
 
@@ -191,4 +195,6 @@ JAZZMIN_UI_TWEAKS = {
     "layout_fixed": True,
     "show_sidebar": True,
 }
+
+
 
