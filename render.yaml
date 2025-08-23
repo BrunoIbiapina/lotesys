@@ -1,7 +1,7 @@
 services:
   - type: web
     name: lotesys
-    env: python
+    runtime: python
     region: oregon
     plan: free
 
@@ -43,12 +43,13 @@ services:
       - key: SERVE_MEDIA
         value: "True"
 
-      # Telegram (também no web, caso você queira disparar manual pelo shell)
+      # Telegram (para rodar também no web se precisar)
       - key: TELEGRAM_BOT_TOKEN
-        value: "COLOQUE_AQUI_O_TOKEN_8390..."
+        value: "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
       - key: TELEGRAM_CHAT_IDS
         value: "842553869"
 
+    # Disco persistente só no web
     disks:
       - name: media
         mountPath: /opt/render/project/src/media
@@ -57,17 +58,19 @@ services:
   # === CRON JOB para avisos do Telegram ===
   - type: cron
     name: avisos-telegram
-    env: python
+    runtime: python
     region: oregon
     plan: free
     schedule: "0 11 * * *"   # 11:00 UTC = 08:00 America/Recife
+
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
     startCommand: python manage.py avisos_telegram
+
     envVars:
       - key: TELEGRAM_BOT_TOKEN
-        value: "COLOQUE_AQUI_O_TOKEN_8390..."
+        value: "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
       - key: TELEGRAM_CHAT_IDS
         value: "842553869"
 
