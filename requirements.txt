@@ -13,5 +13,6 @@ django-jazzmin
 # Utilidades
 pillow   # caso use imagens em models/avatars
 python-decouple  # se quiser ler variáveis .env (opcional)
+python-dotenv
 
 # Outros (se você já usava)
