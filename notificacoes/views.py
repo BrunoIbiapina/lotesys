@@ -1,4 +1,3 @@
-# notificacoes/views.py
 import os, json
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -70,7 +69,8 @@ def telegram_webhook(request, secret: str):
     elif text.startswith("/status"):
         try:
             d = DestinatarioTelegram.objects.get(chat_id=chat_id)
-            tg_send(chat_id,
+            tg_send(
+                chat_id,
                 f"Status: {'ativo' if d.ativo else 'inativo'}\n"
                 f"Vence hoje: {'on' if d.recebe_vencimentos_hoje else 'off'}\n"
                 f"Atrasados: {'on' if d.recebe_atrasados else 'off'}"
