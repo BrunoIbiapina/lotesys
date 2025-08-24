@@ -18,78 +18,54 @@ services:
         value: "False"
       - key: DJANGO_SECRET_KEY
         generateValue: true
-
-      # Admin automático (opcional)
       - key: DJANGO_SUPERUSER_USERNAME
         value: admin
       - key: DJANGO_SUPERUSER_EMAIL
         value: admin@example.com
       - key: DJANGO_SUPERUSER_PASSWORD
         value: admin123
-
-      # Host/CSRF do Render
       - key: ALLOWED_HOSTS
         value: "lotesys.onrender.com,127.0.0.1,localhost"
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://lotesys.onrender.com"
-
-      # Banco do Render
       - key: DATABASE_URL
         fromDatabase:
           name: lotesys-db
           property: connectionString
-
-      # Servir /media/
       - key: SERVE_MEDIA
         value: "True"
-
-      # Telegram (para rodar também no web se precisar)
       - key: TELEGRAM_BOT_TOKEN
         value: "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
       - key: TELEGRAM_CHAT_IDS
         value: "842553869"
 
-    # Disco persistente só no web
     disks:
       - name: media
         mountPath: /opt/render/project/src/media
         sizeGB: 1
 
-  # === CRON JOB para avisos do Telegram ===
+  # === CRON JOB de teste (rodando a cada 5 min) ===
   - type: cron
-    name: avisos-telegram
+    name: avisos-telegram-debug
     runtime: python
     region: oregon
     plan: free
-    schedule: "0 11 * * *" # 11:00 UTC = 08:00 America/Recife
+    schedule: "*/5 * * * *"   # a cada 5 minutos
 
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: python manage.py avisos_telegram
+
+    # use --force --debug para ver mensagens mesmo sem regra de 2 em 2 dias
+    startCommand: python manage.py avisos_telegram --force --debug
+
     envVars:
       - key: TELEGRAM_BOT_TOKEN
-        value: "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
+        sync: false     # use os valores já definidos no serviço, ou preencha aqui
       - key: TELEGRAM_CHAT_IDS
-        value: "842553869"
-
-  # === CRON JOB de teste do Telegram ===
-  - type: cron
-    name: teste-telegram
-    runtime: python
-    region: oregon
-    plan: free
-    schedule: "*/5 * * * *"  # roda a cada 5 minutos (remova depois de validar)
-
-    buildCommand: |
-      pip install --upgrade pip
-      pip install -r requirements.txt
-    startCommand: python manage.py teste_telegram
-    envVars:
-      - key: TELEGRAM_BOT_TOKEN
-        value: "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
-      - key: TELEGRAM_CHAT_IDS
-        value: "842553869"
+        sync: false
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings
 
 databases:
   - name: lotesys-db
