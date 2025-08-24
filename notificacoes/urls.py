@@ -1,7 +1,11 @@
+# notificacoes/urls.py
 from django.urls import path
-from .views import telegram_webhook, task_notify
+from . import views
+import os
+
+WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "secret")
 
 urlpatterns = [
-    path("<str:secret>/", telegram_webhook, name="telegram_webhook"),
-    path("task-notify/", task_notify, name="task_notify"),  # opcional
+    path("run/", views.task_notify, name="task_notify"),
+    path(f"webhook/{WEBHOOK_SECRET}/", views.telegram_webhook, name="telegram_webhook"),
 ]

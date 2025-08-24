@@ -1,12 +1,13 @@
+# notificacoes/views.py
 import os, json
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.core.management import call_command
 from .models import DestinatarioTelegram
 from .utils import tg_send
-from django.core.management import call_command
 
 WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "secret")
-TASK_TOKEN = os.getenv("TASK_TRIGGER_TOKEN", "task-secret")  # usado na etapa 7 (opção B)
+TASK_TOKEN = os.getenv("TASK_TRIGGER_TOKEN", "task-secret")
 
 HELP = (
     "Olá! Eu sou o bot do LoteSys.\n"
@@ -19,6 +20,12 @@ HELP = (
 def task_notify(request):
     if request.GET.get("token") != TASK_TOKEN:
         return HttpResponse(status=403)
+
+    debug = request.GET.get("debug")
+    if debug:
+        call_command("avisos_telegram", dry_run=True, debug=True, verbosity=2)
+        return HttpResponse("ok (dry-run + debug)")
+
     call_command("avisos_telegram")
     return HttpResponse("ok")
 
@@ -26,7 +33,6 @@ def task_notify(request):
 def telegram_webhook(request, secret: str):
     if secret != WEBHOOK_SECRET:
         return HttpResponse(status=403)
-
     if request.method != "POST":
         return HttpResponse("ok")
 
@@ -64,9 +70,11 @@ def telegram_webhook(request, secret: str):
     elif text.startswith("/status"):
         try:
             d = DestinatarioTelegram.objects.get(chat_id=chat_id)
-            tg_send(chat_id, f"Status: {'ativo' if d.ativo else 'inativo'}\n"
-                             f"Vence hoje: {'on' if d.recebe_vencimentos_hoje else 'off'}\n"
-                             f"Atrasados: {'on' if d.recebe_atrasados else 'off'}")
+            tg_send(chat_id,
+                f"Status: {'ativo' if d.ativo else 'inativo'}\n"
+                f"Vence hoje: {'on' if d.recebe_vencimentos_hoje else 'off'}\n"
+                f"Atrasados: {'on' if d.recebe_atrasados else 'off'}"
+            )
         except DestinatarioTelegram.DoesNotExist:
             tg_send(chat_id, "Você não está inscrito. Use /start.")
     else:
