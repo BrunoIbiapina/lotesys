@@ -30,7 +30,8 @@ HELP = (
     "Olá! Eu sou o bot do LoteSys.\n"
     "/start – registrar este chat para receber avisos\n"
     "/stop – parar de receber avisos\n"
-    "/status – ver sua inscrição\n\n"
+    "/status – ver sua inscrição\n"
+    "/help – este menu\n\n"
     "Menu rápido:\n"
     "1️⃣ Vencem hoje\n"
     "2️⃣ Atrasadas\n"
@@ -84,11 +85,9 @@ def tg_send_safe(chat_id: str, text: str) -> None:
     """
     try:
         if _tg_send_util:
-            # Idealmente seu utils.tg_send já usa timeout curto; mas ainda assim,
-            # chamaremos em thread fora da view, então não bloqueia o response.
             _tg_send_util(chat_id, text)
         else:
-            import requests, os
+            import requests
             token = os.getenv("TELEGRAM_BOT_TOKEN", "")
             if not token:
                 return
@@ -174,6 +173,10 @@ def _process_update(payload: dict) -> None:
             tg_send_safe(chat_id, "✅ Inscrição registrada!\n" + HELP)
             return
 
+        if text.startswith("/help") or text == "menu":
+            tg_send_safe(chat_id, HELP)
+            return
+
         if text.startswith("/stop"):
             if DestinatarioTelegram:
                 try:
@@ -217,7 +220,9 @@ def _process_update(payload: dict) -> None:
                 total += v
                 ven = getattr(p, "vencimento", None)
                 ven = ven.strftime("%d/%m/%Y") if ven else "s/ data"
-                linhas.append(f"• Venda #{venda_id} — {nome} — Parc. {numero}/{total_parc} — {_brl(v)} — {ven}")
+                linhas.append(
+                    f"• Venda #{venda_id} — {nome} — Parc. {numero}/{total_parc} — {_brl(v)} — {ven}"
+                )
             cab = f"<b>{titulo}</b>\n\n" if linhas else f"<b>{titulo}</b>\n\n(sem itens)"
             rod = f"\n\n<b>Total:</b> {_brl(total)}" if linhas else ""
             return cab + "\n".join(linhas) + rod
