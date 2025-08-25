@@ -164,6 +164,16 @@ def index(request: HttpRequest):
         .order_by("-data_pagamento")[:10]
     )
 
+    # ===== NOVO: listas detalhadas para os cards =====
+    vencidas_list = (
+        vencidas_qs.select_related("venda", "venda__cliente")
+        .order_by("vencimento", "venda_id", "numero")
+    )
+    prox7_list = (
+        prox7_qs.select_related("venda", "venda__cliente")
+        .order_by("vencimento", "venda_id", "numero")
+    )
+
     ctx = dict(
         # filtros
         inicio=inicio,
@@ -179,7 +189,7 @@ def index(request: HttpRequest):
         despesas_previstas=float(despesas_previstas),
         fluxo_liquido=float(fluxo_liquido),
 
-        # Resumo HOJE (mantém Decimal; template usa |brl)
+        # Resumo HOJE
         entradas_hoje=entradas_hoje,
         despesas_hoje=despesas_hoje,
         fluxo_hoje=fluxo_hoje,
@@ -195,7 +205,7 @@ def index(request: HttpRequest):
         despesas_periodo=despesas_periodo,
         parcelas_pagas_periodo=parcelas_pagas_periodo,
 
-        # Alertas
+        # Alertas (contagens/valores)
         vencidas_qtd=vencidas_qtd,
         vencidas_valor=float(vencidas_valor),
         prox7_qtd=prox7_qtd,
@@ -205,5 +215,9 @@ def index(request: HttpRequest):
         vencem_hoje=vencem_hoje_qs,
         total_vencem_hoje=total_vencem_hoje,
         vencem_hoje_count=vencem_hoje_count,
+
+        # ===== NOVO no contexto =====
+        vencidas_list=vencidas_list,
+        prox7_list=prox7_list,
     )
     return render(request, "dashboard/index.html", ctx)

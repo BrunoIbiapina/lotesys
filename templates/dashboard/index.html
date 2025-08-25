@@ -49,6 +49,7 @@
 {% if vencidas_qtd or vencem_hoje_count or prox7_qtd %}
 <div class="grid md:grid-cols-3 gap-4 mb-6">
 
+  {# ---- VENCIDAS ---- #}
   {% if vencidas_qtd %}
   <div class="bg-red-50 border border-red-200 text-red-800 p-4 rounded-2xl">
     <div class="flex items-center justify-between">
@@ -60,9 +61,39 @@
       </div>
       <a href="/financeiro/extrato/?inicio=&fim=" class="text-sm underline">ver no extrato</a>
     </div>
+
+    {% if vencidas_list %}
+    <details class="mt-3">
+      <summary class="cursor-pointer text-sm underline">ver detalhes</summary>
+      <ul class="mt-3 divide-y divide-red-100 bg-white rounded-xl overflow-hidden border border-red-100">
+        {% for p in vencidas_list %}
+          <li class="px-3 py-2 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="font-medium">
+                <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="hover:underline">
+                  Venda #{{ p.venda_id }}
+                </a>
+                <span class="text-xs ml-2 px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-semibold">
+                  {{ p.numero }}/{{ p.venda.parcelas_total }}
+                </span>
+              </div>
+              <div class="text-xs text-gray-500 truncate">
+                {{ p.venda.cliente.nome }}
+              </div>
+            </div>
+            <div class="shrink-0 text-right">
+              <div class="font-semibold text-red-700">{{ p.valor|brl }}</div>
+              <div class="text-xs text-gray-500">{{ p.vencimento|date:"d/m/Y" }}</div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
   </div>
   {% endif %}
 
+  {# ---- VENCEM HOJE ---- #}
   {% if vencem_hoje_count %}
   <div class="bg-blue-50 border border-blue-200 text-blue-900 p-4 rounded-2xl">
     <div class="flex items-start justify-between gap-4">
@@ -110,6 +141,7 @@
   </div>
   {% endif %}
 
+  {# ---- VENCEM EM 7 DIAS ---- #}
   {% if prox7_qtd %}
   <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl">
     <div class="flex items-center justify-between">
@@ -121,6 +153,35 @@
       </div>
       <a href="/financeiro/extrato/?inicio=&fim=" class="text-sm underline">ver no extrato</a>
     </div>
+
+    {% if prox7_list %}
+    <details class="mt-3">
+      <summary class="cursor-pointer text-sm underline">ver detalhes</summary>
+      <ul class="mt-3 divide-y divide-amber-100 bg-white rounded-xl overflow-hidden border border-amber-100">
+        {% for p in prox7_list %}
+          <li class="px-3 py-2 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="font-medium">
+                <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="hover:underline">
+                  Venda #{{ p.venda_id }}
+                </a>
+                <span class="text-xs ml-2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">
+                  {{ p.numero }}/{{ p.venda.parcelas_total }}
+                </span>
+              </div>
+              <div class="text-xs text-gray-500 truncate">
+                {{ p.venda.cliente.nome }}
+              </div>
+            </div>
+            <div class="shrink-0 text-right">
+              <div class="font-semibold text-amber-700">{{ p.valor|brl }}</div>
+              <div class="text-xs text-gray-500">{{ p.vencimento|date:"d/m/Y" }}</div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
   </div>
   {% endif %}
 
