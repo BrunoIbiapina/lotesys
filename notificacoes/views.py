@@ -10,6 +10,8 @@ from django.utils import timezone
 from django.core.management import call_command
 from django.db.models import Q, Sum
 
+import requests  # usado no envio direto
+
 logger = logging.getLogger(__name__)
 
 # (opcionais)
@@ -18,7 +20,7 @@ try:
 except Exception:
     DestinatarioTelegram = None
 
-# Preferimos usar o util, mas nunca bloquear a view
+# Preferimos usar o util se NÃO houver token; mas agora priorizamos envio direto quando houver token
 try:
     from .utils import tg_send as _tg_send_util  # pode ter timeout interno
 except Exception:
@@ -82,28 +84,45 @@ def _flag_from_qs(request, name: str) -> bool:
     v = (request.GET.get(name) or "").strip()
     return v in ("1", "true", "True", "yes", "on")
 
-def tg_send_safe(chat_id: str, text: str) -> None:
+# ---------- Envio Telegram ----------
+def _tg_http_send(token: str, chat_id: str, text: str, timeout: int = 8) -> tuple[int, str]:
+    """Envia via HTTP direto e retorna (status_code, response_text)."""
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    r = requests.post(
+        url,
+        json={"chat_id": str(chat_id), "text": text, "parse_mode": "HTML"},
+        timeout=timeout,
+    )
+    return r.status_code, r.text
+
+def tg_send_safe(chat_id: str, text: str, *, mode: str | None = None) -> None:
     """
-    Envia mensagem sem nunca bloquear a resposta do webhook.
-    Usa utilidade se existir; caso contrário, fallback via requests com timeout curto.
+    Envia mensagem sem bloquear o webhook.
+    - Se houver TELEGRAM_BOT_TOKEN e mode != 'util'  -> usa envio HTTP direto (preferido)
+    - Senão, se houver _tg_send_util ou mode == 'util' -> tenta util
+    - Senão, não envia
     """
     try:
+        token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+        if (mode != "util") and token:
+            # preferir direto
+            try:
+                status, body = _tg_http_send(token, chat_id, text, timeout=5)
+                if status >= 300:
+                    logger.warning("Telegram HTTP falhou [%s]: %s", status, body)
+            except Exception as e:
+                logger.exception("Falha no envio HTTP Telegram: %s", e)
+                # fallback para util se existir
+                if _tg_send_util:
+                    _tg_send_util(chat_id, text)
+            return
+
+        # Sem token (ou modo obrigado util): tentar util
         if _tg_send_util:
             _tg_send_util(chat_id, text)
         else:
-            import requests
-            token = os.getenv("TELEGRAM_BOT_TOKEN", "")
-            if not token:
-                logger.warning("TELEGRAM_BOT_TOKEN ausente; não foi possível enviar para %s", chat_id)
-                return
-            url = f"https://api.telegram.org/bot{token}/sendMessage"
-            requests.post(
-                url,
-                json={"chat_id": str(chat_id), "text": text, "parse_mode": "HTML"},
-                timeout=5,  # timeout curto
-            )
+            logger.warning("Sem TELEGRAM_BOT_TOKEN e sem util; não foi possível enviar p/ %s", chat_id)
     except Exception as e:
-        # Nunca deixar exceção vazar
         logger.exception("Falha ao enviar Telegram: %s", e)
 
 # ---------- Trigger HTTP para rodar o comando avisos_telegram ----------
@@ -113,7 +132,8 @@ def task_notify(request):
     GET /notificacoes/run/?token=...&dry_run=1&force=1&debug=1&date=YYYY-MM-DD
     GET /notificacoes/run/?token=...&stats=1      -> texto de diagnóstico
     GET /notificacoes/run/?token=...&echo=webhook -> ecoa o segredo do webhook (mascarado)
-    GET /notificacoes/run/?token=...&send=Oi&chat_id=842553869 -> envia teste direto
+    GET /notificacoes/run/?token=...&whoami=1     -> diagnosticar env/mode
+    GET /notificacoes/run/?token=...&send=Oi&chat_id=842553869[&mode=direct|util] -> envia teste direto (síncrono)
     """
     if request.GET.get("token") != TASK_TOKEN:
         return HttpResponse(status=403)
@@ -123,14 +143,41 @@ def task_notify(request):
         masked = WEBHOOK_SECRET[:2] + "…" if WEBHOOK_SECRET else "(vazio)"
         return HttpResponse(f"webhook_secret={masked}", content_type="text/plain; charset=utf-8")
 
-    # envio de teste direto
+    # whoami/diagnóstico
+    if request.GET.get("whoami") == "1":
+        has_token = bool(os.getenv("TELEGRAM_BOT_TOKEN"))
+        mode = "direct" if has_token else ("util" if _tg_send_util else "none")
+        return HttpResponse(
+            f"has_token={has_token} mode_default={mode}",
+            content_type="text/plain; charset=utf-8",
+        )
+
+    # envio de teste direto (síncrono p/ ver status do Telegram)
     if request.GET.get("send"):
         chat_id = request.GET.get("chat_id")
         if not chat_id:
             return HttpResponse("faltou chat_id", status=400)
         msg = request.GET.get("send")
-        Thread(target=tg_send_safe, args=(chat_id, msg), daemon=True).start()
-        return HttpResponse("ok (send)", content_type="text/plain; charset=utf-8")
+        mode = request.GET.get("mode")  # direct|util|None
+
+        if mode == "util":
+            if _tg_send_util:
+                try:
+                    _tg_send_util(chat_id, msg)
+                    return HttpResponse("ok (send via util)", content_type="text/plain; charset=utf-8")
+                except Exception as e:
+                    return HttpResponse(f"erro util: {e}", status=500)
+            return HttpResponse("util indisponível", status=500)
+
+        # default/direct
+        token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+        if not token:
+            return HttpResponse("TELEGRAM_BOT_TOKEN ausente", status=500)
+        try:
+            status, body = _tg_http_send(token, chat_id, msg, timeout=10)
+            return HttpResponse(f"direct status={status} body={body}", content_type="text/plain; charset=utf-8", status=200 if status < 400 else 500)
+        except Exception as e:
+            return HttpResponse(f"erro direct: {e}", status=500)
 
     # stats
     if request.GET.get("stats") == "1":
