@@ -6,6 +6,7 @@ from datetime import date, datetime
 import requests
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from django.db.models import Q
 
 # ---- importa o modelo Parcela da app correta ----
 try:
@@ -42,7 +43,7 @@ def send_message(token: str, chat_id: str, text: str) -> None:
 class Command(BaseCommand):
     help = "Envia avisos de vencimentos/atrasos das parcelas via Telegram."
 
-    # ---------- NOVO: flags ----------
+    # ---------- flags ----------
     def add_arguments(self, parser):
         parser.add_argument(
             "--dry-run",
@@ -93,17 +94,25 @@ class Command(BaseCommand):
         debug: bool = options.get("debug", False)
 
         # ---------- consultas ----------
-        pendentes = Parcela.objects.filter(status="PENDENTE")
-        vencem_hoje = pendentes.filter(vencimento=hoje).select_related(
-            "venda", "venda__cliente"
+        # Considera PENDENTE **ou** VENCIDO (case-insensitive), e descarta vencimento nulo
+        elegiveis = Parcela.objects.filter(
+            (Q(status__iexact="PENDENTE") | Q(status__iexact="VENCIDO")),
+            vencimento__isnull=False,
         )
-        atrasadas_qs = pendentes.filter(vencimento__lt=hoje).select_related(
-            "venda", "venda__cliente"
+
+        vencem_hoje = (
+            elegiveis.filter(vencimento=hoje)
+            .select_related("venda", "venda__cliente")
+        )
+
+        atrasadas_qs = (
+            elegiveis.filter(vencimento__lt=hoje)
+            .select_related("venda", "venda__cliente")
         )
 
         if debug:
             print(
-                f"[debug] hoje={hoje} | pendentes={pendentes.count()} | "
+                f"[debug] hoje={hoje} | elegiveis={elegiveis.count()} | "
                 f"vencem_hoje={vencem_hoje.count()} | atrasadas={atrasadas_qs.count()}"
             )
 
@@ -115,12 +124,13 @@ class Command(BaseCommand):
             venda_id = getattr(p, "venda_id", None)
             cliente = getattr(getattr(p, "venda", None), "cliente", None)
             cliente_nome = getattr(cliente, "nome", "Cliente")
+            valor = Decimal(getattr(p, "valor", 0) or 0)
             linhas_hoje.append(
                 f"• Venda #{venda_id} — {cliente_nome} — Parc. {p.numero}/"
                 f"{getattr(getattr(p, 'venda', None), 'parcelas_total', '?')} — "
-                f"<b>{brl(p.valor)}</b> — vence <b>{p.vencimento.strftime('%d/%m/%Y')}</b>"
+                f"<b>{brl(valor)}</b> — vence <b>{p.vencimento.strftime('%d/%m/%Y')}</b>"
             )
-            total_hoje += Decimal(p.valor)
+            total_hoje += valor
 
         msg_hoje = ""
         if linhas_hoje:
@@ -139,13 +149,14 @@ class Command(BaseCommand):
                 venda_id = getattr(p, "venda_id", None)
                 cliente = getattr(getattr(p, "venda", None), "cliente", None)
                 cliente_nome = getattr(cliente, "nome", "Cliente")
+                valor = Decimal(getattr(p, "valor", 0) or 0)
                 linhas_atraso.append(
                     f"• Venda #{venda_id} — {cliente_nome} — Parc. {p.numero}/"
                     f"{getattr(getattr(p, 'venda', None), 'parcelas_total', '?')} — "
-                    f"<b>{brl(p.valor)}</b> — venceu em <b>{p.vencimento.strftime('%d/%m/%Y')}</b> "
+                    f"<b>{brl(valor)}</b> — venceu em <b>{p.vencimento.strftime('%d/%m/%Y')}</b> "
                     f"— {dias} dia(s) em atraso"
                 )
-                total_atraso += Decimal(p.valor)
+                total_atraso += valor
 
         msg_atraso = ""
         if linhas_atraso:
