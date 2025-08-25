@@ -1,13 +1,11 @@
 # notificacoes/urls.py
-from django.urls import path
-from . import views
-
-app_name = "notificacoes"
+from django.urls import path, re_path
+from .views import task_notify, telegram_webhook
 
 urlpatterns = [
-    # Webhook do Telegram (se usar)
-    path("webhook/<str:secret>/", views.telegram_webhook, name="telegram_webhook"),
+    # Trigger HTTP para rodar o management command
+    path("run/", task_notify, name="task_notify"),
 
-    # Runner HTTP dos avisos (trigger por cron externo/Render)
-    path("run/", views.task_notify, name="task_notify"),
+    # Webhook do Telegram — aceita /telegram/<secret> e /telegram/<secret>/
+    re_path(r"^telegram/(?P<secret>[^/]+)/?$", telegram_webhook, name="telegram_webhook"),
 ]

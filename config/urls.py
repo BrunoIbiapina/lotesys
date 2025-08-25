@@ -5,6 +5,8 @@ from django.conf.urls.static import static
 from django.views.static import serve as media_serve
 import os
 
+from notificacoes.views import telegram_webhook
+
 urlpatterns = [
     path("admin/", admin.site.urls),
 
@@ -14,9 +16,9 @@ urlpatterns = [
     path("vendas/", include(("vendas.urls", "vendas"), namespace="vendas")),
     path("mural/", include(("mural.urls", "mural"), namespace="mural")),
     path("relatorios/", include(("relatorios.urls", "relatorios"), namespace="relatorios")),
-
+    path("telegram/<str:secret>/", telegram_webhook, name="telegram_webhook"),
     # <<< SEM CONDICIONAL >>>
-    path("notificacoes/", include(("notificacoes.urls", "notificacoes"), namespace="notificacoes")),
+   path("notificacoes/", include("notificacoes.urls")),
 ]
 
 if settings.DEBUG:
