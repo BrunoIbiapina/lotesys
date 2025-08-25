@@ -47,8 +47,9 @@
 
 {# ===================== ALERTAS (Vencidas / Hoje / Próx. 7 dias) ===================== #}
 {% if vencidas_qtd or vencem_hoje_count or prox7_qtd %}
-<div class="grid md:grid-cols-3 gap-4 mb-6">
-
+<div
+  class="grid gap-4 mb-6
+  {% if alerts_count == 1 %}md:grid-cols-1{% elif alerts_count == 2 %}md:grid-cols-2{% else %}md:grid-cols-3{% endif %}">
   {# ---- VENCIDAS ---- #}
   {% if vencidas_qtd %}
   <div class="bg-red-50 border border-red-200 text-red-800 p-4 rounded-2xl">
@@ -88,6 +89,9 @@
           </li>
         {% endfor %}
       </ul>
+      {% if vencidas_has_more %}
+        <a href="/financeiro/extrato/?inicio=&fim=" class="block mt-2 text-xs underline">+ ver todas</a>
+      {% endif %}
     </details>
     {% endif %}
   </div>
@@ -180,11 +184,13 @@
           </li>
         {% endfor %}
       </ul>
+      {% if prox7_has_more %}
+        <a href="/financeiro/extrato/?inicio=&fim=" class="block mt-2 text-xs underline">+ ver todas</a>
+      {% endif %}
     </details>
     {% endif %}
   </div>
   {% endif %}
-
 </div>
 {% endif %}
 

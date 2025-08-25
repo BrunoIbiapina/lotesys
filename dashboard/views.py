@@ -1,19 +1,21 @@
 # dashboard/views.py
+from datetime import date, timedelta
+from decimal import Decimal
+
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth, Coalesce
 from django.http import HttpRequest
 from django.shortcuts import render
 from django.utils import timezone
-from datetime import date, timedelta
-from decimal import Decimal
 
-from vendas.models import Venda
 from financeiro.models import Despesa
+from vendas.models import Venda
 try:
     from vendas.models import Parcela
 except Exception:
-    from financeiro.models import Parcela
+    # fallback caso exista outro app com Parcela
+    from financeiro.models import Parcela  # type: ignore
 
 
 def _parse_date(s: str | None) -> date | None:
@@ -164,15 +166,23 @@ def index(request: HttpRequest):
         .order_by("-data_pagamento")[:10]
     )
 
-    # ===== NOVO: listas detalhadas para os cards =====
-    vencidas_list = (
+    # ===== Listas detalhadas para os cards (limitadas) =====
+    vencidas_list_qs = (
         vencidas_qs.select_related("venda", "venda__cliente")
         .order_by("vencimento", "venda_id", "numero")
     )
-    prox7_list = (
+    prox7_list_qs = (
         prox7_qs.select_related("venda", "venda__cliente")
         .order_by("vencimento", "venda_id", "numero")
     )
+    VISIBLE_MAX = 5
+    vencidas_list = list(vencidas_list_qs[:VISIBLE_MAX])
+    prox7_list = list(prox7_list_qs[:VISIBLE_MAX])
+    vencidas_has_more = vencidas_list_qs.count() > VISIBLE_MAX
+    prox7_has_more = prox7_list_qs.count() > VISIBLE_MAX
+
+    # total de cards presentes (para o grid do template)
+    alerts_count = int(bool(vencidas_qtd)) + int(bool(vencem_hoje_count)) + int(bool(prox7_qtd))
 
     ctx = dict(
         # filtros
@@ -189,7 +199,7 @@ def index(request: HttpRequest):
         despesas_previstas=float(despesas_previstas),
         fluxo_liquido=float(fluxo_liquido),
 
-        # Resumo HOJE
+        # Resumo HOJE (mantém Decimal; o template usa |brl)
         entradas_hoje=entradas_hoje,
         despesas_hoje=despesas_hoje,
         fluxo_hoje=fluxo_hoje,
@@ -216,8 +226,13 @@ def index(request: HttpRequest):
         total_vencem_hoje=total_vencem_hoje,
         vencem_hoje_count=vencem_hoje_count,
 
-        # ===== NOVO no contexto =====
+        # Listas dos cards + flags
         vencidas_list=vencidas_list,
         prox7_list=prox7_list,
+        vencidas_has_more=vencidas_has_more,
+        prox7_has_more=prox7_has_more,
+
+        # Para o grid responsivo dos alertas
+        alerts_count=alerts_count,
     )
     return render(request, "dashboard/index.html", ctx)
