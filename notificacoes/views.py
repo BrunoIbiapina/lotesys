@@ -1,6 +1,8 @@
 # notificacoes/views.py
 import os
 import json
+from threading import Thread
+
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
@@ -13,12 +15,11 @@ try:
 except Exception:
     DestinatarioTelegram = None
 
+# Preferimos usar o util, mas nunca bloquear a view
 try:
-    from .utils import tg_send
+    from .utils import tg_send as _tg_send_util  # pode ter timeout interno
 except Exception:
-    def tg_send(chat_id, text):
-        # fallback mudo (evita quebrar em ambiente sem utils)
-        pass
+    _tg_send_util = None
 
 # === ENV ===
 WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "secret")
@@ -36,7 +37,7 @@ HELP = (
     "3️⃣ Resumo\n"
 )
 
-# ---------- Utilidades de consulta ----------
+# ---------- Utilidades ----------
 def _get_parcela_model():
     try:
         from vendas.models import Parcela
@@ -75,6 +76,31 @@ def _stats_text():
 def _flag_from_qs(request, name: str) -> bool:
     v = (request.GET.get(name) or "").strip()
     return v in ("1", "true", "True", "yes", "on")
+
+def tg_send_safe(chat_id: str, text: str) -> None:
+    """
+    Envia mensagem sem nunca bloquear a resposta do webhook.
+    Usa utilidade se existir; caso contrário, fallback via requests com timeout curto.
+    """
+    try:
+        if _tg_send_util:
+            # Idealmente seu utils.tg_send já usa timeout curto; mas ainda assim,
+            # chamaremos em thread fora da view, então não bloqueia o response.
+            _tg_send_util(chat_id, text)
+        else:
+            import requests, os
+            token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+            if not token:
+                return
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
+            requests.post(
+                url,
+                json={"chat_id": str(chat_id), "text": text, "parse_mode": "HTML"},
+                timeout=5,  # timeout curto
+            )
+    except Exception:
+        # Nunca deixar exceção vazar
+        pass
 
 # ---------- Trigger HTTP para rodar o comando avisos_telegram ----------
 @csrf_exempt
@@ -118,12 +144,135 @@ def task_notify(request):
     body = "ok" + (f" ({', '.join(parts)})" if parts else "")
     return HttpResponse(body, content_type="text/plain; charset=utf-8")
 
-# ---------- Webhook Telegram ----------
+# ---------- Processamento do webhook (em thread) ----------
+def _process_update(payload: dict) -> None:
+    """
+    Faz todo o trabalho pesado do webhook fora da request HTTP,
+    para responder rápido ao Telegram.
+    """
+    try:
+        msg = payload.get("message") or payload.get("edited_message")
+        if not msg:
+            return
+
+        chat = msg.get("chat", {})
+        chat_id = str(chat.get("id"))
+        text = (msg.get("text") or "").strip().lower()
+
+        Parcela = _get_parcela_model()
+        hoje = timezone.localdate()
+
+        # ----- Comandos -----
+        if text.startswith("/start"):
+            if DestinatarioTelegram:
+                dest, _ = DestinatarioTelegram.objects.get_or_create(
+                    chat_id=chat_id,
+                    defaults={"nome": chat.get("first_name") or "Usuário"},
+                )
+                dest.ativo = True
+                dest.save()
+            tg_send_safe(chat_id, "✅ Inscrição registrada!\n" + HELP)
+            return
+
+        if text.startswith("/stop"):
+            if DestinatarioTelegram:
+                try:
+                    dest = DestinatarioTelegram.objects.get(chat_id=chat_id)
+                    dest.ativo = False
+                    dest.save()
+                    tg_send_safe(chat_id, "🛑 Ok, avisos desativados. Use /start para reativar.")
+                except DestinatarioTelegram.DoesNotExist:
+                    tg_send_safe(chat_id, "Você não está inscrito. Use /start.")
+            else:
+                tg_send_safe(chat_id, "🛑 Ok. (Cadastro simples indisponível)")
+            return
+
+        if text.startswith("/status"):
+            if DestinatarioTelegram:
+                try:
+                    d = DestinatarioTelegram.objects.get(chat_id=chat_id)
+                    tg_send_safe(
+                        chat_id,
+                        f"Status: {'ativo' if d.ativo else 'inativo'}\n"
+                        f"Vence hoje: {'on' if getattr(d, 'recebe_vencimentos_hoje', True) else 'off'}\n"
+                        f"Atrasados: {'on' if getattr(d, 'recebe_atrasados', True) else 'off'}"
+                    )
+                except DestinatarioTelegram.DoesNotExist:
+                    tg_send_safe(chat_id, "Você não está inscrito. Use /start.")
+            else:
+                tg_send_safe(chat_id, "Cadastro simples indisponível.")
+            return
+
+        # ----- Menu rápido (1/2/3) -----
+        def _fmt_lista(qs, titulo: str):
+            linhas = []
+            total = 0.0
+            for p in qs[:10]:
+                venda_id = getattr(p, "venda_id", None)
+                cliente = getattr(getattr(p, "venda", None), "cliente", None)
+                nome = getattr(cliente, "nome", "Cliente")
+                numero = getattr(p, "numero", "?")
+                total_parc = getattr(getattr(p, "venda", None), "parcelas_total", "?")
+                v = float(getattr(p, "valor", 0) or 0)
+                total += v
+                ven = getattr(p, "vencimento", None)
+                ven = ven.strftime("%d/%m/%Y") if ven else "s/ data"
+                linhas.append(f"• Venda #{venda_id} — {nome} — Parc. {numero}/{total_parc} — {_brl(v)} — {ven}")
+            cab = f"<b>{titulo}</b>\n\n" if linhas else f"<b>{titulo}</b>\n\n(sem itens)"
+            rod = f"\n\n<b>Total:</b> {_brl(total)}" if linhas else ""
+            return cab + "\n".join(linhas) + rod
+
+        if text in ("1", "vencem hoje", "hoje"):
+            qs = (
+                Parcela.objects.filter(status__iexact="PENDENTE", vencimento=hoje)
+                .select_related("venda", "venda__cliente")
+                .order_by("vencimento", "venda_id", "numero")
+            )
+            tg_send_safe(chat_id, _fmt_lista(qs, "🔔 Vencimentos de HOJE"))
+            return
+
+        if text in ("2", "atrasadas", "atrasado", "atraso"):
+            qs = (
+                Parcela.objects.filter(status__iexact="PENDENTE", vencimento__lt=hoje)
+                .select_related("venda", "venda__cliente")
+                .order_by("vencimento", "venda_id", "numero")
+            )
+            tg_send_safe(chat_id, _fmt_lista(qs, "⚠️ Parcelas ATRASADAS"))
+            return
+
+        if text in ("3", "resumo"):
+            pend = Parcela.objects.filter(status__iexact="PENDENTE")
+            hoje_qs = pend.filter(vencimento=hoje)
+            atr_qs = pend.filter(vencimento__lt=hoje)
+            prox_qs = pend.filter(vencimento__range=[hoje, hoje + timezone.timedelta(days=7)])
+
+            t_hoje = hoje_qs.aggregate(s=Sum("valor"))["s"] or 0
+            t_atr  = atr_qs.aggregate(s=Sum("valor"))["s"] or 0
+            t_prox = prox_qs.aggregate(s=Sum("valor"))["s"] or 0
+
+            txt = (
+                "<b>📊 Resumo</b>\n\n"
+                f"Vencem HOJE: {hoje_qs.count()} — {_brl(t_hoje)}\n"
+                f"Atrasadas: {atr_qs.count()} — {_brl(t_atr)}\n"
+                f"Próx. 7 dias: {prox_qs.count()} — {_brl(t_prox)}\n\n"
+                "Envie 1, 2 ou 3 para detalhes; /help para ajuda."
+            )
+            tg_send_safe(chat_id, txt)
+            return
+
+        # default: ajuda
+        tg_send_safe(chat_id, HELP)
+
+    except Exception:
+        # Nunca deixar exceção derrubar a thread
+        pass
+
+# ---------- Webhook Telegram (ACK rápido) ----------
 @csrf_exempt
 def telegram_webhook(request, secret: str):
     """
-    POST do Telegram chega aqui.
-    Também aceita GET para teste manual de health.
+    POST do Telegram chega aqui. Respondemos imediatamente para evitar timeout
+    e processamos em background.
     """
     if secret != WEBHOOK_SECRET:
         return HttpResponse(status=403)
@@ -138,117 +287,9 @@ def telegram_webhook(request, secret: str):
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except Exception:
-        return HttpResponse("ignored")
+        # Acknowledge mesmo com payload inválido para limpar fila do Telegram
+        return HttpResponse("ignored", content_type="text/plain; charset=utf-8")
 
-    msg = payload.get("message") or payload.get("edited_message")
-    if not msg:
-        return HttpResponse("ignored")
-
-    chat = msg.get("chat", {})
-    chat_id = str(chat.get("id"))
-    text = (msg.get("text") or "").strip().lower()
-
-    Parcela = _get_parcela_model()
-    hoje = timezone.localdate()
-
-    # ----- Comandos -----
-    if text.startswith("/start"):
-        if DestinatarioTelegram:
-            dest, _ = DestinatarioTelegram.objects.get_or_create(
-                chat_id=chat_id,
-                defaults={"nome": chat.get("first_name") or "Usuário"},
-            )
-            dest.ativo = True
-            dest.save()
-        tg_send(chat_id, "✅ Inscrição registrada!\n" + HELP)
-        return JsonResponse({"ok": True})
-
-    if text.startswith("/stop"):
-        if DestinatarioTelegram:
-            try:
-                dest = DestinatarioTelegram.objects.get(chat_id=chat_id)
-                dest.ativo = False
-                dest.save()
-                tg_send(chat_id, "🛑 Ok, avisos desativados. Use /start para reativar.")
-            except DestinatarioTelegram.DoesNotExist:
-                tg_send(chat_id, "Você não está inscrito. Use /start.")
-        else:
-            tg_send(chat_id, "🛑 Ok. (Cadastro simples indisponível)")
-        return JsonResponse({"ok": True})
-
-    if text.startswith("/status"):
-        if DestinatarioTelegram:
-            try:
-                d = DestinatarioTelegram.objects.get(chat_id=chat_id)
-                tg_send(
-                    chat_id,
-                    f"Status: {'ativo' if d.ativo else 'inativo'}\n"
-                    f"Vence hoje: {'on' if getattr(d, 'recebe_vencimentos_hoje', True) else 'off'}\n"
-                    f"Atrasados: {'on' if getattr(d, 'recebe_atrasados', True) else 'off'}"
-                )
-            except DestinatarioTelegram.DoesNotExist:
-                tg_send(chat_id, "Você não está inscrito. Use /start.")
-        else:
-            tg_send(chat_id, "Cadastro simples indisponível.")
-        return JsonResponse({"ok": True})
-
-    # ----- Menu rápido (1/2/3) -----
-    def _fmt_lista(qs, titulo: str):
-        linhas = []
-        total = 0.0
-        for p in qs[:10]:
-            venda_id = getattr(p, "venda_id", None)
-            cliente = getattr(getattr(p, "venda", None), "cliente", None)
-            nome = getattr(cliente, "nome", "Cliente")
-            numero = getattr(p, "numero", "?")
-            total_parc = getattr(getattr(p, "venda", None), "parcelas_total", "?")
-            v = float(getattr(p, "valor", 0) or 0)
-            total += v
-            ven = getattr(p, "vencimento", None)
-            ven = ven.strftime("%d/%m/%Y") if ven else "s/ data"
-            linhas.append(f"• Venda #{venda_id} — {nome} — Parc. {numero}/{total_parc} — {_brl(v)} — {ven}")
-        cab = f"<b>{titulo}</b>\n\n" if linhas else f"<b>{titulo}</b>\n\n(sem itens)"
-        rod = f"\n\n<b>Total:</b> {_brl(total)}" if linhas else ""
-        return cab + "\n".join(linhas) + rod
-
-    if text in ("1", "vencem hoje", "hoje"):
-        qs = (
-            Parcela.objects.filter(status__iexact="PENDENTE", vencimento=hoje)
-            .select_related("venda", "venda__cliente")
-            .order_by("vencimento", "venda_id", "numero")
-        )
-        tg_send(chat_id, _fmt_lista(qs, "🔔 Vencimentos de HOJE"))
-        return JsonResponse({"ok": True})
-
-    if text in ("2", "atrasadas", "atrasado", "atraso"):
-        qs = (
-            Parcela.objects.filter(status__iexact="PENDENTE", vencimento__lt=hoje)
-            .select_related("venda", "venda__cliente")
-            .order_by("vencimento", "venda_id", "numero")
-        )
-        tg_send(chat_id, _fmt_lista(qs, "⚠️ Parcelas ATRASADAS"))
-        return JsonResponse({"ok": True})
-
-    if text in ("3", "resumo"):
-        pend = Parcela.objects.filter(status__iexact="PENDENTE")
-        hoje_qs = pend.filter(vencimento=hoje)
-        atr_qs = pend.filter(vencimento__lt=hoje)
-        prox_qs = pend.filter(vencimento__range=[hoje, hoje + timezone.timedelta(days=7)])
-
-        t_hoje = hoje_qs.aggregate(s=Sum("valor"))["s"] or 0
-        t_atr  = atr_qs.aggregate(s=Sum("valor"))["s"] or 0
-        t_prox = prox_qs.aggregate(s=Sum("valor"))["s"] or 0
-
-        txt = (
-            "<b>📊 Resumo</b>\n\n"
-            f"Vencem HOJE: {hoje_qs.count()} — {_brl(t_hoje)}\n"
-            f"Atrasadas: {atr_qs.count()} — {_brl(t_atr)}\n"
-            f"Próx. 7 dias: {prox_qs.count()} — {_brl(t_prox)}\n\n"
-            "Envie 1, 2 ou 3 para detalhes; /help para ajuda."
-        )
-        tg_send(chat_id, txt)
-        return JsonResponse({"ok": True})
-
-    # default: ajuda
-    tg_send(chat_id, HELP)
-    return JsonResponse({"ok": True})
+    # Dispara processamento em thread e responde 200 imediatamente
+    Thread(target=_process_update, args=(payload,), daemon=True).start()
+    return HttpResponse("ok", content_type="text/plain; charset=utf-8")
