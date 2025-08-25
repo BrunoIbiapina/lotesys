@@ -1,6 +1,7 @@
 # notificacoes/views.py
 import os
 import json
+import logging
 from threading import Thread
 
 from django.http import HttpResponse, JsonResponse
@@ -8,6 +9,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.core.management import call_command
 from django.db.models import Q, Sum
+
+logger = logging.getLogger(__name__)
 
 # (opcionais)
 try:
@@ -31,6 +34,7 @@ HELP = (
     "/start – registrar este chat para receber avisos\n"
     "/stop – parar de receber avisos\n"
     "/status – ver sua inscrição\n"
+    "/id – ver seu chat_id\n"
     "/help – este menu\n\n"
     "Menu rápido:\n"
     "1️⃣ Vencem hoje\n"
@@ -90,6 +94,7 @@ def tg_send_safe(chat_id: str, text: str) -> None:
             import requests
             token = os.getenv("TELEGRAM_BOT_TOKEN", "")
             if not token:
+                logger.warning("TELEGRAM_BOT_TOKEN ausente; não foi possível enviar para %s", chat_id)
                 return
             url = f"https://api.telegram.org/bot{token}/sendMessage"
             requests.post(
@@ -97,9 +102,9 @@ def tg_send_safe(chat_id: str, text: str) -> None:
                 json={"chat_id": str(chat_id), "text": text, "parse_mode": "HTML"},
                 timeout=5,  # timeout curto
             )
-    except Exception:
+    except Exception as e:
         # Nunca deixar exceção vazar
-        pass
+        logger.exception("Falha ao enviar Telegram: %s", e)
 
 # ---------- Trigger HTTP para rodar o comando avisos_telegram ----------
 @csrf_exempt
@@ -108,6 +113,7 @@ def task_notify(request):
     GET /notificacoes/run/?token=...&dry_run=1&force=1&debug=1&date=YYYY-MM-DD
     GET /notificacoes/run/?token=...&stats=1      -> texto de diagnóstico
     GET /notificacoes/run/?token=...&echo=webhook -> ecoa o segredo do webhook (mascarado)
+    GET /notificacoes/run/?token=...&send=Oi&chat_id=842553869 -> envia teste direto
     """
     if request.GET.get("token") != TASK_TOKEN:
         return HttpResponse(status=403)
@@ -116,6 +122,15 @@ def task_notify(request):
     if request.GET.get("echo") == "webhook":
         masked = WEBHOOK_SECRET[:2] + "…" if WEBHOOK_SECRET else "(vazio)"
         return HttpResponse(f"webhook_secret={masked}", content_type="text/plain; charset=utf-8")
+
+    # envio de teste direto
+    if request.GET.get("send"):
+        chat_id = request.GET.get("chat_id")
+        if not chat_id:
+            return HttpResponse("faltou chat_id", status=400)
+        msg = request.GET.get("send")
+        Thread(target=tg_send_safe, args=(chat_id, msg), daemon=True).start()
+        return HttpResponse("ok (send)", content_type="text/plain; charset=utf-8")
 
     # stats
     if request.GET.get("stats") == "1":
@@ -156,7 +171,10 @@ def _process_update(payload: dict) -> None:
 
         chat = msg.get("chat", {})
         chat_id = str(chat.get("id"))
-        text = (msg.get("text") or "").strip().lower()
+        text_raw = (msg.get("text") or "").strip()
+        text = text_raw.lower()
+
+        logger.info("Webhook msg chat_id=%s text=%r", chat_id, text_raw)
 
         Parcela = _get_parcela_model()
         hoje = timezone.localdate()
@@ -171,6 +189,10 @@ def _process_update(payload: dict) -> None:
                 dest.ativo = True
                 dest.save()
             tg_send_safe(chat_id, "✅ Inscrição registrada!\n" + HELP)
+            return
+
+        if text.startswith("/id"):
+            tg_send_safe(chat_id, f"Seu chat_id é: <code>{chat_id}</code>")
             return
 
         if text.startswith("/help") or text == "menu":
@@ -249,7 +271,8 @@ def _process_update(payload: dict) -> None:
             pend = Parcela.objects.filter(status__iexact="PENDENTE")
             hoje_qs = pend.filter(vencimento=hoje)
             atr_qs = pend.filter(vencimento__lt=hoje)
-            prox_qs = pend.filter(vencimento__range=[hoje, hoje + timezone.timedelta(days=7)])
+            from datetime import timedelta as _td
+            prox_qs = pend.filter(vencimento__range=[hoje, hoje + _td(days=7)])
 
             t_hoje = hoje_qs.aggregate(s=Sum("valor"))["s"] or 0
             t_atr  = atr_qs.aggregate(s=Sum("valor"))["s"] or 0
@@ -268,9 +291,8 @@ def _process_update(payload: dict) -> None:
         # default: ajuda
         tg_send_safe(chat_id, HELP)
 
-    except Exception:
-        # Nunca deixar exceção derrubar a thread
-        pass
+    except Exception as e:
+        logger.exception("Erro ao processar update do Telegram: %s", e)
 
 # ---------- Webhook Telegram (ACK rápido) ----------
 @csrf_exempt
