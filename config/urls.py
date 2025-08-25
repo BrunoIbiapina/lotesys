@@ -13,6 +13,7 @@ urlpatterns = [
     path("usuarios/", include(("usuarios.urls", "usuarios"), namespace="usuarios")),
     path("vendas/", include(("vendas.urls", "vendas"), namespace="vendas")),
     path("mural/", include(("mural.urls", "mural"), namespace="mural")),
+    path("relatorios/", include(("relatorios.urls", "relatorios"), namespace="relatorios")),
 
     # <<< SEM CONDICIONAL >>>
     path("notificacoes/", include(("notificacoes.urls", "notificacoes"), namespace="notificacoes")),

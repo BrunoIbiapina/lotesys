@@ -10,13 +10,17 @@
     </title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  
-  <style>html { scroll-behavior: smooth; }</style>
+
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
   <body class="bg-gray-50">
     {% load mural_ui %}
 
     <!-- HEADER -->
-     
+
     <header class="bg-white border-b">
       <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         <!-- Marca / home -->
@@ -29,11 +33,15 @@
             class="px-3 py-1.5 rounded-full text-sm
                  {% if request.path|slice:':11' == '/financeiro' %}
               
+              
                    bg-indigo-600 text-white
+
 
             {% else %}
               
+              
                    text-gray-700 hover:bg-gray-100
+
 
             {% endif %}">
             Extrato
@@ -44,11 +52,15 @@
             class="px-3 py-1.5 rounded-full text-sm
                  {% if request.path|slice:':8' == '/vendas/' or request.path == '/vendas' %}
               
+              
                    bg-indigo-600 text-white
+
 
             {% else %}
               
+              
                    text-gray-700 hover:bg-gray-100
+
 
             {% endif %}">
             Vendas
@@ -59,11 +71,15 @@
             class="px-3 py-1.5 rounded-full text-sm relative
           {% if request.path|slice:':7' == '/mural/' or request.path == '/mural' %}
               
+              
             bg-indigo-600 text-white
+
 
             {% else %}
               
+              
             text-gray-700 hover:bg-gray-100
+
 
             {% endif %}">
             Mural{% mural_badge recentes_dias=7 %}
@@ -74,6 +90,10 @@
             <a href="/admin/" class="px-3 py-1.5 rounded-full text-sm text-gray-700 hover:bg-gray-100">Admin</a>
           {% endif %}
         </nav>
+
+        {% if request.user.is_superuser %}
+          <a href="{% url 'relatorios:comissoes_pagas' %}" class="...">💼 Comissões pagas</a>
+        {% endif %}
 
         <!-- Usuário / Auth -->
         <div class="flex items-center gap-3">

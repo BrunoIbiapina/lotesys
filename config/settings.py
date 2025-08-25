@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import os
 import dj_database_url
 
+
 load_dotenv()
 
 # ===================== BASE =====================
@@ -175,6 +176,9 @@ JAZZMIN_SETTINGS = {
         {"name": "Dashboard", "url": "/", "permissions": ["auth.view_user"]},
         {"name": "Extrato", "url": "/financeiro/extrato/"},
         {"name": "Vendas", "url": "/vendas/"},
+        {"name": "Dashboard", "url": "/"},
+        {"name": "Extrato", "url": "/financeiro/extrato/"},
+        {"name": "Comissões", "url": "/relatorios/comissoes/"},
     ],
     "copyright": "LoteSys",
 }

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load ui %}
+
+{% block title %}Comissões pagas{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-semibold">Comissões pagas</h1>
+</div>
+
+<form method="get" class="bg-white p-4 rounded-xl shadow mb-6">
+  <div class="grid sm:grid-cols-4 gap-4 items-end">
+    <div>
+      <label class="text-sm text-gray-600">Início</label>
+      <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="w-full border rounded p-2">
+    </div>
+    <div>
+      <label class="text-sm text-gray-600">Fim</label>
+      <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="w-full border rounded p-2">
+    </div>
+    <div class="sm:col-span-2">
+      <button class="px-4 py-2 rounded bg-gray-900 text-white">Aplicar filtros</button>
+      <a href="?inicio=&fim=" class="ml-2 text-sm underline">Limpar</a>
+    </div>
+  </div>
+</form>
+
+<div class="grid lg:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <div class="text-gray-500 text-sm">Total no período</div>
+    <div class="text-3xl font-bold text-emerald-700">{{ total|brl }}</div>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow lg:col-span-2">
+    <h3 class="font-semibold mb-3">Série mensal (somatório)</h3>
+    <canvas id="serieComissoes"></canvas>
+  </div>
+</div>
+
+<div class="bg-white p-5 rounded-2xl shadow">
+  <h3 class="font-semibold mb-3">Lançamentos</h3>
+  <div class="overflow-auto -mx-5">
+    <table class="min-w-full text-sm">
+      <thead>
+        <tr class="text-left border-b">
+          <th class="px-5 py-2">Data</th>
+          <th class="px-5 py-2">Descrição</th>
+          <th class="px-5 py-2 text-right">Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in itens %}
+        <tr class="border-b last:border-0">
+          <td class="px-5 py-2 whitespace-nowrap">{{ d.data|date:"d/m/Y" }}</td>
+          <td class="px-5 py-2">{{ d.descricao }}</td>
+          <td class="px-5 py-2 text-right font-medium">{{ d.valor|brl }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="px-5 py-6 text-gray-500">Nenhum lançamento encontrado no período.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const labels = {{ mensal_labels|safe }};
+  const values = {{ mensal_values|safe }};
+  new Chart(document.getElementById('serieComissoes'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Comissões pagas',
+        data: values,
+        borderColor: 'rgba(59,130,246,1)',
+        backgroundColor: 'rgba(59,130,246,0.2)',
+        fill: true,
+        tension: .35
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+</script>
+{% endblock %}
