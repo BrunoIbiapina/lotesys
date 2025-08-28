@@ -6,6 +6,7 @@ python-dateutil>=2.9
 dj-database-url>=2.2
 psycopg2-binary
 requests>=2.25,<3
+reportlab>=3.6.12
 
 # Admin theme
 django-jazzmin
