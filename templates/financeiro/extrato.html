@@ -22,6 +22,8 @@
       </div>
       <div class="md:col-span-2">
         <button class="px-4 py-2 rounded bg-gray-900 text-white">Aplicar</button>
+        <a href="{% url 'financeiro:extrato_pdf' %}?inicio={{ inicio|date:'Y-m-d' }}&fim={{ fim|date:'Y-m-d' }}" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">⬇️ Baixar PDF</a>
+
         <a href="?" class="ml-2 text-sm underline">Limpar</a>
       </div>
     </div>
