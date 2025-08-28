@@ -168,8 +168,8 @@ def extrato(request):
 
 @login_required
 def extrato_pdf(request):
-    """Gera o PDF do extrato com visual profissional (tema azul/indigo)."""
-    # Import local (evita carregar libs quando não usado)
+    """Gera o PDF do extrato (ReportLab), com legenda colorida Receitas/Despesas/Projeção."""
+    # importa só dentro da função para não carregar se não for usar
     from io import BytesIO
     from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors
@@ -184,20 +184,20 @@ def extrato_pdf(request):
     hoje = timezone.localdate()
     inicio = _parse_date(request.GET.get("inicio")) or hoje.replace(day=1)
     fim    = _parse_date(request.GET.get("fim")) or hoje
-    periodo_txt = f"{inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}"
 
     # --------- dados ----------
     ctx = _monta_contexto_extrato(inicio, fim)
 
-    # --------- tema/cores ----------
-    brand        = HexColor("#1e40af")  # indigo-800
-    brand_text   = HexColor("#111827")  # gray-900
-    brand_light  = HexColor("#e0e7ff")  # indigo-100
-    brand_lighter= HexColor("#eef2ff")  # indigo-50
-    accent       = HexColor("#3b82f6")  # blue-500
-    text_muted   = colors.Color(0.30, 0.30, 0.34)
+    # --------- estilos/cores ----------
+    brand = HexColor("#0f172a")        # título (slate-900)
+    brand_line = HexColor("#334155")    # linha (slate-700)
 
-    # --------- estilos ----------
+    # paleta da legenda (iguais ao app)
+    c_receita_bg = HexColor("#dbeafe")  # azul clarinho
+    c_despesa_bg = HexColor("#fee2e2")  # vermelho clarinho
+    c_proj_bg    = HexColor("#fef9c3")  # amarelo clarinho
+    c_head_text  = HexColor("#0f172a")  # texto header
+
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(
         name="H1",
@@ -220,154 +220,109 @@ def extrato_pdf(request):
         name="Muted",
         parent=styles["Normal"],
         fontSize=9,
-        textColor=text_muted,
+        textColor=colors.Color(0.35, 0.35, 0.35),
     ))
     styles.add(ParagraphStyle(
-        name="Badge",
+        name="SmallBold",
         parent=styles["Normal"],
-        fontSize=8.5,
-        textColor=brand_text,
-        spaceAfter=2,
+        fontName="Helvetica-Bold",
+        fontSize=9.5,
+        textColor=c_head_text,
     ))
 
-    # --------- doc ----------
+    # --------- montagem do PDF ----------
     buf = BytesIO()
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
-        leftMargin=28, rightMargin=28, topMargin=52, bottomMargin=36,
+        leftMargin=28, rightMargin=28, topMargin=48, bottomMargin=36,
         title="Extrato Financeiro"
     )
 
-    # header/footer
-    def _on_page(canvas, _doc):
-        canvas.saveState()
-        w, h = A4
-        # header
-        canvas.setFillColor(brand)
-        canvas.setFont("Helvetica-Bold", 10)
-        canvas.drawString(28, h - 26, "Extrato Financeiro")
-        canvas.setFont("Helvetica", 9)
-        canvas.setFillColor(text_muted)
-        canvas.drawRightString(w - 28, h - 26, f"Período: {periodo_txt}")
-        canvas.setStrokeColor(brand)
-        canvas.setLineWidth(0.8)
-        canvas.line(28, h - 30, w - 28, h - 30)
-        # footer
-        canvas.setFont("Helvetica", 9)
-        canvas.setFillColor(text_muted)
-        canvas.drawString(28, 22, f"Emitido em {hoje.strftime('%d/%m/%Y')}")
-        canvas.drawRightString(w - 28, 22, f"Página {_doc.page}")
-        canvas.restoreState()
+    periodo_txt = f"{inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}"
 
     story = []
 
-    # título + tags
+    # título
     story.append(Paragraph("Extrato Financeiro", styles["H1"]))
     story.append(Paragraph(f"Período: {periodo_txt}", styles["Muted"]))
-    story.append(Spacer(1, 4))
+    story.append(Spacer(1, 6))
+    story.append(HRFlowable(width="100%", color=brand_line, thickness=0.7, spaceBefore=4, spaceAfter=8))
 
-    # "tags" estilo badge (Receitas / Despesas / Projeção)
-    badge_tbl = Table(
-        [[
-            Paragraph("Receitas", styles["Badge"]),
-            Paragraph("Despesas", styles["Badge"]),
-            Paragraph("Projeção", styles["Badge"]),
-        ]],
-        colWidths=[70, 70, 70],
-        hAlign="LEFT"
-    )
-    badge_tbl.setStyle(TableStyle([
-        ("BACKGROUND", (0,0), (0,0), HexColor("#dbeafe")),  # blue-100
-        ("BACKGROUND", (1,0), (1,0), HexColor("#fee2e2")),  # red-100
-        ("BACKGROUND", (2,0), (2,0), HexColor("#fef9c3")),  # yellow-100
-        ("BOX", (0,0), (-1,-1), 0.25, colors.white),
-        ("INNERGRID", (0,0), (-1,-1), 0.25, colors.white),
+    # ========= LEGENDA COLORIDA =========
+    legend_rows = [[
+        Paragraph("Receitas", styles["SmallBold"]),
+        Paragraph("Despesas", styles["SmallBold"]),
+        Paragraph("Projeção", styles["SmallBold"]),
+    ]]
+    legend = Table(legend_rows, colWidths=[100, 100, 100], hAlign="LEFT")
+    legend.setStyle(TableStyle([
+        ("GRID", (0,0), (-1,-1), 0.25, colors.white),
         ("ALIGN", (0,0), (-1,-1), "CENTER"),
         ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-        ("LEFTPADDING", (0,0), (-1,-1), 6),
-        ("RIGHTPADDING",(0,0), (-1,-1), 6),
-        ("TOPPADDING",  (0,0), (-1,-1), 3),
-        ("BOTTOMPADDING",(0,0),(-1,-1), 3),
+        ("BACKGROUND", (0,0), (0,0), c_receita_bg),
+        ("BACKGROUND", (1,0), (1,0), c_despesa_bg),
+        ("BACKGROUND", (2,0), (2,0), c_proj_bg),
+        ("TEXTCOLOR", (0,0), (-1,-1), c_head_text),
+        ("FONTSIZE", (0,0), (-1,-1), 9.5),
+        ("TOPPADDING", (0,0), (-1,-1), 3),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 3),
     ]))
-    story.append(badge_tbl)
+    story.append(legend)
+    story.append(Spacer(1, 12))
+    # ====================================
 
-    story.append(Spacer(1, 6))
-    story.append(HRFlowable(width="100%", color=brand, thickness=0.8, spaceBefore=4, spaceAfter=10))
-
-    # ---------------- KPIs em "cards" (grade 3x) ----------------
-    kpis = [
-        ("Parcelas PAGAS",            _brl(ctx["total_parcelas_pagas"])),
-        ("Entradas brutas (vendas)",  _brl(ctx["total_entradas_brutas"])),
-        ("Comissões sobre entradas",  _brl(ctx["total_comissoes"])),
-        ("Entradas líquidas",         _brl(ctx["total_entradas_liquidas"])),
-        ("Total de Receitas",         _brl(ctx["total_receitas"])),
-        ("Despesas PAGAS",            _brl(ctx["total_despesas_pagas"])),
-        ("Despesas PREVISTAS",        _brl(ctx["total_despesas_previstas"])),
-        ("Vencidas (atraso)",         _brl(ctx["total_vencidas"])),
-        ("A receber (pendentes)",     _brl(ctx["total_a_receber"])),
+    # Resumo (KPIs)
+    story.append(Paragraph("Resumo", styles["H2"]))
+    kpi_rows = [
+        ["Parcelas PAGAS",            _brl(ctx["total_parcelas_pagas"])],
+        ["Entradas brutas (vendas)",  _brl(ctx["total_entradas_brutas"])],
+        ["Comissões sobre entradas",  _brl(ctx["total_comissoes"])],
+        ["Entradas líquidas",         _brl(ctx["total_entradas_liquidas"])],
+        ["Total de Receitas",         _brl(ctx["total_receitas"])],
+        ["Despesas PAGAS",            _brl(ctx["total_despesas_pagas"])],
+        ["Despesas PREVISTAS",        _brl(ctx["total_despesas_previstas"])],
+        ["Vencidas (atraso)",         _brl(ctx["total_vencidas"])],
+        ["A receber (pendentes)",     _brl(ctx["total_a_receber"])],
     ]
+    t_kpi = Table(kpi_rows, colWidths=[280, 180], hAlign="LEFT")
+    t_kpi.setStyle(TableStyle([
+        ("GRID", (0,0), (-1,-1), 0.25, colors.lightgrey),
+        ("BACKGROUND", (0,0), (-1,0), c_receita_bg),  # cabeçalho com a mesma vibe da legenda
+        ("TEXTCOLOR", (0,0), (-1,0), c_head_text),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("ALIGN", (1,0), (1,-1), "RIGHT"),
+        ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.whitesmoke, colors.Color(0.98,0.98,0.98)]),
+        ("FONTSIZE", (0,0), (-1,-1), 9.2),
+        ("TOPPADDING", (0,0), (-1,0), 6),
+        ("BOTTOMPADDING", (0,0), (-1,0), 6),
+        ("LEFTPADDING", (0,0), (-1,-1), 6),
+        ("RIGHTPADDING", (0,0), (-1,-1), 6),
+    ]))
+    story.append(t_kpi)
+    story.append(Spacer(1, 12))
 
-    def _kpi_card(title: str, value: str):
-        t = Table(
-            [[Paragraph(title, ParagraphStyle(
-                name="kpiTitle", fontName="Helvetica", fontSize=8.8, textColor=text_muted
-            ))],
-             [Paragraph(value, ParagraphStyle(
-                 name="kpiValue", fontName="Helvetica-Bold", fontSize=13, textColor=brand_text
-             ))]],
-            colWidths=[170]
-        )
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0,0), (-1,-1), brand_lighter),
-            ("BOX", (0,0), (-1,-1), 0.5, brand_light),
-            ("INNERGRID", (0,0), (-1,-1), 0.0, colors.white),
-            ("LEFTPADDING", (0,0), (-1,-1), 8),
-            ("RIGHTPADDING",(0,0), (-1,-1), 8),
-            ("TOPPADDING",  (0,0), (-1,-1), 6),
-            ("BOTTOMPADDING",(0,0), (-1,-1), 8),
-        ]))
-        return t
-
-    # organiza em linhas de 3 cards
-    rows_cards = []
-    row = []
-    for idx, (t, v) in enumerate(kpis, 1):
-        row.append(_kpi_card(t, v))
-        if idx % 3 == 0:
-            rows_cards.append(row)
-            row = []
-    if row:
-        # completa linha final com células vazias para alinhamento
-        while len(row) < 3:
-            row.append(Table([[""]], colWidths=[170], rowHeights=[0]))
-        rows_cards.append(row)
-
-    cards_tbl = Table(rows_cards, colWidths=[170, 170, 170], hAlign="LEFT", spaceBefore=2, spaceAfter=12)
-    cards_tbl.setStyle(TableStyle([("VALIGN", (0,0), (-1,-1), "TOP")]))
-    story.append(cards_tbl)
-
-    # ---------------- Helper para seções (tabelas) ----------------
-    def _section_table(title: str, header: list[str], rows: list[list], col_widths: list[int]):
+    # Helper para tabelas seções (c/ zebra e header suave)
+    def _section_table(title: str, header: list[str], rows: list[list], col_widths: list[int], header_bg=HexColor("#f8fafc")):
         story.append(Paragraph(title, styles["H2"]))
-        tbl = Table([header] + rows, colWidths=col_widths, hAlign="LEFT")
+        tbl = Table([header] + rows, colWidths=col_widths)
         tbl.setStyle(TableStyle([
             ("GRID", (0,0), (-1,-1), 0.25, colors.lightgrey),
-            ("BACKGROUND", (0,0), (-1,0), brand_light),
-            ("TEXTCOLOR", (0,0), (-1,0), brand),
+            ("BACKGROUND", (0,0), (-1,0), header_bg),
+            ("TEXTCOLOR", (0,0), (-1,0), c_head_text),
             ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
             ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.whitesmoke, colors.Color(0.98,0.98,0.98)]),
-            ("FONTSIZE", (0,0), (-1,-1), 9),
-            ("ALIGN", (-1,1), (-1,-1), "RIGHT"),  # última coluna (valor) à direita
+            ("FONTSIZE", (0,0), (-1,-1), 8.8),
+            ("ALIGN", (-1,1), (-1,-1), "RIGHT"),  # última coluna à direita
             ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
             ("LEFTPADDING", (0,0), (-1,-1), 6),
-            ("RIGHTPADDING",(0,0), (-1,-1), 6),
-            ("TOPPADDING",  (0,0), (-1,0), 6),
-            ("BOTTOMPADDING",(0,0), (-1,0), 6),
+            ("RIGHTPADDING", (0,0), (-1,-1), 6),
+            ("TOPPADDING", (0,0), (-1,0), 6),
+            ("BOTTOMPADDING", (0,0), (-1,0), 6),
         ]))
         story.append(KeepTogether(tbl))
         story.append(Spacer(1, 10))
 
-    # ---------------- Seção: Parcelas PAGAS ----------------
+    # Tabela: Parcelas PAGAS (amostra) — azul clarinho (Receitas)
     rows_pagas = []
     for p in ctx["parcelas_pagas"][:200]:
         rows_pagas.append([
@@ -383,9 +338,10 @@ def extrato_pdf(request):
         ["Pagamento", "Cliente", "Venda", "Parcela", "Valor"],
         rows_pagas,
         [70, 210, 55, 60, 65],
+        header_bg=c_receita_bg,
     )
 
-    # ---------------- Seção: Despesas ----------------
+    # Tabela: Despesas no período (amostra) — vermelho clarinho (Despesas)
     rows_desp = []
     for d in ctx["despesas"][:200]:
         rows_desp.append([
@@ -399,9 +355,10 @@ def extrato_pdf(request):
         ["Data", "Descrição", "Status", "Valor"],
         rows_desp,
         [70, 245, 60, 85],
+        header_bg=c_despesa_bg,
     )
 
-    # ---------------- Seção: Vencidas ----------------
+    # Tabela: Parcelas Vencidas (amostra) — amarelo clarinho (Projeção/Aviso)
     rows_venc = []
     for p in ctx["vencidas"][:200]:
         rows_venc.append([
@@ -417,10 +374,11 @@ def extrato_pdf(request):
         ["Vencimento", "Cliente", "Venda", "Parcela", "Valor"],
         rows_venc,
         [70, 210, 55, 60, 65],
+        header_bg=c_proj_bg,
     )
 
-    # renderiza PDF
-    doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
+    # renderiza
+    doc.build(story)
     pdf_bytes = buf.getvalue()
     buf.close()
 
