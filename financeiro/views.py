@@ -168,7 +168,7 @@ def extrato(request):
 
 @login_required
 def extrato_pdf(request):
-    """Gera o PDF do extrato com visual profissional (tema azul/indigo)."""
+    """Gera o PDF do extrato com visual profissional, seções coloridas e gráfico comparativo (mês atual x mês anterior)."""
     # Import local (evita carregar libs quando não usado)
     from io import BytesIO
     from reportlab.lib.pagesizes import A4
@@ -179,6 +179,10 @@ def extrato_pdf(request):
         SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
         HRFlowable, KeepTogether
     )
+    # gráfico
+    from reportlab.graphics.shapes import Drawing, String
+    from reportlab.graphics.charts.barcharts import VerticalBarChart
+    from reportlab.graphics import renderPDF
 
     # --------- período ----------
     hoje = timezone.localdate()
@@ -190,12 +194,19 @@ def extrato_pdf(request):
     ctx = _monta_contexto_extrato(inicio, fim)
 
     # --------- tema/cores ----------
-    brand        = HexColor("#1e40af")  # indigo-800
-    brand_text   = HexColor("#111827")  # gray-900
-    brand_light  = HexColor("#e0e7ff")  # indigo-100
-    brand_lighter= HexColor("#eef2ff")  # indigo-50
-    accent       = HexColor("#3b82f6")  # blue-500
-    text_muted   = colors.Color(0.30, 0.30, 0.34)
+    brand         = HexColor("#1e40af")  # indigo-800 (principal)
+    brand_text    = HexColor("#111827")  # gray-900
+    brand_light   = HexColor("#e0e7ff")  # indigo-100 (header tabela)
+    brand_lighter = HexColor("#eef2ff")  # indigo-50  (fundo card)
+    text_muted    = colors.Color(0.30, 0.30, 0.34)
+
+    # paletas por seção
+    azul_bg   = HexColor("#dbeafe")  # Receitas (header)
+    azul_tx   = HexColor("#2563eb")
+    vermelho_bg = HexColor("#fee2e2")  # Despesas (header)
+    vermelho_tx = HexColor("#dc2626")
+    amber_bg  = HexColor("#fef9c3")  # Projeção/Vencidas (header)
+    amber_tx  = HexColor("#d97706")
 
     # --------- estilos ----------
     styles = getSampleStyleSheet()
@@ -207,12 +218,31 @@ def extrato_pdf(request):
         textColor=brand,
         spaceAfter=6,
     ))
+    # três H2 com cores diferentes
     styles.add(ParagraphStyle(
-        name="H2",
+        name="H2Receitas",
         parent=styles["Heading3"],
         fontName="Helvetica-Bold",
         fontSize=12.5,
-        textColor=brand,
+        textColor=azul_tx,
+        spaceBefore=6,
+        spaceAfter=4,
+    ))
+    styles.add(ParagraphStyle(
+        name="H2Despesas",
+        parent=styles["Heading3"],
+        fontName="Helvetica-Bold",
+        fontSize=12.5,
+        textColor=vermelho_tx,
+        spaceBefore=6,
+        spaceAfter=4,
+    ))
+    styles.add(ParagraphStyle(
+        name="H2Projecao",
+        parent=styles["Heading3"],
+        fontName="Helvetica-Bold",
+        fontSize=12.5,
+        textColor=amber_tx,
         spaceBefore=6,
         spaceAfter=4,
     ))
@@ -277,9 +307,9 @@ def extrato_pdf(request):
         hAlign="LEFT"
     )
     badge_tbl.setStyle(TableStyle([
-        ("BACKGROUND", (0,0), (0,0), HexColor("#dbeafe")),  # blue-100
-        ("BACKGROUND", (1,0), (1,0), HexColor("#fee2e2")),  # red-100
-        ("BACKGROUND", (2,0), (2,0), HexColor("#fef9c3")),  # yellow-100
+        ("BACKGROUND", (0,0), (0,0), azul_bg),
+        ("BACKGROUND", (1,0), (1,0), vermelho_bg),
+        ("BACKGROUND", (2,0), (2,0), amber_bg),
         ("BOX", (0,0), (-1,-1), 0.25, colors.white),
         ("INNERGRID", (0,0), (-1,-1), 0.25, colors.white),
         ("ALIGN", (0,0), (-1,-1), "CENTER"),
@@ -337,7 +367,6 @@ def extrato_pdf(request):
             rows_cards.append(row)
             row = []
     if row:
-        # completa linha final com células vazias para alinhamento
         while len(row) < 3:
             row.append(Table([[""]], colWidths=[170], rowHeights=[0]))
         rows_cards.append(row)
@@ -347,17 +376,28 @@ def extrato_pdf(request):
     story.append(cards_tbl)
 
     # ---------------- Helper para seções (tabelas) ----------------
-    def _section_table(title: str, header: list[str], rows: list[list], col_widths: list[int]):
-        story.append(Paragraph(title, styles["H2"]))
+    def _section_table(title: str, header: list[str], rows: list[list], col_widths: list[int], scheme: str):
+        """scheme: 'receitas' | 'despesas' | 'projecao' (muda cores da header e do título)."""
+        if scheme == "receitas":
+            section_style = styles["H2Receitas"]
+            head_bg, head_tx = azul_bg, azul_tx
+        elif scheme == "despesas":
+            section_style = styles["H2Despesas"]
+            head_bg, head_tx = vermelho_bg, vermelho_tx
+        else:
+            section_style = styles["H2Projecao"]
+            head_bg, head_tx = amber_bg, amber_tx
+
+        story.append(Paragraph(title, section_style))
         tbl = Table([header] + rows, colWidths=col_widths, hAlign="LEFT")
         tbl.setStyle(TableStyle([
             ("GRID", (0,0), (-1,-1), 0.25, colors.lightgrey),
-            ("BACKGROUND", (0,0), (-1,0), brand_light),
-            ("TEXTCOLOR", (0,0), (-1,0), brand),
+            ("BACKGROUND", (0,0), (-1,0), head_bg),
+            ("TEXTCOLOR", (0,0), (-1,0), head_tx),
             ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
             ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.whitesmoke, colors.Color(0.98,0.98,0.98)]),
             ("FONTSIZE", (0,0), (-1,-1), 9),
-            ("ALIGN", (-1,1), (-1,-1), "RIGHT"),  # última coluna (valor) à direita
+            ("ALIGN", (-1,1), (-1,-1), "RIGHT"),
             ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
             ("LEFTPADDING", (0,0), (-1,-1), 6),
             ("RIGHTPADDING",(0,0), (-1,-1), 6),
@@ -366,10 +406,8 @@ def extrato_pdf(request):
         ]))
         story.append(KeepTogether(tbl))
         story.append(Spacer(1, 10))
-        
-        
 
-    # ---------------- Seção: Parcelas PAGAS ----------------
+    # ---------------- Seção: Parcelas PAGAS (Receitas) ----------------
     rows_pagas = []
     for p in ctx["parcelas_pagas"][:200]:
         rows_pagas.append([
@@ -385,6 +423,7 @@ def extrato_pdf(request):
         ["Pagamento", "Cliente", "Venda", "Parcela", "Valor"],
         rows_pagas,
         [70, 210, 55, 60, 65],
+        scheme="receitas",
     )
 
     # ---------------- Seção: Despesas ----------------
@@ -401,9 +440,10 @@ def extrato_pdf(request):
         ["Data", "Descrição", "Status", "Valor"],
         rows_desp,
         [70, 245, 60, 85],
+        scheme="despesas",
     )
 
-    # ---------------- Seção: Vencidas ----------------
+    # ---------------- Seção: Vencidas (Projeção/Atraso) ----------------
     rows_venc = []
     for p in ctx["vencidas"][:200]:
         rows_venc.append([
@@ -419,7 +459,58 @@ def extrato_pdf(request):
         ["Vencimento", "Cliente", "Venda", "Parcela", "Valor"],
         rows_venc,
         [70, 210, 55, 60, 65],
+        scheme="projecao",
     )
+
+    # ---------------- Gráfico comparativo (mês atual x mês anterior) ----------------
+    # Define mês anterior respeitando o 'inicio' atual
+    fim_mes_anterior = inicio - timedelta(days=1)
+    inicio_mes_anterior = fim_mes_anterior.replace(day=1)
+    ctx_prev = _monta_contexto_extrato(inicio_mes_anterior, fim_mes_anterior)
+
+    receitas_atual  = float(ctx["total_receitas"] or 0)
+    despesas_atual  = float(ctx["total_despesas_pagas"] or 0)
+    receitas_prev   = float(ctx_prev["total_receitas"] or 0)
+    despesas_prev   = float(ctx_prev["total_despesas_pagas"] or 0)
+
+    story.append(Paragraph("Comparativo mês atual × mês anterior", styles["H2Projecao"]))
+
+    drawing = Drawing(470, 220)  # largura x altura
+    chart = VerticalBarChart()
+    chart.x = 40
+    chart.y = 40
+    chart.height = 140
+    chart.width = 380
+    chart.data = [
+        [receitas_prev, receitas_atual],  # série 0: Receitas
+        [despesas_prev, despesas_atual],  # série 1: Despesas
+    ]
+    chart.categoryAxis.categoryNames = ["Mês Anterior", "Mês Atual"]
+    chart.valueAxis.valueMin = 0
+    chart.barWidth = 22
+    chart.groupSpacing = 16
+    chart.barSpacing = 6
+
+    # cores das séries
+    chart.bars[0].fillColor = azul_tx       # Receitas
+    chart.bars[1].fillColor = vermelho_tx   # Despesas
+
+    # rótulos dos eixos
+    chart.categoryAxis.labels.fontName = "Helvetica"
+    chart.categoryAxis.labels.fontSize = 8.5
+    chart.valueAxis.labels.fontName = "Helvetica"
+    chart.valueAxis.labels.fontSize = 8.5
+    chart.valueAxis.labelTextFormat = '%.0f'
+
+    drawing.add(chart)
+    drawing.add(String(40, 190, "R$ (valores)", fontName="Helvetica", fontSize=8.5, fillColor=text_muted))
+    # legendinha simples
+    drawing.add(String(340, 190, "■ Receitas", fontName="Helvetica-Bold", fontSize=9, fillColor=azul_tx))
+    drawing.add(String(420, 190, "■ Despesas", fontName="Helvetica-Bold", fontSize=9, fillColor=vermelho_tx))
+
+    # Embala o drawing para evitar quebra ruim de página
+    story.append(Spacer(1, 4))
+    story.append(KeepTogether(drawing))
 
     # renderiza PDF
     doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
