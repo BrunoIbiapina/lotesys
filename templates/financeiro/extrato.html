@@ -52,7 +52,9 @@
       <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
         <div class="text-xs font-medium text-indigo-700">RECEITAS</div>
         <div class="mt-1 text-2xl font-bold text-indigo-900">{{ total_receitas|brl }}</div>
-        <div class="mt-2 text-[11px] text-indigo-700/80">Parcelas: <b>{{ total_parcelas_pagas|brl }}</b> · Entradas líquidas: <b>{{ total_entradas_liquidas|brl }}</b></div>
+        <div class="mt-2 text-[11px] text-indigo-700/80">
+          Parcelas: <b>{{ total_parcelas_pagas|brl }}</b> · Entradas líquidas: <b>{{ total_entradas_liquidas|brl }}</b>
+        </div>
       </div>
 
       <!-- Despesas p/ FLUXO do período -->
@@ -73,7 +75,9 @@
       <div class="rounded-xl border border-amber-100 bg-amber-50 p-4">
         <div class="text-xs font-medium text-amber-700">SALDO EM CAIXA</div>
         <div class="mt-1 text-2xl font-bold text-amber-900">{{ caixa_ate_fim|brl }}</div>
-        <div class="mt-2 text-[11px] text-amber-700/80">Acumulado até o fim do período. Hoje: <b>{{ caixa_ate_hoje|brl }}</b></div>
+        <div class="mt-2 text-[11px] text-amber-700/80">
+          Acumulado até o fim do período. Hoje: <b>{{ caixa_ate_hoje|brl }}</b>
+        </div>
       </div>
     </div>
   </div>
@@ -406,57 +410,75 @@
   </div>
 {% endblock %}
 
-{# ===================== RESUMO DE CAIXA ===================== #}
+<!-- ===================== RESUMO DE CAIXA (PERÍODO) ===================== -->
+<!-- ...existing code... -->
+
+<!-- ===================== RESUMO DE CAIXA ===================== -->
 <div class="bg-white p-5 rounded-2xl shadow mb-8">
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="text-xl font-semibold">Resumo de Caixa</h2>
-    <span class="text-xs text-gray-500">Período: {{ inicio|date:'d/m/Y' }} – {{ fim|date:'d/m/Y' }}</span>
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-semibold">Resumo do Caixa</h2>
   </div>
-
-  <div class="grid sm:grid-cols-3 gap-4 mb-4">
-    <div class="rounded-xl border border-gray-100 p-4">
-      <div class="text-sm text-gray-600">Receitas no período</div>
-      <div class="mt-1 text-2xl font-bold text-emerald-700">{{ total_receitas|brl }}</div>
-      <div class="mt-1 text-xs text-gray-500">
-        Parcelas pagas: <b>{{ total_parcelas_pagas|brl }}</b><br>
-        Entradas líquidas: <b>{{ total_entradas_liquidas|brl }}</b>
-      </div>
+  <div class="grid sm:grid-cols-4 gap-4">
+    <div class="p-4 rounded-xl bg-indigo-50 text-indigo-900">
+      <div class="text-xs font-medium text-indigo-700 mb-1">Entradas líquidas</div>
+      <div class="text-2xl font-bold">R$ {{ total_entradas_liquidas|floatformat:2|default:'0,00' }}</div>
     </div>
-
-    <div class="rounded-xl border border-gray-100 p-4">
-      <div class="text-sm text-gray-600">Despesas do período (para fluxo)</div>
-      <div class="mt-1 text-2xl font-bold text-red-700">-{{ total_despesas_pagas_fluxo|brl }}</div>
-      <div class="mt-1 text-xs text-gray-500">
-        <span class="inline-block">* Comissão já abatida nas entradas: <b>-{{ comissao_paga_com_entradas_no_periodo|brl }}</b></span>
-      </div>
+    <div class="p-4 rounded-xl bg-green-50 text-green-900">
+      <div class="text-xs font-medium text-green-700 mb-1">Receitas (parcelas pagas + entradas)</div>
+      <div class="text-2xl font-bold">R$ {{ total_receitas|floatformat:2|default:'0,00' }}</div>
     </div>
-
-    <div class="rounded-xl border border-gray-100 p-4">
-      <div class="text-sm text-gray-600">Fluxo líquido no período</div>
-      <div class="mt-1 text-2xl font-bold {% if caixa_no_periodo < 0 %}text-red-700{% else %}text-emerald-700{% endif %}">
-        {{ caixa_no_periodo|brl }}
-      </div>
-      <div class="mt-1 text-xs text-gray-500">Receitas - Despesas (fluxo)</div>
+    <div class="p-4 rounded-xl bg-red-50 text-red-900">
+      <div class="text-xs font-medium text-red-700 mb-1">Despesas pagas (fluxo)</div>
+      <div class="text-2xl font-bold">R$ {{ total_despesas_pagas_fluxo|floatformat:2|default:'0,00' }}</div>
     </div>
-  </div>
-
-  <div class="grid sm:grid-cols-2 gap-4">
-    <div class="rounded-xl border border-gray-100 p-4">
-      <div class="text-sm text-gray-600">Saldo acumulado em caixa (até o fim do período)</div>
-      <div class="mt-1 text-2xl font-bold {% if caixa_ate_fim < 0 %}text-red-700{% else %}text-emerald-700{% endif %}">
-        {{ caixa_ate_fim|brl }}
-      </div>
-      <div class="mt-1 text-xs text-gray-500">Considerando todo o histórico até {{ fim|date:'d/m/Y' }}</div>
-    </div>
-
-    <div class="rounded-xl border border-gray-100 p-4">
-      <div class="text-sm text-gray-600">Saldo acumulado em caixa (até hoje)</div>
-      <div class="mt-1 text-2xl font-bold {% if caixa_ate_hoje < 0 %}text-red-700{% else %}text-emerald-700{% endif %}">
-        {{ caixa_ate_hoje|brl }}
-      </div>
-      <div class="mt-1 text-xs text-gray-500">Considerando todo o histórico até {{ hoje|date:'d/m/Y' }}</div>
+    <div class="p-4 rounded-xl bg-gray-50 text-gray-900">
+      <div class="text-xs font-medium text-gray-700 mb-1">Caixa no período</div>
+      <div class="text-2xl font-bold">R$ {{ caixa_no_periodo|floatformat:2|default:'0,00' }}</div>
     </div>
   </div>
 </div>
 
+<!-- ===================== COMPOSIÇÃO DAS ENTRADAS E SAÍDAS ===================== -->
+<div class="grid md:grid-cols-2 gap-6 mb-8">
+  <!-- Entradas de Caixa -->
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <h3 class="font-semibold mb-2 text-emerald-800">Entradas de Caixa</h3>
+    <table class="min-w-full text-sm">
+      <tbody class="divide-y">
+        <tr>
+          <td class="py-2">Parcelas pagas</td>
+          <td class="py-2 font-medium text-right">{{ total_parcelas_pagas|brl }}</td>
+        </tr>
+        <tr>
+          <td class="py-2">Entradas brutas de vendas</td>
+          <td class="py-2 font-medium text-right">{{ total_entradas_brutas|brl }}</td>
+        </tr>
+        <tr class="bg-emerald-50 font-semibold">
+          <td class="py-2">Total de Entradas</td>
+          <td class="py-2 text-right">{{ caixa_entradas|brl }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
+  <!-- Saídas de Caixa -->
+  <div class="bg-white p-5 rounded-2xl shadow">
+    <h3 class="font-semibold mb-2 text-red-800">Saídas de Caixa</h3>
+    <table class="min-w-full text-sm">
+      <tbody class="divide-y">
+        <tr>
+          <td class="py-2">Comissões pagas</td>
+          <td class="py-2 font-medium text-right">- {{ total_comissoes_pagas|brl }}</td>
+        </tr>
+        <tr>
+          <td class="py-2">Outras despesas pagas</td>
+          <td class="py-2 font-medium text-right">- {{ total_despesas_pagas_sem_comissoes|brl }}</td>
+        </tr>
+        <tr class="bg-red-50 font-semibold">
+          <td class="py-2">Total de Saídas</td>
+          <td class="py-2 text-right">- {{ caixa_saidas|brl }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

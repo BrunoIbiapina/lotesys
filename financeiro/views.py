@@ -48,15 +48,42 @@ def _saldo_caixa_ate(data_limite: date) -> dict:
         .aggregate(v=Coalesce(Sum("valor"), Decimal("0.00")))["v"] or Decimal("0.00")
     )
 
-    # Vendas até a data: somo entrada_liquida e a comissão da entrada
+    # Despesas de comissão pagas até a data
+    despesas_comissao_pagas_ate = (
+        Despesa.objects.filter(status="PAGA", categoria="COMISSAO", data__lte=data_limite)
+        .aggregate(v=Coalesce(Sum("valor"), Decimal("0.00")))
+        .get("v") or Decimal("0.00")
+    )
+
+    # Vendas até a data: somo entrada_liquida (não acumula comissão de entrada)
     entradas_liquidas_ate = Decimal("0.00")
-    comissoes_entrada_ate = Decimal("0.00")
     for v in Venda.objects.filter(data_venda__lte=data_limite).select_related("cliente"):
         entrada_bruta = getattr(v, "entrada_bruta", Decimal("0.00")) or Decimal("0.00")
-        comissao_entr = getattr(v, "comissao_paga_na_entrada", Decimal("0.00")) or Decimal("0.00")
-        entrada_liq   = getattr(v, "entrada_liquida", Decimal("0.00")) or (entrada_bruta - comissao_entr)
-        entradas_liquidas_ate += entrada_liq
-        comissoes_entrada_ate += comissao_entr
+        comissao_entr = getattr(v, "comissao_paga_na_entrada", None)
+        if comissao_entr is None:
+            # fallback: se não existir o campo, calcula mínimo entre comissão total e entrada
+            com_total = getattr(v, "comissao_total", None)
+            if com_total is None:
+                valor_total = getattr(v, "valor_total", None) or getattr(v, "valor_venda", None)
+                perc = getattr(v, "percentual_comissao", None)
+                if valor_total is not None and perc is not None:
+                    try:
+                        com_total = Decimal(str(valor_total)) * (Decimal(str(perc)) / Decimal("100"))
+                    except Exception:
+                        com_total = None
+            try:
+                comissao_entr = min(Decimal(str(entrada_bruta)), Decimal(str(com_total))) if com_total is not None else Decimal("0.00")
+            except Exception:
+                comissao_entr = Decimal("0.00")
+        else:
+            try:
+                comissao_entr = Decimal(str(comissao_entr))
+            except Exception:
+                comissao_entr = Decimal("0.00")
+        entrada_liq = getattr(v, "entrada_liquida", None)
+        if entrada_liq is None:
+            entrada_liq = entrada_bruta - comissao_entr
+        entradas_liquidas_ate += (entrada_liq or Decimal("0.00"))
 
     # Parcelas pagas até a data
     parcelas_pagas_ate = (
@@ -67,7 +94,7 @@ def _saldo_caixa_ate(data_limite: date) -> dict:
     receitas_ate = parcelas_pagas_ate + entradas_liquidas_ate
 
     # Despesas para fluxo (não desconta comissão duas vezes)
-    despesas_fluxo_ate = despesas_pagas_ate - comissoes_entrada_ate
+    despesas_fluxo_ate = despesas_pagas_ate - despesas_comissao_pagas_ate
     if despesas_fluxo_ate < 0:
         despesas_fluxo_ate = Decimal("0.00")
 
@@ -76,7 +103,7 @@ def _saldo_caixa_ate(data_limite: date) -> dict:
     return dict(
         receitas_ate=receitas_ate,
         despesas_pagas_ate=despesas_pagas_ate,
-        comissoes_entrada_ate=comissoes_entrada_ate,
+        comissoes_entrada_ate=despesas_comissao_pagas_ate,
         despesas_fluxo_ate=despesas_fluxo_ate,
         caixa_ate=caixa_ate,
     )
@@ -96,6 +123,11 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
     )["v"] or Decimal("0.00")
 
     total_despesas_previstas = despesas_qs.filter(status="PREVISTA").aggregate(
+        v=Coalesce(Sum("valor"), Decimal("0.00"))
+    )["v"] or Decimal("0.00")
+
+    # Despesas de comissão pagas no período
+    despesas_comissao_pagas_periodo = despesas_qs.filter(status="PAGA", categoria="COMISSAO").aggregate(
         v=Coalesce(Sum("valor"), Decimal("0.00"))
     )["v"] or Decimal("0.00")
 
@@ -145,7 +177,7 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
     total_receitas = total_parcelas_pagas + total_entradas_liquidas
 
     # Despesa para FLUXO no período (sem comissão já abatida nas entradas)
-    total_despesas_pagas_fluxo = total_despesas_pagas - total_comissoes
+    total_despesas_pagas_fluxo = total_despesas_pagas - despesas_comissao_pagas_periodo
     if total_despesas_pagas_fluxo < 0:
         total_despesas_pagas_fluxo = Decimal("0.00")
 
@@ -199,6 +231,7 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
         total_despesas_pagas=total_despesas_pagas,
         total_despesas_previstas=total_despesas_previstas,
         total_despesas_pagas_fluxo=total_despesas_pagas_fluxo,  # p/ fluxo
+        total_despesas_comissao_pagas=despesas_comissao_pagas_periodo,
         comissao_paga_com_entradas_no_periodo=total_comissoes,
 
         # Receitas
@@ -252,8 +285,9 @@ def extrato_pdf(request):
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.platypus import (
         SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-        HRFlowable, KeepTogether
+        KeepTogether
     )
+    from reportlab.platypus.flowables import HRFlowable
     # gráfico
     from reportlab.graphics.shapes import Drawing, String
     from reportlab.graphics.charts.barcharts import VerticalBarChart
