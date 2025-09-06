@@ -7,27 +7,49 @@
 
   <div class="flex items-center justify-between mb-4">
     <h1 class="text-3xl font-semibold">Extrato Financeiro</h1>
-    <a href="/" class="text-sm underline">← Voltar ao Dashboard</a>
+    <a href="/" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium shadow transition">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Voltar ao Dashboard
+    </a>
   </div>
 
-  <form method="get" class="bg-white p-4 rounded-2xl shadow mb-6">
-    <div class="grid md:grid-cols-4 gap-4 items-end">
-      <div>
-        <label class="text-sm text-gray-600">Início</label>
-        <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="w-full border rounded p-2" />
+  <div class="bg-white p-4 rounded-2xl shadow mb-6">
+    <form method="get">
+      <div class="grid md:grid-cols-4 gap-4 items-end">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Início</label>
+          <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Fim</label>
+          <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+        </div>
+        <div class="md:col-span-2 flex flex-wrap gap-2 items-end">
+          <button class="px-5 py-2 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition flex items-center gap-2" type="submit">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            Aplicar
+          </button>
+          <a href="{% url 'financeiro:extrato_pdf' %}?inicio={{ inicio|date:'Y-m-d' }}&fim={{ fim|date:'Y-m-d' }}"
+             class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Baixar PDF
+          </a>
+          <a href="?" class="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition text-sm font-medium">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Limpar
+          </a>
+        </div>
       </div>
-      <div>
-        <label class="text-sm text-gray-600">Fim</label>
-        <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="w-full border rounded p-2" />
-      </div>
-      <div class="md:col-span-2">
-        <button class="px-4 py-2 rounded bg-gray-900 text-white">Aplicar</button>
-        <a href="{% url 'financeiro:extrato_pdf' %}?inicio={{ inicio|date:'Y-m-d' }}&fim={{ fim|date:'Y-m-d' }}" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">⬇️ Baixar PDF</a>
-
-        <a href="?" class="ml-2 text-sm underline">Limpar</a>
-      </div>
-    </div>
-  </form>
+    </form>
+  </div>
 
   {# ===== Banner-resumo de vencidas (opcional) ===== #}
   {% if vencidas %}
@@ -59,56 +81,60 @@
 
       <!-- Despesas p/ FLUXO do período -->
       <div class="rounded-xl border border-rose-100 bg-rose-50 p-4">
-        <div class="text-xs font-medium text-rose-700">DESPESAS P/ FLUXO</div>
+        <div class="text-xs font-medium text-rose-700">DESPESAS</div>
         <div class="mt-1 text-2xl font-bold text-rose-900">{{ total_despesas_pagas_fluxo|brl }}</div>
         <div class="mt-2 text-[11px] text-rose-700/80">Despesas pagas menos a comissão já abatida nas entradas ({{ comissao_paga_com_entradas_no_periodo|brl }}).</div>
       </div>
 
       <!-- Caixa no período -->
       <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-        <div class="text-xs font-medium text-emerald-700">CAIXA NO PERÍODO</div>
+        <div class="text-xs font-medium text-emerald-700">SALDO LÍQUIDO CAIXA</div>
         <div class="mt-1 text-2xl font-bold text-emerald-900">{{ caixa_no_periodo|brl }}</div>
         <div class="mt-2 text-[11px] text-emerald-700/80">Receitas − Despesas p/ fluxo.</div>
+        <div class="mt-2 text-[11px] text-emerald-700/80">Já descontado a comissão e despesas, saldo líquido.</div>
       </div>
 
       <!-- Saldo acumulado -->
       <div class="rounded-xl border border-amber-100 bg-amber-50 p-4">
-        <div class="text-xs font-medium text-amber-700">SALDO EM CAIXA</div>
+        <div class="text-xs font-medium text-amber-700">ACUMULADO</div>
         <div class="mt-1 text-2xl font-bold text-amber-900">{{ caixa_ate_fim|brl }}</div>
-        <div class="mt-2 text-[11px] text-amber-700/80">
-          Acumulado até o fim do período. Hoje: <b>{{ caixa_ate_hoje|brl }}</b>
-        </div>
+        <div class="mt-2 text-[11px] text-amber-700/80">Acumulado de entradas desde o inicio.</b></div>
       </div>
     </div>
   </div>
 
   <!-- ===================== RECEITAS ===================== -->
   <div class="bg-white p-5 rounded-2xl shadow mb-8">
-    <h2 class="text-xl font-semibold mb-2">Receitas ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</h2>
+    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+      <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 0V4m0 16v-4"/>
+      </svg>
+      Receitas <span class="text-base text-gray-400 font-normal">({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</span>
+    </h2>
 
     <div class="grid sm:grid-cols-3 gap-4 mb-4">
       <!-- Parcelas pagas -->
-      <div>
-        <div class="text-sm text-gray-600">Parcelas PAGAS</div>
-        <div class="text-2xl font-bold">{{ total_parcelas_pagas|brl }}</div>
+      <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4 flex flex-col items-start shadow-sm">
+        <div class="text-xs font-medium text-emerald-700 mb-1">Parcelas PAGAS</div>
+        <div class="text-2xl font-bold text-emerald-900">{{ total_parcelas_pagas|brl }}</div>
       </div>
 
       <!-- Entradas líquidas de vendas (com lista destacada) -->
-      <div>
-        <div class="text-sm text-gray-600">Entradas líquidas de vendas</div>
-        <div class="text-2xl font-bold">{{ total_entradas_liquidas|brl }}</div>
+      <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-4 flex flex-col items-start shadow-sm">
+        <div class="text-xs font-medium text-indigo-700 mb-1">Entradas líquidas de vendas</div>
+        <div class="text-2xl font-bold text-indigo-900">{{ total_entradas_liquidas|brl }}</div>
 
         {% if entradas_detalhe %}
-          <div class="mt-2 border border-gray-200 rounded-lg overflow-hidden">
-            <div class="bg-gray-50 px-3 py-1.5 text-xs text-gray-600">Resumo das entradas</div>
+          <div class="mt-3 w-full border border-gray-200 rounded-lg overflow-hidden bg-white shadow">
+            <div class="bg-gray-50 px-3 py-1.5 text-xs text-gray-600 font-semibold">Resumo das entradas</div>
             <ul class="divide-y divide-gray-100">
               {% for e in entradas_detalhe|slice:':4' %}
-                <li class="px-3 py-2 text-sm flex items-center justify-between gap-3">
+                <li class="px-3 py-2 text-sm flex items-center justify-between gap-3 hover:bg-gray-50 transition">
                   <div class="min-w-0">
                     {% if e.venda.id %}
-                      <a href="{% url 'vendas:venda_detail' e.venda.id %}" class="font-medium text-gray-800 hover:underline">Venda #{{ e.venda.id }}</a>
+                      <a href="{% url 'vendas:venda_detail' e.venda.id %}" class="font-medium text-indigo-800 hover:underline">Venda #{{ e.venda.id }}</a>
                     {% else %}
-                      <span class="font-medium text-gray-800">Venda</span>
+                      <span class="font-medium text-indigo-800">Venda</span>
                     {% endif %}
                     <div class="text-xs text-gray-500 truncate">{{ e.venda.cliente.nome }}</div>
                   </div>
@@ -124,41 +150,47 @@
       </div>
 
       <!-- Total de receitas -->
-      <div>
-        <div class="text-sm text-gray-600">Total de Receitas</div>
-        <div class="text-2xl font-bold">{{ total_receitas|brl }}</div>
+      <div class="rounded-xl border border-blue-100 bg-blue-50 p-4 flex flex-col items-start shadow-sm">
+        <div class="text-xs font-medium text-blue-700 mb-1">Total de Receitas</div>
+        <div class="text-2xl font-bold text-blue-900">{{ total_receitas|brl }}</div>
       </div>
     </div>
 
     <!-- === RECEITAS — PARCELAS PAGAS (destacado) === -->
-    <div class="bg-white p-4 rounded-2xl shadow mb-2 border border-gray-100">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold">Receitas — Parcelas pagas</h3>
+    <div class="bg-white p-5 rounded-2xl shadow mb-6 border border-emerald-100">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold flex items-center gap-2 text-emerald-800">
+          <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2a4 4 0 014-4h2a4 4 0 014 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+          </svg>
+          Receitas — Parcelas pagas
+        </h3>
         <div class="flex items-center gap-2 text-sm">
-          <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">Total: <strong class="ml-1">{{ total_parcelas_pagas|brl }}</strong></span>
-          <span class="px-2 py-1 rounded-full bg-gray-100 text-gray-700">Itens: <strong class="ml-1">{{ parcelas_pagas|length }}</strong></span>
+          <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">Total: <strong class="ml-1">{{ total_parcelas_pagas|brl }}</strong></span>
+          <span class="px-2 py-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200">Itens: <strong class="ml-1">{{ parcelas_pagas|length }}</strong></span>
         </div>
       </div>
 
-      <div class="overflow-auto">
-        <table class="min-w-full">
-          <thead class="bg-gray-100 text-sm">
+      <div class="overflow-auto rounded-xl border border-gray-100">
+        <table class="min-w-full text-sm">
+          <thead class="bg-emerald-50 text-emerald-800">
             <tr>
-              <th class="text-left p-2 w-32">Data</th>
-              <th class="text-left p-2">Venda / Cliente</th>
-              <th class="text-left p-2 w-28">Parcela</th>
-              <th class="text-left p-2 w-40">Valor</th>
-              <th class="text-left p-2 w-24">Status</th>
+              <th class="text-left p-2 w-32 font-semibold">Data</th>
+              <th class="text-left p-2 font-semibold">Venda / Cliente</th>
+              <th class="text-left p-2 w-28 font-semibold">Parcela</th>
+              <th class="text-left p-2 w-40 font-semibold">Valor</th>
+              <th class="text-left p-2 w-24 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>
             {% for p in parcelas_pagas %}
-              <tr class="border-t">
-                <td class="p-2 text-sm text-gray-600">{{ p.data_pagamento|date:'d/m/Y' }}</td>
+              <tr class="border-t hover:bg-emerald-50/40 transition">
+                <td class="p-2 text-gray-600">{{ p.data_pagamento|date:'d/m/Y' }}</td>
                 <td class="p-2">
                   <div class="text-sm">
                     <div class="font-medium">
-                      <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="hover:underline">Venda #{{ p.venda_id }}</a>
+                      <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="hover:underline text-emerald-800">Venda #{{ p.venda_id }}</a>
                     </div>
                     <div class="text-gray-500 truncate">{{ p.venda.cliente.nome }}</div>
                   </div>
@@ -185,34 +217,40 @@
   {# ===================== PARCELAS VENCIDAS (lista detalhada) ===================== #}
   {% if vencidas %}
     <div id="vencidas" class="bg-white p-5 rounded-2xl shadow mb-8 border border-red-200">
-      <h2 class="text-xl font-semibold mb-2 text-red-700">⚠️ Parcelas vencidas</h2>
-      <div class="text-sm text-red-600 mb-4">{{ vencidas|length }} parcela(s) em atraso — total {{ total_vencidas|brl }}</div>
-
-      <div class="overflow-auto">
-        <table class="min-w-full">
-          <thead class="bg-red-50">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-xl font-semibold flex items-center gap-2 text-red-700">
+          <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+          </svg>
+          Parcelas vencidas
+        </h2>
+        <span class="px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 text-sm font-medium">
+          {{ vencidas|length }} em atraso — total {{ total_vencidas|brl }}
+        </span>
+      </div>
+      <div class="overflow-auto rounded-xl border border-red-100">
+        <table class="min-w-full text-sm">
+          <thead class="bg-red-50 text-red-800">
             <tr>
-              <th class="text-left p-2">Vencimento</th>
-              <th class="text-left p-2">Venda</th>
-              <th class="text-left p-2">Cliente</th>
-              <th class="text-left p-2">#</th>
-              <th class="text-left p-2">Valor</th>
-              <th class="text-left p-2">Status</th>
+              <th class="text-left p-2 font-semibold">Vencimento</th>
+              <th class="text-left p-2 font-semibold">Venda</th>
+              <th class="text-left p-2 font-semibold">Cliente</th>
+              <th class="text-left p-2 font-semibold">#</th>
+              <th class="text-left p-2 font-semibold">Valor</th>
+              <th class="text-left p-2 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>
             {% for p in vencidas %}
-              <tr class="border-t">
+              <tr class="border-t hover:bg-red-50/40 transition">
                 <td class="p-2">{{ p.vencimento|date:'d/m/Y' }}</td>
-                <td class="p-2">{{ p.venda_id }}</td>
+                <td class="p-2 text-red-900 font-semibold">#{{ p.venda_id }}</td>
                 <td class="p-2">{{ p.venda.cliente.nome }}</td>
                 <td class="p-2">
                   <span class="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-800 rounded-full">{{ p.numero }}/{{ p.venda.parcelas_total }}</span>
                 </td>
-                <td class="p-2">{{ p.valor|brl }}</td>
-                <td class="p-2">
-                  {% badge_status 'VENCIDO' %}
-                </td>
+                <td class="p-2 font-semibold text-red-700">{{ p.valor|brl }}</td>
+                <td class="p-2">{% badge_status 'VENCIDO' %}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -222,35 +260,40 @@
   {% endif %}
 
   {% if entradas_detalhe %}
-    <h3 class="font-semibold mt-4 mb-2">Detalhe — Entradas de vendas</h3>
-    <div class="overflow-auto mb-6">
-      <table class="min-w-full">
-        <thead class="bg-gray-100">
+    <h3 class="font-semibold mt-6 mb-2 flex items-center gap-2 text-indigo-800">
+      <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 0V4m0 16v-4"/>
+      </svg>
+      Detalhe — Entradas de vendas
+    </h3>
+    <div class="overflow-auto mb-6 rounded-xl border border-indigo-100 bg-indigo-50/10">
+      <table class="min-w-full text-sm">
+        <thead class="bg-indigo-50 text-indigo-800">
           <tr>
-            <th class="text-left p-2">Venda</th>
-            <th class="text-left p-2">Cliente</th>
-            <th class="text-left p-2">Entrada bruta</th>
-            <th class="text-left p-2">Comissão</th>
-            <th class="text-left p-2">Entrada líquida</th>
+            <th class="text-left p-2 font-semibold">Venda</th>
+            <th class="text-left p-2 font-semibold">Cliente</th>
+            <th class="text-left p-2 font-semibold">Entrada bruta</th>
+            <th class="text-left p-2 font-semibold">Comissão</th>
+            <th class="text-left p-2 font-semibold">Entrada líquida</th>
           </tr>
         </thead>
         <tbody>
           {% for e in entradas_detalhe %}
-            <tr class="border-t">
+            <tr class="border-t hover:bg-indigo-50/40 transition">
               <td class="p-2">
-                <a href="{% url 'vendas:venda_detail' e.venda.id %}" class="hover:underline">#{{ e.venda.id }}</a>
+                <a href="{% url 'vendas:venda_detail' e.venda.id %}" class="hover:underline text-indigo-800 font-medium">#{{ e.venda.id }}</a>
               </td>
               <td class="p-2">{{ e.venda.cliente.nome }}</td>
               <td class="p-2">{{ e.entrada_bruta|brl }}</td>
               <td class="p-2 text-red-600">-{{ e.comissao|brl }}</td>
-              <td class="p-2 font-bold">{{ e.entrada_liquida|brl }}</td>
+              <td class="p-2 font-bold text-emerald-700">{{ e.entrada_liquida|brl }}</td>
             </tr>
           {% endfor %}
-          <tr class="border-t bg-gray-50 font-medium">
+          <tr class="border-t bg-indigo-50 font-medium">
             <td class="p-2" colspan="2">Totais</td>
             <td class="p-2">{{ total_entradas_brutas|brl }}</td>
             <td class="p-2 text-red-600">-{{ total_comissoes|brl }}</td>
-            <td class="p-2">{{ total_entradas_liquidas|brl }}</td>
+            <td class="p-2 text-emerald-700">{{ total_entradas_liquidas|brl }}</td>
           </tr>
         </tbody>
       </table>
@@ -258,42 +301,52 @@
   {% endif %}
 
   <!-- ===================== DESPESAS ===================== -->
-  <div class="bg-white p-5 rounded-2xl shadow mb-8">
-    <h2 class="text-xl font-semibold mb-2">Despesas ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</h2>
+  <div class="bg-white p-5 rounded-2xl shadow mb-8 border border-rose-100">
+    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2 text-rose-800">
+      <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7v4a2 2 0 01-2 2H7a2 2 0 01-2-2V7m5 4V7m4 4V7m-6 8h8"/>
+      </svg>
+      Despesas <span class="text-base text-gray-400 font-normal">({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</span>
+    </h2>
 
     <div class="grid sm:grid-cols-3 gap-4 mb-4">
-      <div>
-        <div class="text-sm text-gray-600">PAGAS</div>
-        <div class="text-2xl font-bold">{{ total_despesas_pagas|brl }}</div>
+      <div class="rounded-xl border border-rose-100 bg-rose-50 p-4 flex flex-col items-start shadow-sm">
+        <div class="text-xs font-medium text-rose-700 mb-1">PAGAS</div>
+        <div class="text-2xl font-bold text-rose-900">{{ total_despesas_pagas|brl }}</div>
       </div>
-      <div>
-        <div class="text-sm text-gray-600">PREVISTAS</div>
-        <div class="text-2xl font-bold">{{ total_despesas_previstas|brl }}</div>
+      <div class="rounded-xl border border-yellow-100 bg-yellow-50 p-4 flex flex-col items-start shadow-sm">
+        <div class="text-xs font-medium text-yellow-700 mb-1">PREVISTAS</div>
+        <div class="text-2xl font-bold text-yellow-900">{{ total_despesas_previstas|brl }}</div>
       </div>
-      <div>
-        <div class="text-sm text-gray-600">p/ FLUXO (no período)</div>
-        <div class="text-2xl font-bold">{{ total_despesas_pagas_fluxo|brl }}</div>
+      <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 flex flex-col items-start shadow-sm">
+        <div class="text-xs font-medium text-gray-700 mb-1">p/ FLUXO (no período)</div>
+        <div class="text-2xl font-bold text-gray-900">{{ total_despesas_pagas_fluxo|brl }}</div>
         <div class="text-xs text-gray-500 mt-1">= Despesas pagas − Comissão já paga com entradas.</div>
       </div>
     </div>
 
-    <h3 class="font-semibold mb-2">Detalhe — Despesas</h3>
-    <div class="overflow-auto">
-      <table class="min-w-full">
-        <thead class="bg-gray-100">
+    <h3 class="font-semibold mb-2 flex items-center gap-2 text-rose-800">
+      <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7v4a2 2 0 01-2 2H7a2 2 0 01-2-2V7m5 4V7m4 4V7m-6 8h8"/>
+      </svg>
+      Detalhe — Despesas
+    </h3>
+    <div class="overflow-auto rounded-xl border border-rose-100">
+      <table class="min-w-full text-sm">
+        <thead class="bg-rose-50 text-rose-800">
           <tr>
-            <th class="text-left p-2">Data</th>
-            <th class="text-left p-2">Categoria</th>
-            <th class="text-left p-2">Descrição</th>
-            <th class="text-left p-2">Origem</th>
-            <th class="text-left p-2">Status</th>
-            <th class="text-left p-2">Valor</th>
-            <th class="text-left p-2">Comprovante</th>
+            <th class="text-left p-2 font-semibold">Data</th>
+            <th class="text-left p-2 font-semibold">Categoria</th>
+            <th class="text-left p-2 font-semibold">Descrição</th>
+            <th class="text-left p-2 font-semibold">Origem</th>
+            <th class="text-left p-2 font-semibold">Status</th>
+            <th class="text-left p-2 font-semibold">Valor</th>
+            <th class="text-left p-2 font-semibold">Comprovante</th>
           </tr>
         </thead>
         <tbody>
           {% for d in despesas %}
-            <tr class="border-t">
+            <tr class="border-t hover:bg-rose-50/40 transition">
               <td class="p-2">{{ d.data|date:'d/m/Y' }}</td>
               <td class="p-2">
                 <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full whitespace-nowrap truncate max-w-[160px] inline-block">{{ d.get_categoria_display }}</span>
@@ -309,9 +362,8 @@
               <td class="p-2">
                 {% badge_status d.status %}
               </td>
-              <td class="p-2">{{ d.valor|brl }}</td>
+              <td class="p-2 font-semibold text-rose-700">{{ d.valor|brl }}</td>
               <td class="p-2 text-sm">
-                <!-- Ícone inline para comprovante (Heroicon "document-text") -->
                 {% if d.comprovante %}
                   <a href="{{ d.comprovante.url }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100" title="Abrir comprovante">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5 text-indigo-600">
@@ -320,7 +372,6 @@
                   </a>
                 {% else %}
                   <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg text-gray-300" title="Sem comprovante">
-                    <!-- mesmo SVG, porém cinza claro -->
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 12h6m-6 4h6M9 8h3m2-5H8a2 2 0 00-2 2v14a2 2 0 002 2h8a2 2 0 002-2V7l-4-4z" />
                     </svg>
@@ -339,19 +390,45 @@
   </div>
 
   <!-- ===================== PROJEÇÃO ===================== -->
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <h2 class="text-xl font-semibold mb-2">Projeção — A receber (pendentes)</h2>
+  <div id="projecao" class="bg-white p-5 rounded-2xl shadow mb-8 border border-yellow-100">
+    <h2 class="text-xl font-semibold mb-2 flex items-center gap-2 text-yellow-800">
+      <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
+      </svg>
+      Projeção — A receber (pendentes)
+    </h2>
     <div class="mb-3 text-gray-600 text-sm">A partir de {{ hoje|date:'d/m/Y' }}</div>
 
     <div class="mb-4">
       <span class="text-sm text-gray-600">Total a receber</span>
-      <div class="text-2xl font-bold">{{ total_a_receber|brl }}</div>
+      <div class="text-2xl font-bold text-yellow-900">{{ total_a_receber|brl }}</div>
     </div>
 
-    <h3 class="font-semibold mb-2">Por mês</h3>
-    <div class="overflow-auto mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      <h3 class="font-semibold text-yellow-800 flex items-center gap-2 mb-0">
+        <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
+        </svg>
+        Por mês
+      </h3>
+      <form method="get" action="#projecao">
+        <label for="mes" class="sr-only">Escolha o mês</label>
+        <select name="mes" id="mes"
+          class="rounded-lg border border-yellow-300 bg-yellow-50 text-yellow-900 font-semibold px-4 py-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
+          onchange="this.form.submit()">
+          <option value="">Todos os meses</option>
+          {% for m in por_mes %}
+            <option value="{{ m.mes }}" {% if mes_selecionado == m.mes %}selected{% endif %}>{{ m.mes_label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+
+    <div class="overflow-x-auto mb-6">
       <table class="min-w-full">
-        <thead class="bg-gray-100">
+        <thead class="bg-yellow-50 text-yellow-800">
           <tr>
             <th class="text-left p-2">Mês</th>
             <th class="text-left p-2">Valor</th>
@@ -359,7 +436,7 @@
         </thead>
         <tbody>
           {% for m in por_mes %}
-            <tr class="border-t">
+            <tr class="border-t {% if mes_selecionado == m.mes %}bg-yellow-100{% endif %}">
               <td class="p-2">{{ m.mes_label }}</td>
               <td class="p-2">{{ m.valor|brl }}</td>
             </tr>
@@ -372,10 +449,16 @@
       </table>
     </div>
 
-    <h3 class="font-semibold mb-2">Lista de parcelas pendentes</h3>
-    <div class="overflow-auto">
-      <table class="min-w-full">
-        <thead class="bg-gray-100">
+    <h3 class="font-semibold mb-2 flex items-center gap-2 text-yellow-800">
+      <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
+      </svg>
+      Lista de parcelas pendentes
+    </h3>
+    <div class="overflow-auto rounded-xl border border-yellow-100 bg-yellow-50/10">
+      <table class="min-w-full text-sm">
+        <thead class="bg-yellow-50 text-yellow-800">
           <tr>
             <th class="text-left p-2">Vencimento</th>
             <th class="text-left p-2">Venda</th>
@@ -410,9 +493,6 @@
   </div>
 {% endblock %}
 
-<!-- ===================== RESUMO DE CAIXA (PERÍODO) ===================== -->
-<!-- ...existing code... -->
-
 <!-- ===================== RESUMO DE CAIXA ===================== -->
 <div class="bg-white p-5 rounded-2xl shadow mb-8">
   <div class="flex items-center justify-between mb-4">
@@ -422,6 +502,8 @@
     <div class="p-4 rounded-xl bg-indigo-50 text-indigo-900">
       <div class="text-xs font-medium text-indigo-700 mb-1">Entradas líquidas</div>
       <div class="text-2xl font-bold">R$ {{ total_entradas_liquidas|floatformat:2|default:'0,00' }}</div>
+      
+      
     </div>
     <div class="p-4 rounded-xl bg-green-50 text-green-900">
       <div class="text-xs font-medium text-green-700 mb-1">Receitas (parcelas pagas + entradas)</div>
@@ -482,3 +564,10 @@
     </table>
   </div>
 </div>
+
+<script>
+  // Se a URL tiver #projecao, faz scroll suave até lá
+  if (window.location.hash === "#projecao") {
+    document.getElementById("projecao")?.scrollIntoView({behavior: "smooth"});
+  }
+</script>

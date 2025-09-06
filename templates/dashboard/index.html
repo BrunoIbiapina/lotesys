@@ -11,19 +11,23 @@
   </a>
 </div>
 
-<form method="get" class="bg-white p-4 rounded-xl shadow mb-6">
+<form method="get" class="bg-white p-5 rounded-2xl shadow mb-8 border border-gray-100">
   <div class="grid sm:grid-cols-4 gap-4 items-end">
     <div>
-      <label class="text-sm text-gray-600">Início</label>
-      <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="w-full border rounded p-2">
+      <label class="block text-xs font-semibold text-gray-700 mb-1">Início</label>
+      <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}"
+        class="w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-800 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition text-sm shadow-sm">
     </div>
     <div>
-      <label class="text-sm text-gray-600">Fim</label>
-      <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="w-full border rounded p-2">
+      <label class="block text-xs font-semibold text-gray-700 mb-1">Fim</label>
+      <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}"
+        class="w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-800 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition text-sm shadow-sm">
     </div>
-    <div class="sm:col-span-2">
-      <button class="px-4 py-2 rounded bg-gray-900 text-white">Aplicar filtros</button>
-      <a href="?" class="ml-2 text-sm underline">Limpar</a>
+    <div class="sm:col-span-2 flex gap-3 items-end">
+      <button class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+        Aplicar filtros
+      </button>
+      <a href="?" class="text-sm text-gray-500 underline hover:text-emerald-700 transition">Limpar</a>
     </div>
   </div>
 </form>
@@ -38,9 +42,10 @@
   <div class="rounded-2xl border border-rose-100 bg-rose-50 p-5 shadow">
     <div class="text-xs font-medium text-rose-700">Despesas PAGAS HOJE</div>
     <div class="mt-1 text-2xl font-bold text-rose-900">{{ despesas_hoje|brl }}</div>
+    
   </div>
   <div class="rounded-2xl border border-sky-100 bg-sky-50 p-5 shadow">
-    <div class="text-xs font-medium text-sky-700">Fluxo Líquido HOJE</div>
+    <div class="text-xs font-medium text-sky-700">Valor Líquido HOJE na conta</div>
     <div class="mt-1 text-2xl font-bold text-sky-900">{{ fluxo_hoje|brl }}</div>
   </div>
 </div>
@@ -211,15 +216,22 @@
   <div class="rounded-2xl border border-indigo-100 bg-indigo-50 p-5 shadow">
     <div class="text-xs font-medium text-indigo-700">Entradas líquidas (vendas)</div>
     <div class="mt-1 text-3xl font-bold text-indigo-900">{{ entradas_liquidas|brl }}</div>
+    <br>
+    <div class="mt-1 text-[11px] text-emerald-700/80">Entradas com a comissão descontada</div>
+
   </div>
   <div class="rounded-2xl border border-rose-100 bg-rose-50 p-5 shadow">
     <div class="text-xs font-medium text-rose-700">Despesas PAGAS no período</div>
     <div class="mt-1 text-3xl font-bold text-rose-900">{{ despesas_pagas|brl }}</div>
     <div class="mt-1 text-[11px] text-rose-700/80">Previstas: {{ despesas_previstas|brl }}</div>
+    <div class="mt-1 text-[11px] text-emerald-700/80">Despesas manuais + valores pagos de comissão</div>
+
   </div>
   <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow">
     <div class="text-xs font-medium text-emerald-700">Fluxo líquido do período</div>
     <div class="mt-1 text-3xl font-bold text-emerald-900">{{ fluxo_liquido|brl }}</div>
+    <br>
+    <div class="mt-1 text-[11px] text-emerald-700/80">Saldo líquido no caixa, já descontado despesas</div>
   </div>
 </div>
 
@@ -268,18 +280,30 @@
 
       <div class="relative">
         {% if user.is_staff and p.status == 'PENDENTE' %}
-          <form action="{% url 'vendas:parcela_pagar' p.id %}" method="post">
+          <form action="{% url 'vendas:parcela_pagar' p.id %}" method="post" class="w-full">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button class="w-full px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 relative z-10">
+            <button
+              class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white shadow hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+              title="Marcar como Pago"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
               Marcar como Pago
             </button>
           </form>
         {% elif user.is_staff and p.status == 'PAGO' %}
-          <form action="{% url 'vendas:parcela_desfazer' p.id %}" method="post">
+          <form action="{% url 'vendas:parcela_desfazer' p.id %}" method="post" class="w-full">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button class="w-full px-3 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 relative z-10">
+            <button
+              class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-white shadow hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 transition"
+              title="Desfazer pagamento"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+              </svg>
               Desfazer
             </button>
           </form>
@@ -302,23 +326,67 @@
 
   const COLORS = {
     green: 'rgba(16, 185, 129, 0.85)',
+    greenBorder: 'rgba(16, 185, 129, 1)',
     red: 'rgba(239, 68, 68, 0.85)',
+    redBorder: 'rgba(239, 68, 68, 1)',
     blue: 'rgba(59, 130, 246, 1)',
-    blueFill: 'rgba(59, 130, 246, 0.2)'
+    blueFill: 'rgba(59, 130, 246, 0.15)'
   };
 
+  // Gráfico de barras
   new Chart(document.getElementById('barChart'), {
     type: 'bar',
     data: {
       labels,
       datasets: [
-        { label: '✔️ Recebido', data: recebido, backgroundColor: COLORS.green },
-        { label: '❌ Despesa', data: gasto, backgroundColor: COLORS.red }
+        {
+          label: '✔️ Recebido',
+          data: recebido,
+          backgroundColor: COLORS.green,
+          borderColor: COLORS.greenBorder,
+          borderRadius: 8,
+          maxBarThickness: 40
+        },
+        {
+          label: '❌ Despesa',
+          data: gasto,
+          backgroundColor: COLORS.red,
+          borderColor: COLORS.redBorder,
+          borderRadius: 8,
+          maxBarThickness: 40
+        }
       ]
     },
-    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 16 } } },
+        tooltip: {
+          backgroundColor: '#fff',
+          titleColor: '#222',
+          bodyColor: '#222',
+          borderColor: '#ddd',
+          borderWidth: 1,
+          padding: 12,
+          bodyFont: { size: 15 }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 14 } }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f3f4f6' },
+          ticks: { font: { size: 14 } }
+        }
+      },
+      animation: { duration: 900, easing: 'easeOutQuart' }
+    }
   });
 
+  // Gráfico de linha
   new Chart(document.getElementById('lineChart'), {
     type: 'line',
     data: {
@@ -329,10 +397,40 @@
         borderColor: COLORS.blue,
         backgroundColor: COLORS.blueFill,
         fill: true,
-        tension: 0.35
+        tension: 0.35,
+        pointRadius: 5,
+        pointBackgroundColor: COLORS.blue,
+        pointBorderColor: '#fff',
+        pointHoverRadius: 7
       }]
     },
-    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 16 } } },
+        tooltip: {
+          backgroundColor: '#fff',
+          titleColor: '#222',
+          bodyColor: '#222',
+          borderColor: '#ddd',
+          borderWidth: 1,
+          padding: 12,
+          bodyFont: { size: 15 }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 14 } }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f3f4f6' },
+          ticks: { font: { size: 14 } }
+        }
+      },
+      animation: { duration: 900, easing: 'easeOutQuart' }
+    }
   });
 </script>
 
