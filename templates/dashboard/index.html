@@ -30,18 +30,18 @@
 
 {# ===================== RESUMO DE HOJE ===================== #}
 <div class="grid md:grid-cols-3 gap-4 mb-6">
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <div class="text-gray-500 text-sm">Entradas HOJE</div>
-    <div class="text-2xl font-bold text-emerald-700">{{ entradas_hoje|brl }}</div>
-    <div class="text-xs text-gray-500 mt-1">Parcelas pagas hoje + entradas líquidas de vendas de hoje</div>
+  <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow">
+    <div class="text-xs font-medium text-emerald-700">Entradas HOJE</div>
+    <div class="mt-1 text-2xl font-bold text-emerald-900">{{ entradas_hoje|brl }}</div>
+    <div class="mt-1 text-[11px] text-emerald-700/80">Parcelas pagas hoje + entradas líquidas de vendas de hoje</div>
   </div>
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <div class="text-gray-500 text-sm">Despesas PAGAS HOJE</div>
-    <div class="text-2xl font-bold text-red-600">{{ despesas_hoje|brl }}</div>
+  <div class="rounded-2xl border border-rose-100 bg-rose-50 p-5 shadow">
+    <div class="text-xs font-medium text-rose-700">Despesas PAGAS HOJE</div>
+    <div class="mt-1 text-2xl font-bold text-rose-900">{{ despesas_hoje|brl }}</div>
   </div>
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <div class="text-gray-500 text-sm">Fluxo Líquido HOJE</div>
-    <div class="text-2xl font-bold text-blue-700">{{ fluxo_hoje|brl }}</div>
+  <div class="rounded-2xl border border-sky-100 bg-sky-50 p-5 shadow">
+    <div class="text-xs font-medium text-sky-700">Fluxo Líquido HOJE</div>
+    <div class="mt-1 text-2xl font-bold text-sky-900">{{ fluxo_hoje|brl }}</div>
   </div>
 </div>
 
@@ -196,30 +196,30 @@
 
 {# ===================== KPIs DO PERÍODO ===================== #}
 <div class="grid lg:grid-cols-3 gap-4 mb-8">
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <div class="text-gray-500 text-sm">À receber ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</div>
-    <div class="text-3xl font-bold">{{ a_receber|brl }}</div>
+  <div class="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow">
+    <div class="text-xs font-medium text-amber-700">À receber ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</div>
+    <div class="mt-1 text-3xl font-bold text-amber-900">{{ a_receber|brl }}</div>
   </div>
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <div class="text-gray-500 text-sm">Vencidas (até hoje)</div>
-    <div class="text-3xl font-bold">{{ vencidas|brl }}</div>
+  <div class="rounded-2xl border border-stone-200 bg-stone-50 p-5 shadow">
+    <div class="text-xs font-medium text-stone-700">Vencidas (até hoje)</div>
+    <div class="mt-1 text-3xl font-bold text-stone-900">{{ vencidas|brl }}</div>
   </div>
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <div class="text-gray-500 text-sm">Pagas no período</div>
-    <div class="text-3xl font-bold">{{ pagas|brl }}</div>
+  <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow">
+    <div class="text-xs font-medium text-emerald-700">Pagas no período</div>
+    <div class="mt-1 text-3xl font-bold text-emerald-900">{{ pagas|brl }}</div>
   </div>
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <div class="text-gray-500 text-sm">Entradas líquidas (vendas)</div>
-    <div class="text-3xl font-bold">{{ entradas_liquidas|brl }}</div>
+  <div class="rounded-2xl border border-indigo-100 bg-indigo-50 p-5 shadow">
+    <div class="text-xs font-medium text-indigo-700">Entradas líquidas (vendas)</div>
+    <div class="mt-1 text-3xl font-bold text-indigo-900">{{ entradas_liquidas|brl }}</div>
   </div>
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <div class="text-gray-500 text-sm">Despesas PAGAS no período</div>
-    <div class="text-3xl font-bold">{{ despesas_pagas|brl }}</div>
-    <div class="text-xs text-gray-500 mt-1">Previstas: {{ despesas_previstas|brl }}</div>
+  <div class="rounded-2xl border border-rose-100 bg-rose-50 p-5 shadow">
+    <div class="text-xs font-medium text-rose-700">Despesas PAGAS no período</div>
+    <div class="mt-1 text-3xl font-bold text-rose-900">{{ despesas_pagas|brl }}</div>
+    <div class="mt-1 text-[11px] text-rose-700/80">Previstas: {{ despesas_previstas|brl }}</div>
   </div>
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <div class="text-gray-500 text-sm">Fluxo líquido do período</div>
-    <div class="text-3xl font-bold">{{ fluxo_liquido|brl }}</div>
+  <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow">
+    <div class="text-xs font-medium text-emerald-700">Fluxo líquido do período</div>
+    <div class="mt-1 text-3xl font-bold text-emerald-900">{{ fluxo_liquido|brl }}</div>
   </div>
 </div>
 
