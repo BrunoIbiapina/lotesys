@@ -40,6 +40,44 @@
     </div>
   {% endif %}
 
+  <!-- ===================== RESUMO DE CAIXA ===================== -->
+  <div class="bg-white p-5 rounded-2xl shadow mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold">Resumo de Caixa</h2>
+      <div class="text-xs text-gray-500">Período: {{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }}</div>
+    </div>
+
+    <div class="grid sm:grid-cols-4 gap-4">
+      <!-- Receitas do período -->
+      <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+        <div class="text-xs font-medium text-indigo-700">RECEITAS</div>
+        <div class="mt-1 text-2xl font-bold text-indigo-900">{{ total_receitas|brl }}</div>
+        <div class="mt-2 text-[11px] text-indigo-700/80">Parcelas: <b>{{ total_parcelas_pagas|brl }}</b> · Entradas líquidas: <b>{{ total_entradas_liquidas|brl }}</b></div>
+      </div>
+
+      <!-- Despesas p/ FLUXO do período -->
+      <div class="rounded-xl border border-rose-100 bg-rose-50 p-4">
+        <div class="text-xs font-medium text-rose-700">DESPESAS P/ FLUXO</div>
+        <div class="mt-1 text-2xl font-bold text-rose-900">{{ total_despesas_pagas_fluxo|brl }}</div>
+        <div class="mt-2 text-[11px] text-rose-700/80">Despesas pagas menos a comissão já abatida nas entradas ({{ comissao_paga_com_entradas_no_periodo|brl }}).</div>
+      </div>
+
+      <!-- Caixa no período -->
+      <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+        <div class="text-xs font-medium text-emerald-700">CAIXA NO PERÍODO</div>
+        <div class="mt-1 text-2xl font-bold text-emerald-900">{{ caixa_no_periodo|brl }}</div>
+        <div class="mt-2 text-[11px] text-emerald-700/80">Receitas − Despesas p/ fluxo.</div>
+      </div>
+
+      <!-- Saldo acumulado -->
+      <div class="rounded-xl border border-amber-100 bg-amber-50 p-4">
+        <div class="text-xs font-medium text-amber-700">SALDO EM CAIXA</div>
+        <div class="mt-1 text-2xl font-bold text-amber-900">{{ caixa_ate_fim|brl }}</div>
+        <div class="mt-2 text-[11px] text-amber-700/80">Acumulado até o fim do período. Hoje: <b>{{ caixa_ate_hoje|brl }}</b></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== RECEITAS ===================== -->
   <div class="bg-white p-5 rounded-2xl shadow mb-8">
     <h2 class="text-xl font-semibold mb-2">Receitas ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</h2>
@@ -219,7 +257,7 @@
   <div class="bg-white p-5 rounded-2xl shadow mb-8">
     <h2 class="text-xl font-semibold mb-2">Despesas ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</h2>
 
-    <div class="grid sm:grid-cols-2 gap-4 mb-4">
+    <div class="grid sm:grid-cols-3 gap-4 mb-4">
       <div>
         <div class="text-sm text-gray-600">PAGAS</div>
         <div class="text-2xl font-bold">{{ total_despesas_pagas|brl }}</div>
@@ -227,6 +265,11 @@
       <div>
         <div class="text-sm text-gray-600">PREVISTAS</div>
         <div class="text-2xl font-bold">{{ total_despesas_previstas|brl }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-600">p/ FLUXO (no período)</div>
+        <div class="text-2xl font-bold">{{ total_despesas_pagas_fluxo|brl }}</div>
+        <div class="text-xs text-gray-500 mt-1">= Despesas pagas − Comissão já paga com entradas.</div>
       </div>
     </div>
 
@@ -362,3 +405,58 @@
     </div>
   </div>
 {% endblock %}
+
+{# ===================== RESUMO DE CAIXA ===================== #}
+<div class="bg-white p-5 rounded-2xl shadow mb-8">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-xl font-semibold">Resumo de Caixa</h2>
+    <span class="text-xs text-gray-500">Período: {{ inicio|date:'d/m/Y' }} – {{ fim|date:'d/m/Y' }}</span>
+  </div>
+
+  <div class="grid sm:grid-cols-3 gap-4 mb-4">
+    <div class="rounded-xl border border-gray-100 p-4">
+      <div class="text-sm text-gray-600">Receitas no período</div>
+      <div class="mt-1 text-2xl font-bold text-emerald-700">{{ total_receitas|brl }}</div>
+      <div class="mt-1 text-xs text-gray-500">
+        Parcelas pagas: <b>{{ total_parcelas_pagas|brl }}</b><br>
+        Entradas líquidas: <b>{{ total_entradas_liquidas|brl }}</b>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-gray-100 p-4">
+      <div class="text-sm text-gray-600">Despesas do período (para fluxo)</div>
+      <div class="mt-1 text-2xl font-bold text-red-700">-{{ total_despesas_pagas_fluxo|brl }}</div>
+      <div class="mt-1 text-xs text-gray-500">
+        <span class="inline-block">* Comissão já abatida nas entradas: <b>-{{ comissao_paga_com_entradas_no_periodo|brl }}</b></span>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-gray-100 p-4">
+      <div class="text-sm text-gray-600">Fluxo líquido no período</div>
+      <div class="mt-1 text-2xl font-bold {% if caixa_no_periodo < 0 %}text-red-700{% else %}text-emerald-700{% endif %}">
+        {{ caixa_no_periodo|brl }}
+      </div>
+      <div class="mt-1 text-xs text-gray-500">Receitas - Despesas (fluxo)</div>
+    </div>
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div class="rounded-xl border border-gray-100 p-4">
+      <div class="text-sm text-gray-600">Saldo acumulado em caixa (até o fim do período)</div>
+      <div class="mt-1 text-2xl font-bold {% if caixa_ate_fim < 0 %}text-red-700{% else %}text-emerald-700{% endif %}">
+        {{ caixa_ate_fim|brl }}
+      </div>
+      <div class="mt-1 text-xs text-gray-500">Considerando todo o histórico até {{ fim|date:'d/m/Y' }}</div>
+    </div>
+
+    <div class="rounded-xl border border-gray-100 p-4">
+      <div class="text-sm text-gray-600">Saldo acumulado em caixa (até hoje)</div>
+      <div class="mt-1 text-2xl font-bold {% if caixa_ate_hoje < 0 %}text-red-700{% else %}text-emerald-700{% endif %}">
+        {{ caixa_ate_hoje|brl }}
+      </div>
+      <div class="mt-1 text-xs text-gray-500">Considerando todo o histórico até {{ hoje|date:'d/m/Y' }}</div>
+    </div>
+  </div>
+</div>
+
+

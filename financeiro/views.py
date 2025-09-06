@@ -33,10 +33,59 @@ def _brl(val) -> str:
     return "R$ " + s.replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+# === NOVO: saldo acumulado até uma data (caixa) ===
+def _saldo_caixa_ate(data_limite: date) -> dict:
+    """
+    Saldo de caixa acumulado até data_limite (assume saldo inicial 0).
+    Regras:
+      - Receitas = parcelas pagas até a data + entradas LÍQUIDAS de vendas até a data.
+      - Despesas para FLUXO = despesas PAGAS até a data MENOS a comissão já abatida nas entradas.
+        (evita descontar a comissão duas vezes)
+    """
+    # Despesas pagas até a data (contábil)
+    despesas_pagas_ate = (
+        Despesa.objects.filter(status="PAGA", data__lte=data_limite)
+        .aggregate(v=Coalesce(Sum("valor"), Decimal("0.00")))["v"] or Decimal("0.00")
+    )
+
+    # Vendas até a data: somo entrada_liquida e a comissão da entrada
+    entradas_liquidas_ate = Decimal("0.00")
+    comissoes_entrada_ate = Decimal("0.00")
+    for v in Venda.objects.filter(data_venda__lte=data_limite).select_related("cliente"):
+        entrada_bruta = getattr(v, "entrada_bruta", Decimal("0.00")) or Decimal("0.00")
+        comissao_entr = getattr(v, "comissao_paga_na_entrada", Decimal("0.00")) or Decimal("0.00")
+        entrada_liq   = getattr(v, "entrada_liquida", Decimal("0.00")) or (entrada_bruta - comissao_entr)
+        entradas_liquidas_ate += entrada_liq
+        comissoes_entrada_ate += comissao_entr
+
+    # Parcelas pagas até a data
+    parcelas_pagas_ate = (
+        Parcela.objects.filter(status__iexact="PAGO", data_pagamento__lte=data_limite)
+        .aggregate(v=Coalesce(Sum("valor"), Decimal("0.00")))["v"] or Decimal("0.00")
+    )
+
+    receitas_ate = parcelas_pagas_ate + entradas_liquidas_ate
+
+    # Despesas para fluxo (não desconta comissão duas vezes)
+    despesas_fluxo_ate = despesas_pagas_ate - comissoes_entrada_ate
+    if despesas_fluxo_ate < 0:
+        despesas_fluxo_ate = Decimal("0.00")
+
+    caixa_ate = receitas_ate - despesas_fluxo_ate
+
+    return dict(
+        receitas_ate=receitas_ate,
+        despesas_pagas_ate=despesas_pagas_ate,
+        comissoes_entrada_ate=comissoes_entrada_ate,
+        despesas_fluxo_ate=despesas_fluxo_ate,
+        caixa_ate=caixa_ate,
+    )
+
+
 def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
     hoje = timezone.localdate()
 
-    # --- Despesas no período
+    # --- Despesas no período (contábil)
     despesas_qs = (
         Despesa.objects
         .filter(data__range=[inicio, fim])
@@ -50,7 +99,7 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
         v=Coalesce(Sum("valor"), Decimal("0.00"))
     )["v"] or Decimal("0.00")
 
-    # --- Parcelas pagas (recebidas) no período
+    # --- Parcelas pagas (receitas) no período
     parcelas_pagas_qs = (
         Parcela.objects
         .select_related("venda", "venda__cliente")
@@ -61,7 +110,7 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
         v=Coalesce(Sum("valor"), Decimal("0.00"))
     )["v"] or Decimal("0.00")
 
-    # --- Entradas de vendas no período (com liquidação de comissão)
+    # --- Entradas de vendas no período (abatendo comissão)
     vendas_periodo_qs = (
         Venda.objects
         .select_related("cliente")
@@ -71,7 +120,7 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
 
     entradas_detalhe: list[dict] = []
     total_entradas_brutas = Decimal("0.00")
-    total_comissoes = Decimal("0.00")
+    total_comissoes = Decimal("0.00")          # comissão usada na entrada
     total_entradas_liquidas = Decimal("0.00")
 
     for v in vendas_periodo_qs:
@@ -88,13 +137,22 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
                     entrada_liquida=entrada_liq,
                 )
             )
-            total_entradas_brutas += entrada_bruta
-            total_comissoes += comissao_entr
+            total_entradas_brutas   += entrada_bruta
+            total_comissoes         += comissao_entr
             total_entradas_liquidas += entrada_liq
 
+    # Receita do período
     total_receitas = total_parcelas_pagas + total_entradas_liquidas
 
-    # --- Vencidas (pendentes em atraso)
+    # Despesa para FLUXO no período (sem comissão já abatida nas entradas)
+    total_despesas_pagas_fluxo = total_despesas_pagas - total_comissoes
+    if total_despesas_pagas_fluxo < 0:
+        total_despesas_pagas_fluxo = Decimal("0.00")
+
+    # Caixa no PERÍODO (fluxo líquido)
+    fluxo_liquido = total_receitas - total_despesas_pagas_fluxo  # == caixa_no_periodo
+
+    # --- Vencidas/Pendentes
     vencidas_qs = (
         Parcela.objects
         .select_related("venda", "venda__cliente")
@@ -105,7 +163,6 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
         v=Coalesce(Sum("valor"), Decimal("0.00"))
     )["v"] or Decimal("0.00")
 
-    # --- A receber (pendentes futuras)
     pendentes_qs = (
         Parcela.objects
         .select_related("venda", "venda__cliente")
@@ -128,13 +185,23 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
         for r in por_mes_qs if r["mes"]
     ]
 
+    # === acumulados até as datas ===
+    saldo_fim  = _saldo_caixa_ate(fim)
+    saldo_hoje = _saldo_caixa_ate(hoje)
+
     return dict(
         hoje=hoje,
         inicio=inicio,
         fim=fim,
+
+        # Despesas (contábil e para fluxo)
         despesas=despesas_qs,
         total_despesas_pagas=total_despesas_pagas,
         total_despesas_previstas=total_despesas_previstas,
+        total_despesas_pagas_fluxo=total_despesas_pagas_fluxo,  # p/ fluxo
+        comissao_paga_com_entradas_no_periodo=total_comissoes,
+
+        # Receitas
         parcelas_pagas=parcelas_pagas_qs,
         total_parcelas_pagas=total_parcelas_pagas,
         entradas_detalhe=entradas_detalhe,
@@ -142,6 +209,14 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
         total_comissoes=total_comissoes,
         total_entradas_liquidas=total_entradas_liquidas,
         total_receitas=total_receitas,
+
+        # Fluxo / Caixa
+        fluxo_liquido=fluxo_liquido,           # == caixa_no_periodo
+        caixa_no_periodo=fluxo_liquido,        # alias
+        caixa_ate_fim=saldo_fim["caixa_ate"],  # saldo acumulado até 'fim'
+        caixa_ate_hoje=saldo_hoje["caixa_ate"],
+
+        # Projeção
         vencidas=vencidas_qs,
         total_vencidas=total_vencidas,
         pendentes=pendentes_qs,
@@ -182,7 +257,6 @@ def extrato_pdf(request):
     # gráfico
     from reportlab.graphics.shapes import Drawing, String
     from reportlab.graphics.charts.barcharts import VerticalBarChart
-    from reportlab.graphics import renderPDF
 
     # --------- período ----------
     hoje = timezone.localdate()
@@ -201,12 +275,12 @@ def extrato_pdf(request):
     text_muted    = colors.Color(0.30, 0.30, 0.34)
 
     # paletas por seção
-    azul_bg   = HexColor("#dbeafe")  # Receitas (header)
-    azul_tx   = HexColor("#2563eb")
+    azul_bg     = HexColor("#dbeafe")  # Receitas (header)
+    azul_tx     = HexColor("#2563eb")
     vermelho_bg = HexColor("#fee2e2")  # Despesas (header)
     vermelho_tx = HexColor("#dc2626")
-    amber_bg  = HexColor("#fef9c3")  # Projeção/Vencidas (header)
-    amber_tx  = HexColor("#d97706")
+    amber_bg    = HexColor("#fef9c3")  # Projeção/Vencidas (header)
+    amber_tx    = HexColor("#d97706")
 
     # --------- estilos ----------
     styles = getSampleStyleSheet()
@@ -326,15 +400,15 @@ def extrato_pdf(request):
     
     # ---------------- KPIs em "cards" (grade 3x) ----------------
     kpis = [
-        ("Parcelas PAGAS",            _brl(ctx["total_parcelas_pagas"])),
-        ("Entradas brutas (vendas)",  _brl(ctx["total_entradas_brutas"])),
-        ("Comissões sobre entradas",  _brl(ctx["total_comissoes"])),
-        ("Entradas líquidas",         _brl(ctx["total_entradas_liquidas"])),
-        ("Total de Receitas",         _brl(ctx["total_receitas"])),
-        ("Despesas PAGAS",            _brl(ctx["total_despesas_pagas"])),
-        ("Despesas PREVISTAS",        _brl(ctx["total_despesas_previstas"])),
-        ("Vencidas (atraso)",         _brl(ctx["total_vencidas"])),
-        ("A receber (pendentes)",     _brl(ctx["total_a_receber"])),
+        ("Parcelas PAGAS",             _brl(ctx["total_parcelas_pagas"])),
+        ("Entradas brutas (vendas)",   _brl(ctx["total_entradas_brutas"])),
+        ("Comissões sobre entradas",   _brl(ctx["total_comissoes"])),
+        ("Entradas líquidas",          _brl(ctx["total_entradas_liquidas"])),
+        ("Total de Receitas",          _brl(ctx["total_receitas"])),
+        ("Despesas PAGAS (contábil)",  _brl(ctx["total_despesas_pagas"])),
+        ("Despesas p/ FLUXO",          _brl(ctx["total_despesas_pagas_fluxo"])),
+        ("Caixa no período",           _brl(ctx["caixa_no_periodo"])),
+        ("Saldo em caixa (até fim)",   _brl(ctx["caixa_ate_fim"])),
     ]
 
     def _kpi_card(title: str, value: str):
@@ -483,7 +557,7 @@ def extrato_pdf(request):
     chart.width = 380
     chart.data = [
         [receitas_prev, receitas_atual],  # série 0: Receitas
-        [despesas_prev, despesas_atual],  # série 1: Despesas
+        [despesas_prev, despesas_atual],  # série 1: Despesas (contábil)
     ]
     chart.categoryAxis.categoryNames = ["Mês Anterior", "Mês Atual"]
     chart.valueAxis.valueMin = 0
