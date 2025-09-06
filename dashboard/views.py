@@ -8,6 +8,7 @@ from django.db.models.functions import TruncMonth, Coalesce
 from django.http import HttpRequest
 from django.shortcuts import render
 from django.utils import timezone
+from financeiro.views import _monta_contexto_extrato
 
 from financeiro.models import Despesa
 from vendas.models import Venda
@@ -27,6 +28,15 @@ def _parse_date(s: str | None) -> date | None:
     except Exception:
         return None
 
+def _month_bounds(any_day: date) -> tuple[date, date]:
+    start = any_day.replace(day=1)
+    if start.month == 12:
+        next_start = start.replace(year=start.year + 1, month=1)
+    else:
+        next_start = start.replace(month=start.month + 1)
+    end = next_start - timedelta(days=1)
+    return start, end
+
 
 @login_required
 def index(request: HttpRequest):
@@ -37,15 +47,14 @@ def index(request: HttpRequest):
     fim = _parse_date(request.GET.get("fim")) or hoje
 
     # ================= KPIs do período =================
-    a_receber = (
-        Parcela.objects.filter(status__iexact="PENDENTE", vencimento__range=[inicio, fim])
-        .aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))["total"]
-        or Decimal("0")
-    )
+    ctx_periodo = _monta_contexto_extrato(inicio, fim)
+
+    a_receber = ctx_periodo["total_a_receber"]
 
     vencidas_qs = Parcela.objects.filter(status__iexact="PENDENTE", vencimento__lt=hoje)
     vencidas_valor = (
-        vencidas_qs.aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))["total"]
+        vencidas_qs.aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))
+        ["total"]
         or Decimal("0")
     )
     vencidas_qtd = vencidas_qs.count()
@@ -55,36 +64,19 @@ def index(request: HttpRequest):
         status__iexact="PENDENTE", vencimento__range=[hoje, proximos_7_fim]
     )
     prox7_valor = (
-        prox7_qs.aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))["total"]
+        prox7_qs.aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))
+        ["total"]
         or Decimal("0")
     )
     prox7_qtd = prox7_qs.count()
 
-    pagas = (
-        Parcela.objects.filter(status__iexact="PAGO", data_pagamento__range=[inicio, fim])
-        .aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))["total"]
-        or Decimal("0")
-    )
+    pagas = ctx_periodo["total_parcelas_pagas"]
+    entradas_liquidas = ctx_periodo["total_entradas_liquidas"]
+    despesas_pagas = ctx_periodo["total_despesas_pagas"]            # contábil (card informativo)
+    despesas_previstas = ctx_periodo["total_despesas_previstas"]
 
-    # Entradas líquidas no período (somatório por venda)
-    entradas_liquidas = sum(
-        (v.entrada_liquida for v in Venda.objects.filter(data_venda__range=[inicio, fim])),
-        Decimal("0.00"),
-    )
-
-    despesas_pagas = (
-        Despesa.objects.filter(status__iexact="PAGA", data__range=[inicio, fim])
-        .aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))["total"]
-        or Decimal("0")
-    )
-
-    despesas_previstas = (
-        Despesa.objects.filter(status__iexact="PREVISTA", data__range=[inicio, fim])
-        .aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))["total"]
-        or Decimal("0")
-    )
-
-    fluxo_liquido = (pagas + entradas_liquidas) - despesas_pagas
+    # Fluxo líquido do período (idêntico ao Extrato)
+    fluxo_liquido = ctx_periodo["fluxo_liquido"]
 
     # ---------- PARCELAS QUE VENCEM HOJE ----------
     vencem_hoje_qs = (
@@ -96,63 +88,32 @@ def index(request: HttpRequest):
     vencem_hoje_count = vencem_hoje_qs.count()
 
     # ================= Resumo de HOJE =================
-    parcelas_pagas_hoje = (
-        Parcela.objects.filter(status__iexact="PAGO", data_pagamento=hoje)
-        .aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))["total"]
-        or Decimal("0")
-    )
-    entradas_liquidas_vendas_hoje = sum(
-        (v.entrada_liquida for v in Venda.objects.filter(data_venda=hoje)),
-        Decimal("0.00"),
-    )
-    entradas_hoje = parcelas_pagas_hoje + entradas_liquidas_vendas_hoje
-
-    despesas_hoje = (
-        Despesa.objects.filter(status__iexact="PAGA", data=hoje)
-        .aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))["total"]
-        or Decimal("0")
-    )
-    fluxo_hoje = entradas_hoje - despesas_hoje
+    ctx_hoje = _monta_contexto_extrato(hoje, hoje)
+    entradas_hoje = ctx_hoje["total_receitas"]
+    despesas_hoje = ctx_hoje["total_despesas_pagas_fluxo"]
+    fluxo_hoje = ctx_hoje["fluxo_liquido"]
 
     # ================= Séries (últimos 6 meses) =================
-    meses_qs = (
-        Parcela.objects.filter(status__iexact="PAGO")
-        .annotate(mes=TruncMonth("data_pagamento"))
-        .values("mes")
-        .annotate(recebido=Coalesce(Sum("valor"), Decimal("0.00")))
-    )
-    despesas_qs = (
-        Despesa.objects.filter(status__iexact="PAGA")
-        .annotate(mes=TruncMonth("data"))
-        .values("mes")
-        .annotate(gasto=Coalesce(Sum("valor"), Decimal("0.00")))
-    )
-
-    def to_map(qs, key, val):
-        out = {}
-        for r in qs:
-            if r[key]:
-                out[r[key].strftime("%Y-%m")] = r[val]
-        return out
-
-    rec_map = to_map(meses_qs, "mes", "recebido")
-    des_map = to_map(despesas_qs, "mes", "gasto")
-
     labels, recebido_series, gasto_series, fluxo_series = [], [], [], []
-    year, month = hoje.year, hoje.month
+
+    first_of_this_month = hoje.replace(day=1)
+    months: list[date] = []
+    y, m = first_of_this_month.year, first_of_this_month.month
     for i in range(5, -1, -1):
-        m = month - i
-        y = year
-        if m <= 0:
-            m += 12
-            y -= 1
-        key = f"{y:04d}-{m:02d}"
-        labels.append(key)
-        r = rec_map.get(key, Decimal("0.00"))
-        g = des_map.get(key, Decimal("0.00"))
-        recebido_series.append(float(r))
-        gasto_series.append(float(g))
-        fluxo_series.append(float(r - g))
+        mm = m - i
+        yy = y
+        while mm <= 0:
+            mm += 12
+            yy -= 1
+        months.append(date(yy, mm, 1))
+
+    for month_start in months:
+        m_start, m_end = _month_bounds(month_start)
+        ctx_m = _monta_contexto_extrato(m_start, m_end)
+        labels.append(f"{m_start:%Y-%m}")
+        recebido_series.append(float(ctx_m["total_receitas"] or 0))
+        gasto_series.append(float(ctx_m["total_despesas_pagas"] or 0))   # contábil no gráfico
+        fluxo_series.append(float(ctx_m["fluxo_liquido"] or 0))          # fluxo ajustado
 
     # ================= Amostras p/ cards =================
     ultimas_parcelas = (
@@ -191,13 +152,17 @@ def index(request: HttpRequest):
         hoje=hoje,
 
         # KPIs principais do período
-        a_receber=float(a_receber),
-        vencidas=float(vencidas_valor),
-        pagas=float(pagas),
-        entradas_liquidas=float(entradas_liquidas),
-        despesas_pagas=float(despesas_pagas),
-        despesas_previstas=float(despesas_previstas),
-        fluxo_liquido=float(fluxo_liquido),
+        a_receber=a_receber,
+        vencidas=vencidas_valor,
+        pagas=pagas,
+        entradas_liquidas=entradas_liquidas,
+        despesas_pagas=despesas_pagas,
+        despesas_previstas=despesas_previstas,
+        fluxo_liquido=fluxo_liquido,
+
+        # Adicionais úteis
+        despesas_pagas_fluxo=ctx_periodo["total_despesas_pagas_fluxo"],
+        comissao_paga_no_periodo=ctx_periodo["total_despesas_comissao_pagas"],
 
         # Resumo HOJE (mantém Decimal; o template usa |brl)
         entradas_hoje=entradas_hoje,
@@ -217,9 +182,9 @@ def index(request: HttpRequest):
 
         # Alertas (contagens/valores)
         vencidas_qtd=vencidas_qtd,
-        vencidas_valor=float(vencidas_valor),
+        vencidas_valor=vencidas_valor,
         prox7_qtd=prox7_qtd,
-        prox7_valor=float(prox7_valor),
+        prox7_valor=prox7_valor,
 
         # Vencem HOJE
         vencem_hoje=vencem_hoje_qs,
