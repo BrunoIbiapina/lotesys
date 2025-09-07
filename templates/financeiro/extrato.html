@@ -389,185 +389,65 @@
     </div>
   </div>
 
-  <!-- ===================== PROJEÇÃO ===================== -->
-  <div id="projecao" class="bg-white p-5 rounded-2xl shadow mb-8 border border-yellow-100">
-    <h2 class="text-xl font-semibold mb-2 flex items-center gap-2 text-yellow-800">
-      <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" />
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
-      </svg>
-      Projeção — A receber (pendentes)
-    </h2>
-    <div class="mb-3 text-gray-600 text-sm">A partir de {{ hoje|date:'d/m/Y' }}</div>
-
-    <div class="mb-4">
-      <span class="text-sm text-gray-600">Total a receber</span>
-      <div class="text-2xl font-bold text-yellow-900">{{ total_a_receber|brl }}</div>
-    </div>
-
-    <div class="flex items-center gap-3 mb-4">
-      <h3 class="font-semibold text-yellow-800 flex items-center gap-2 mb-0">
-        <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
-        </svg>
-        Por mês
-      </h3>
-      <form method="get" action="#projecao">
-        <label for="mes" class="sr-only">Escolha o mês</label>
-        <select name="mes" id="mes"
-          class="rounded-lg border border-yellow-300 bg-yellow-50 text-yellow-900 font-semibold px-4 py-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
-          onchange="this.form.submit()">
-          <option value="">Todos os meses</option>
-          {% for m in por_mes %}
-            <option value="{{ m.mes }}" {% if mes_selecionado == m.mes %}selected{% endif %}>{{ m.mes_label }}</option>
-          {% endfor %}
-        </select>
-      </form>
-    </div>
-
-    <div class="overflow-x-auto mb-6">
-      <table class="min-w-full">
-        <thead class="bg-yellow-50 text-yellow-800">
-          <tr>
-            <th class="text-left p-2">Mês</th>
-            <th class="text-left p-2">Valor</th>
+  <!-- ===================== PARCELAS PENDENTES ===================== -->
+  <div class="overflow-auto rounded-xl border border-yellow-100 bg-yellow-50/10">
+    <table class="min-w-full text-sm">
+      <thead class="bg-yellow-50 text-yellow-800">
+        <tr>
+          <th class="text-left p-2">Vencimento</th>
+          <th class="text-left p-2">Venda</th>
+          <th class="text-left p-2">Cliente</th>
+          <th class="text-left p-2">#</th>
+          <th class="text-left p-2">Valor</th>
+          <th class="text-left p-2">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in page_obj %}
+          <tr class="border-t">
+            <td class="p-2">{{ p.vencimento|date:'d/m/Y' }}</td>
+            <td class="p-2">{{ p.venda_id }}</td>
+            <td class="p-2">{{ p.venda.cliente.nome }}</td>
+            <td class="p-2">
+              <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full whitespace-nowrap">{{ p.numero }}/{{ p.venda.parcelas_total }}</span>
+            </td>
+            <td class="p-2">{{ p.valor|brl }}</td>
+            <td class="p-2">
+              {% badge_status p.status %}
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {% for m in por_mes %}
-            <tr class="border-t {% if mes_selecionado == m.mes %}bg-yellow-100{% endif %}">
-              <td class="p-2">{{ m.mes_label }}</td>
-              <td class="p-2">{{ m.valor|brl }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td class="p-4" colspan="2">Sem parcelas pendentes futuras.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <h3 class="font-semibold mb-2 flex items-center gap-2 text-yellow-800">
-      <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" />
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
-      </svg>
-      Lista de parcelas pendentes
-    </h3>
-    <div class="overflow-auto rounded-xl border border-yellow-100 bg-yellow-50/10">
-      <table class="min-w-full text-sm">
-        <thead class="bg-yellow-50 text-yellow-800">
+        {% empty %}
           <tr>
-            <th class="text-left p-2">Vencimento</th>
-            <th class="text-left p-2">Venda</th>
-            <th class="text-left p-2">Cliente</th>
-            <th class="text-left p-2">#</th>
-            <th class="text-left p-2">Valor</th>
-            <th class="text-left p-2">Status</th>
+            <td class="p-4" colspan="6">Nenhuma parcela pendente.</td>
           </tr>
-        </thead>
-        <tbody>
-          {% for p in pendentes %}
-            <tr class="border-t">
-              <td class="p-2">{{ p.vencimento|date:'d/m/Y' }}</td>
-              <td class="p-2">{{ p.venda_id }}</td>
-              <td class="p-2">{{ p.venda.cliente.nome }}</td>
-              <td class="p-2">
-                <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full whitespace-nowrap">{{ p.numero }}/{{ p.venda.parcelas_total }}</span>
-              </td>
-              <td class="p-2">{{ p.valor|brl }}</td>
-              <td class="p-2">
-                {% badge_status p.status %}
-              </td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td class="p-4" colspan="6">Nenhuma parcela pendente.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+
+  <!-- Paginação -->
+  <div class="flex justify-center items-center gap-2 mt-4">
+    {% if page_obj.has_previous %}
+      <a href="?mes={{ mes_selecionado }}&page={{ page_obj.previous_page_number }}#projecao"
+         class="px-3 py-1 rounded bg-yellow-100 text-yellow-800 border border-yellow-200 hover:bg-yellow-200 transition text-sm font-semibold">
+        ← Anterior
+      </a>
+    {% endif %}
+    <span class="px-3 py-1 text-yellow-900 font-medium">
+      Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+      <a href="?mes={{ mes_selecionado }}&page={{ page_obj.next_page_number }}#projecao"
+         class="px-3 py-1 rounded bg-yellow-100 text-yellow-800 border border-yellow-200 hover:bg-yellow-200 transition text-sm font-semibold">
+        Próxima →
+      </a>
+    {% endif %}
+  </div>
+  
+  <script>
+    // Se a URL tiver #projecao, faz scroll suave até lá
+    if (window.location.hash === "#projecao") {
+      document.getElementById("projecao")?.scrollIntoView({behavior: "smooth"});
+    }
+  </script>
 {% endblock %}
-
-<!-- ===================== RESUMO DE CAIXA ===================== -->
-<div class="bg-white p-5 rounded-2xl shadow mb-8">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-xl font-semibold">Resumo do Caixa</h2>
-  </div>
-  <div class="grid sm:grid-cols-4 gap-4">
-    <div class="p-4 rounded-xl bg-indigo-50 text-indigo-900">
-      <div class="text-xs font-medium text-indigo-700 mb-1">Entradas líquidas</div>
-      <div class="text-2xl font-bold">R$ {{ total_entradas_liquidas|floatformat:2|default:'0,00' }}</div>
-      
-      
-    </div>
-    <div class="p-4 rounded-xl bg-green-50 text-green-900">
-      <div class="text-xs font-medium text-green-700 mb-1">Receitas (parcelas pagas + entradas)</div>
-      <div class="text-2xl font-bold">R$ {{ total_receitas|floatformat:2|default:'0,00' }}</div>
-    </div>
-    <div class="p-4 rounded-xl bg-red-50 text-red-900">
-      <div class="text-xs font-medium text-red-700 mb-1">Despesas pagas (fluxo)</div>
-      <div class="text-2xl font-bold">R$ {{ total_despesas_pagas_fluxo|floatformat:2|default:'0,00' }}</div>
-    </div>
-    <div class="p-4 rounded-xl bg-gray-50 text-gray-900">
-      <div class="text-xs font-medium text-gray-700 mb-1">Caixa no período</div>
-      <div class="text-2xl font-bold">R$ {{ caixa_no_periodo|floatformat:2|default:'0,00' }}</div>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== COMPOSIÇÃO DAS ENTRADAS E SAÍDAS ===================== -->
-<div class="grid md:grid-cols-2 gap-6 mb-8">
-  <!-- Entradas de Caixa -->
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <h3 class="font-semibold mb-2 text-emerald-800">Entradas de Caixa</h3>
-    <table class="min-w-full text-sm">
-      <tbody class="divide-y">
-        <tr>
-          <td class="py-2">Parcelas pagas</td>
-          <td class="py-2 font-medium text-right">{{ total_parcelas_pagas|brl }}</td>
-        </tr>
-        <tr>
-          <td class="py-2">Entradas brutas de vendas</td>
-          <td class="py-2 font-medium text-right">{{ total_entradas_brutas|brl }}</td>
-        </tr>
-        <tr class="bg-emerald-50 font-semibold">
-          <td class="py-2">Total de Entradas</td>
-          <td class="py-2 text-right">{{ caixa_entradas|brl }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Saídas de Caixa -->
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <h3 class="font-semibold mb-2 text-red-800">Saídas de Caixa</h3>
-    <table class="min-w-full text-sm">
-      <tbody class="divide-y">
-        <tr>
-          <td class="py-2">Comissões pagas</td>
-          <td class="py-2 font-medium text-right">- {{ total_comissoes_pagas|brl }}</td>
-        </tr>
-        <tr>
-          <td class="py-2">Outras despesas pagas</td>
-          <td class="py-2 font-medium text-right">- {{ total_despesas_pagas_sem_comissoes|brl }}</td>
-        </tr>
-        <tr class="bg-red-50 font-semibold">
-          <td class="py-2">Total de Saídas</td>
-          <td class="py-2 text-right">- {{ caixa_saidas|brl }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<script>
-  // Se a URL tiver #projecao, faz scroll suave até lá
-  if (window.location.hash === "#projecao") {
-    document.getElementById("projecao")?.scrollIntoView({behavior: "smooth"});
-  }
-</script>
