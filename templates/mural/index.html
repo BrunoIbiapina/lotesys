@@ -3,14 +3,12 @@
 {% block title %}Mural{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-5">
-  <h1 class="text-3xl font-semibold">Mural</h1>
-
+<div class="flex items-center justify-between mb-7">
+  <h1 class="text-3xl font-bold text-gray-900">Mural</h1>
   <div class="flex items-center gap-2">
-    <!-- link para admin criar mensagem (ajuste a rota se tiver view própria) -->
     {% if user.is_staff %}
       <a href="/admin/mural/mensagem/add/"
-         class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-black">
+         class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
         <span class="text-lg leading-none">＋</span>
         Nova mensagem
       </a>
@@ -20,30 +18,38 @@
 
 {# FIXADAS #}
 {% if fixadas %}
-  <div class="mb-6">
-    <div class="text-sm font-medium text-gray-600 mb-2">Fixadas</div>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div class="mb-8">
+    <div class="text-sm font-semibold text-yellow-700 mb-2 flex items-center gap-2">
+      <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
+      </svg>
+      Fixadas
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {% for m in fixadas %}
-        <article
-          class="rounded-2xl shadow-sm hover:shadow-md transition-shadow p-4 border {{ m.tipo|tipo_card }}">
+        <article class="rounded-2xl shadow hover:shadow-lg transition-shadow p-5 border border-yellow-100 bg-yellow-50/40">
           <header class="flex items-start gap-3">
-            <span class="inline-flex w-9 h-9 shrink-0 items-center justify-center rounded-full ring-1 {{ m.tipo|tipo_iconwrap }}">
-              <span class="text-base">{{ m.tipo|tipo_icon }}</span>
+            <span class="inline-flex w-10 h-10 shrink-0 items-center justify-center rounded-full ring-2 {{ m.tipo|tipo_iconwrap }}">
+              <span class="text-xl">{{ m.tipo|tipo_icon }}</span>
             </span>
             <div class="min-w-0">
               <h3 class="font-semibold text-lg leading-tight {{ m.tipo|tipo_title }} truncate">
                 {{ m.titulo }}
               </h3>
               <div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                <span class="px-2 py-0.5 rounded-full {{ m.tipo|tipo_chip }}">{{ m.tipo|capfirst }}</span>
+                <span class="px-2 py-0.5 rounded-full {{ m.tipo|tipo_chip }} font-semibold">{{ m.tipo|capfirst }}</span>
                 <span>•</span>
                 <span>{{ m.criada_em|date:"d/m/Y H:i" }}</span>
-                {% if m.autor %}<span>•</span><span>por {{ m.autor.get_full_name|default:m.autor.username }}</span>{% endif %}
+                {% if m.autor %}
+                  <span>•</span>
+                  <span>por {{ m.autor.get_full_name|default:m.autor.username }}</span>
+                {% endif %}
               </div>
             </div>
           </header>
           {% if m.conteudo %}
-            <p class="mt-3 text-gray-700 text-sm whitespace-pre-line">
+            <p class="mt-3 text-gray-800 text-sm whitespace-pre-line">
               {{ m.conteudo }}
             </p>
           {% endif %}
@@ -55,31 +61,39 @@
 
 {# RECENTES (não fixadas) #}
 <div>
-  <div class="text-sm font-medium text-gray-600 mb-2">Recentes</div>
+  <div class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
+    </svg>
+    Recentes
+  </div>
 
   {% if recentes %}
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {% for m in recentes %}
-        <article
-          class="rounded-2xl shadow-sm hover:shadow-md transition-shadow p-4 border {{ m.tipo|tipo_card }}">
+        <article class="rounded-2xl shadow hover:shadow-lg transition-shadow p-5 border border-gray-100 bg-white">
           <header class="flex items-start gap-3">
-            <span class="inline-flex w-9 h-9 shrink-0 items-center justify-center rounded-full ring-1 {{ m.tipo|tipo_iconwrap }}">
-              <span class="text-base">{{ m.tipo|tipo_icon }}</span>
+            <span class="inline-flex w-10 h-10 shrink-0 items-center justify-center rounded-full ring-2 {{ m.tipo|tipo_iconwrap }}">
+              <span class="text-xl">{{ m.tipo|tipo_icon }}</span>
             </span>
             <div class="min-w-0">
               <h3 class="font-semibold text-lg leading-tight {{ m.tipo|tipo_title }} truncate">
                 {{ m.titulo }}
               </h3>
               <div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                <span class="px-2 py-0.5 rounded-full {{ m.tipo|tipo_chip }}">{{ m.tipo|capfirst }}</span>
+                <span class="px-2 py-0.5 rounded-full {{ m.tipo|tipo_chip }} font-semibold">{{ m.tipo|capfirst }}</span>
                 <span>•</span>
                 <span>{{ m.criada_em|date:"d/m/Y H:i" }}</span>
-                {% if m.autor %}<span>•</span><span>por {{ m.autor.get_full_name|default:m.autor.username }}</span>{% endif %}
+                {% if m.autor %}
+                  <span>•</span>
+                  <span>por {{ m.autor.get_full_name|default:m.autor.username }}</span>
+                {% endif %}
               </div>
             </div>
           </header>
           {% if m.conteudo %}
-            <p class="mt-3 text-gray-700 text-sm whitespace-pre-line">
+            <p class="mt-3 text-gray-800 text-sm whitespace-pre-line">
               {{ m.conteudo }}
             </p>
           {% endif %}
@@ -87,10 +101,10 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="rounded-2xl border bg-white p-8 text-center text-gray-600">
+    <div class="rounded-2xl border border-gray-100 bg-white p-8 text-center text-gray-600 shadow">
       Nenhuma mensagem recente.
       {% if user.is_staff %}
-        <a href="/admin/mural/mensagem/add/" class="inline-block ml-1 underline">Criar agora</a>
+        <a href="/admin/mural/mensagem/add/" class="inline-block ml-1 underline text-emerald-700 hover:text-emerald-900 transition">Criar agora</a>
       {% endif %}
     </div>
   {% endif %}

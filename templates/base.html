@@ -20,79 +20,82 @@
     {% load mural_ui %}
 
     <!-- HEADER -->
-
-    <header class="bg-white border-b">
+    <header class="bg-white border-b shadow-sm">
       <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         <!-- Marca / home -->
-        <a href="/" class="font-semibold text-lg tracking-tight">CONCIL</a>
+        <a href="/" class="font-bold text-xl tracking-tight text-emerald-700 flex items-center gap-2">
+          <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
+          </svg>
+          CONCIL
+        </a>
 
         <!-- Navegação principal -->
         <nav class="flex items-center gap-2">
           <!-- Extrato -->
           <a href="{% url 'financeiro:extrato' %}"
-            class="px-3 py-1.5 rounded-full text-sm
-                 {% if request.path|slice:':11' == '/financeiro' %}
-              
-              
-                   bg-indigo-600 text-white
-
-
-            {% else %}
-              
-              
-                   text-gray-700 hover:bg-gray-100
-
-
-            {% endif %}">
+            class="px-4 py-2 rounded-full text-sm font-semibold transition
+              {% if request.path|slice:':11' == '/financeiro' %}
+                bg-emerald-600 text-white shadow
+              {% else %}
+                text-gray-700 hover:bg-emerald-50 hover:text-emerald-700
+              {% endif %}
+              focus:outline-none focus:ring-2 focus:ring-emerald-400">
+            <svg class="inline w-4 h-4 mr-1 -mt-1 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/>
+            </svg>
             Extrato
           </a>
 
           <!-- Vendas -->
           <a href="{% url 'vendas:vendas_list' %}"
-            class="px-3 py-1.5 rounded-full text-sm
-                 {% if request.path|slice:':8' == '/vendas/' or request.path == '/vendas' %}
-              
-              
-                   bg-indigo-600 text-white
-
-
-            {% else %}
-              
-              
-                   text-gray-700 hover:bg-gray-100
-
-
-            {% endif %}">
+            class="px-4 py-2 rounded-full text-sm font-semibold transition
+              {% if request.path|slice:':8' == '/vendas/' or request.path == '/vendas' %}
+                bg-emerald-600 text-white shadow
+              {% else %}
+                text-gray-700 hover:bg-emerald-50 hover:text-emerald-700
+              {% endif %}
+              focus:outline-none focus:ring-2 focus:ring-emerald-400">
+            <svg class="inline w-4 h-4 mr-1 -mt-1 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/>
+            </svg>
             Vendas
           </a>
 
           <!-- Mural -->
           <a href="{% url 'mural:index' %}"
-            class="px-3 py-1.5 rounded-full text-sm relative
-          {% if request.path|slice:':7' == '/mural/' or request.path == '/mural' %}
-              
-              
-            bg-indigo-600 text-white
-
-
-            {% else %}
-              
-              
-            text-gray-700 hover:bg-gray-100
-
-
-            {% endif %}">
+            class="px-4 py-2 rounded-full text-sm font-semibold relative transition
+              {% if request.path|slice:':7' == '/mural/' or request.path == '/mural' %}
+                bg-emerald-600 text-white shadow
+              {% else %}
+                text-gray-700 hover:bg-emerald-50 hover:text-emerald-700
+              {% endif %}
+              focus:outline-none focus:ring-2 focus:ring-emerald-400">
+            <svg class="inline w-4 h-4 mr-1 -mt-1 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
+            </svg>
             Mural{% mural_badge recentes_dias=7 %}
           </a>
 
           <!-- Admin (apenas staff) -->
           {% if user.is_staff %}
-            <a href="/admin/" class="px-3 py-1.5 rounded-full text-sm text-gray-700 hover:bg-gray-100">Admin</a>
+            <a href="/admin/"
+              class="px-4 py-2 rounded-full text-sm font-semibold transition text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+              <svg class="inline w-4 h-4 mr-1 -mt-1 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v16H4z"/>
+              </svg>
+              Admin
+            </a>
           {% endif %}
         </nav>
 
         {% if request.user.is_superuser %}
-          <a href="{% url 'relatorios:comissoes_pagas' %}" class="...">💼 Comissões pagas</a>
+          <a href="{% url 'relatorios:comissoes_pagas' %}"
+             class="px-4 py-2 rounded-full text-sm font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition shadow">
+            💼 Comissões pagas
+          </a>
         {% endif %}
 
         <!-- Usuário / Auth -->
@@ -101,7 +104,7 @@
             <!-- Dropdown simples sem JS -->
             <details class="relative">
               <summary class="list-none cursor-pointer flex items-center gap-2 select-none">
-                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 text-sm">{{ user.get_full_name|default:user.username|slice:':1'|upper }}</span>
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold border border-emerald-200">{{ user.get_full_name|default:user.username|slice:':1'|upper }}</span>
                 <span class="hidden sm:inline text-sm text-gray-800">{{ user.get_full_name|default:user.username }}</span>
               </summary>
               <ul class="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg overflow-hidden text-sm z-10">
@@ -118,7 +121,7 @@
               </ul>
             </details>
           {% else %}
-            <a href="{% url 'usuarios:login' %}" class="px-3 py-1.5 rounded-full text-sm bg-indigo-600 text-white hover:bg-indigo-700">Entrar</a>
+            <a href="{% url 'usuarios:login' %}" class="px-4 py-2 rounded-full text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition shadow">Entrar</a>
           {% endif %}
         </div>
       </div>
@@ -127,7 +130,6 @@
     <!-- CONTEÚDO -->
     <main class="max-w-6xl mx-auto p-4">
       {% block content %}
-
       {% endblock %}
     </main>
   </body>

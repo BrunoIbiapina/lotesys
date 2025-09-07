@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
+import calendar
 
 from .models import Venda, Parcela
 
@@ -46,10 +47,12 @@ def vendas_list(request):
     ano = request.GET.get("ano")
     q = request.GET.get("q")
 
+    # Filtro combinado de ano e mês
     if ano and ano.isdigit():
         vendas = vendas.filter(data_venda__year=int(ano))
     if mes and mes.isdigit():
         vendas = vendas.filter(data_venda__month=int(mes))
+
     if q:
         vendas = vendas.filter(
             Q(cliente__nome__icontains=q)
@@ -57,10 +60,32 @@ def vendas_list(request):
             | Q(lote__quadra__icontains=q)
         )
 
+    # Lista de meses em português
+    meses_pt = [
+        ("1", "Janeiro"),
+        ("2", "Fevereiro"),
+        ("3", "Março"),
+        ("4", "Abril"),
+        ("5", "Maio"),
+        ("6", "Junho"),
+        ("7", "Julho"),
+        ("8", "Agosto"),
+        ("9", "Setembro"),
+        ("10", "Outubro"),
+        ("11", "Novembro"),
+        ("12", "Dezembro"),
+    ]
+
+    anos = Venda.objects.dates("data_venda", "year")
+    years = [a.year for a in anos]
+
     context = {
         "vendas": vendas,
         "mes": mes or "",
+        "mes_str": mes or "",
         "ano": ano or "",
+        "years": years,
+        "months": meses_pt,  # <-- aqui!
         "q": q or "",
     }
     return render(request, "vendas/list.html", context)

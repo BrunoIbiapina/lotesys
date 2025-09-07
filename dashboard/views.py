@@ -11,7 +11,12 @@ from django.utils import timezone
 from financeiro.views import _monta_contexto_extrato
 
 from financeiro.models import Despesa
-from vendas.models import Venda, Parcela
+from vendas.models import Venda
+try:
+    from vendas.models import Parcela
+except Exception:
+    # fallback caso exista outro app com Parcela
+    from financeiro.models import Parcela  # type: ignore
 
 
 def _parse_date(s: str | None) -> date | None:

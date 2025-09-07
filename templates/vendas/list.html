@@ -3,77 +3,82 @@
 {% block title %}Vendas{% endblock %}
 {% block content %}
 
-<div class="flex items-center justify-between mb-4">
-  <h1 class="text-3xl font-semibold">Vendas</h1>
-  <a href="/" class="text-sm underline">← Voltar ao Dashboard</a>
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-3xl font-bold text-gray-900">Vendas</h1>
+  <a href="/" class="text-sm text-emerald-700 underline hover:text-emerald-900 transition">← Voltar ao Dashboard</a>
 </div>
 
-<form method="get" action="{% url 'vendas:vendas_list' %}" class="bg-white p-4 rounded-2xl shadow mb-6">
+<form method="get" action="{% url 'vendas:vendas_list' %}" class="bg-white p-5 rounded-2xl shadow mb-8 border border-gray-100">
   <div class="grid md:grid-cols-6 gap-4 items-end">
     <div class="md:col-span-2">
-      <label class="text-sm text-gray-600">Buscar (cliente / lote)</label>
+      <label class="block text-xs font-semibold text-gray-700 mb-1">Buscar (cliente / lote)</label>
       <input type="text" name="q" value="{{ q }}" placeholder="ex.: Maria, Q3, Lote 10"
-             class="w-full border rounded p-2">
+             class="w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-800 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition text-sm shadow-sm">
     </div>
-
     <div>
-      <label class="text-sm text-gray-600">Mês</label>
-      <select name="mes" class="w-full border rounded p-2">
+      <label class="block text-xs font-semibold text-gray-700 mb-1">Mês</label>
+      <select name="mes" class="w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-800 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition text-sm shadow-sm">
         <option value="">Todos</option>
         {% for v,label in months %}
           <option value="{{ v }}" {% if mes_str == v %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </div>
-
     <div>
-      <label class="text-sm text-gray-600">Ano</label>
-      <select name="ano" class="w-full border rounded p-2">
+      <label class="block text-xs font-semibold text-gray-700 mb-1">Ano</label>
+      <select name="ano" class="w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-800 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition text-sm shadow-sm">
         <option value="">Todos</option>
         {% for y in years %}
           <option value="{{ y }}" {% if ano == y %}selected{% endif %}>{{ y }}</option>
         {% endfor %}
       </select>
     </div>
-
-    <div class="md:col-span-2">
-      <button class="px-4 py-2 rounded bg-gray-900 text-white">Aplicar</button>
-      <a href="{% url 'vendas:vendas_list' %}" class="ml-2 text-sm underline">Limpar</a>
+    <div class="md:col-span-2 flex gap-3 items-end">
+      <button class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+        Aplicar
+      </button>
+      <a href="{% url 'vendas:vendas_list' %}" class="text-sm text-gray-500 underline hover:text-emerald-700 transition">Limpar</a>
     </div>
   </div>
 </form>
 
-<div class="overflow-auto bg-white rounded-2xl shadow">
-  <table class="min-w-full">
-    <thead class="bg-gray-100">
+<div class="overflow-auto bg-white rounded-2xl shadow border border-gray-100">
+  <table class="min-w-full text-sm">
+    <thead class="bg-emerald-50 text-emerald-800">
       <tr>
-        <th class="text-left p-2">Data</th>
-        <th class="text-left p-2">Cliente</th>
-        <th class="text-left p-2">Lote</th>
-        <th class="text-left p-2">Valor Total</th>
-        <th class="text-left p-2">Entrada líquida</th>
-        <th class="text-left p-2">Parcelas</th>
-        <th class="text-left p-2"></th>
+        <th class="text-left p-3 font-semibold">Data</th>
+        <th class="text-left p-3 font-semibold">Cliente</th>
+        <th class="text-left p-3 font-semibold">Lote</th>
+        <th class="text-left p-3 font-semibold">Valor Total</th>
+        <th class="text-left p-3 font-semibold">Entrada líquida</th>
+        <th class="text-left p-3 font-semibold">Parcelas</th>
+        <th class="text-left p-3"></th>
       </tr>
     </thead>
     <tbody>
       {% for v in vendas %}
-        <tr class="border-t">
-          <td class="p-2">{{ v.data_venda|date:'d/m/Y' }}</td>
-          <td class="p-2">{{ v.cliente.nome }}</td>
-          <td class="p-2">Q{{ v.lote.quadra }} - Lote {{ v.lote.numero }}</td>
-          <td class="p-2">{{ v.valor_total|brl }}</td>
-          <td class="p-2">{{ v.entrada_liquida|brl }}</td>
-          <td class="p-2">{{ v.parcelas_total }}</td>
-          <td class="p-2">
-            <a class="text-indigo-600 hover:underline" href="{% url 'vendas:venda_detail' v.id %}">ver</a>
+        <tr class="border-t hover:bg-emerald-50/60 transition">
+          <td class="p-3">{{ v.data_venda|date:'d/m/Y' }}</td>
+          <td class="p-3">{{ v.cliente.nome }}</td>
+          <td class="p-3">Q{{ v.lote.quadra }} - Lote {{ v.lote.numero }}</td>
+          <td class="p-3">{{ v.valor_total|brl }}</td>
+          <td class="p-3">{{ v.entrada_liquida|brl }}</td>
+          <td class="p-3">{{ v.parcelas_total }}</td>
+          <td class="p-3">
+            <a class="inline-block px-4 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 font-semibold text-xs shadow hover:bg-emerald-200 transition"
+               href="{% url 'vendas:venda_detail' v.id %}">Ver detalhes</a>
           </td>
         </tr>
       {% empty %}
-        <tr><td class="p-4" colspan="7">Nenhuma venda encontrada.</td></tr>
+        <tr>
+          <td class="p-6 text-center text-gray-500" colspan="7">Nenhuma venda encontrada.</td>
+        </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
 {% endblock %}
+
+print("Mês:", request.GET.get("mes"))
+print("Ano:", request.GET.get("ano"))
