@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Minhas Perguntas - LoteSys{% endblock %}
+
+{% block extra_css %}
+<style>
+.my-questions-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+}
+
+.question-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.question-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.status-badge {
+    border-radius: 20px;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+    font-weight: bold;
+}
+
+.status-pendente {
+    background: #ffc107;
+    color: #000;
+}
+
+.status-respondida {
+    background: #28a745;
+    color: white;
+}
+
+.status-arquivada {
+    background: #6c757d;
+    color: white;
+}
+
+.category-badge {
+    border-radius: 15px;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    font-weight: bold;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 15px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: #dee2e6;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #007bff;
+    border: 3px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.stats-row {
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    height: 100%;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.back-link {
+    color: white;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+}
+
+.back-link:hover {
+    opacity: 0.8;
+    color: white;
+}
+
+.pagination-wrapper {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Cabeçalho -->
+<div class="my-questions-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <a href="{% url 'perguntas:lista' %}" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Voltar às Perguntas
+                </a>
+                <h1 class="display-4 mb-3 mt-3">
+                    <i class="fas fa-user-circle"></i>
+                    Minhas Perguntas
+                </h1>
+                <p class="lead">Acompanhe o status das suas perguntas</p>
+                
+                <div class="mt-4">
+                    <a href="{% url 'perguntas:nova' %}" class="btn btn-warning btn-lg">
+                        <i class="fas fa-plus"></i> Nova Pergunta
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    {% if page_obj %}
+    <!-- Estatísticas -->
+    <div class="row stats-row">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h3>{{ page_obj.paginator.count }}</h3>
+                <p class="mb-0">Total de Perguntas</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(45deg, #ffc107, #ff8c00);">
+                <h3>{{ page_obj.object_list|dictsort:"status"|dictsortreversed:"status"|length|add:"-2" }}</h3>
+                <p class="mb-0">Pendentes</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(45deg, #28a745, #20c997);">
+                <h3>{{ page_obj.object_list|length|add:"-1" }}</h3>
+                <p class="mb-0">Respondidas</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(45deg, #6c757d, #495057);">
+                <h3>0</h3>
+                <p class="mb-0">Arquivadas</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de perguntas -->
+    <div class="row">
+        {% for pergunta in page_obj %}
+        <div class="col-12">
+            <div class="card question-card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-start mb-2">
+                                <span class="status-badge status-{{ pergunta.status }} me-2">
+                                    {% if pergunta.status == 'pendente' %}
+                                        <i class="fas fa-clock"></i> Pendente
+                                    {% elif pergunta.status == 'respondida' %}
+                                        <i class="fas fa-check"></i> Respondida
+                                    {% else %}
+                                        <i class="fas fa-archive"></i> Arquivada
+                                    {% endif %}
+                                </span>
+                                
+                                <span class="category-badge text-white" 
+                                      style="background-color: {{ pergunta.categoria.cor }};">
+                                    <i class="{{ pergunta.categoria.icone }}"></i>
+                                    {{ pergunta.categoria.nome }}
+                                </span>
+                            </div>
+                            
+                            <h5 class="card-title">{{ pergunta.titulo }}</h5>
+                            <p class="card-text text-muted">
+                                {{ pergunta.pergunta|truncatewords:25 }}
+                            </p>
+                            
+                            <!-- Timeline da pergunta -->
+                            <div class="mt-3">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot" style="background: #007bff;"></div>
+                                    <small class="text-muted">
+                                        <strong>Pergunta feita</strong><br>
+                                        {{ pergunta.criado_em|date:"d/m/Y à\s H:i" }}
+                                    </small>
+                                </div>
+                                
+                                {% if pergunta.status == 'respondida' %}
+                                <div class="timeline-item">
+                                    <div class="timeline-dot" style="background: #28a745;"></div>
+                                    <small class="text-muted">
+                                        <strong>Respondida por {{ pergunta.nome_respondente }}</strong><br>
+                                        {{ pergunta.respondido_em|date:"d/m/Y à\s H:i" }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-end">
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ pergunta.criado_em|date:"d/m/Y" }}
+                                </small>
+                            </div>
+                            
+                            {% if pergunta.status == 'respondida' %}
+                            <a href="{% url 'perguntas:detalhes' pergunta.pk %}" 
+                               class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Ver Resposta
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">
+                                <i class="fas fa-hourglass-half"></i>
+                                Aguardando resposta
+                            </span>
+                            {% endif %}
+                            
+                            {% if pergunta.publica %}
+                            <div class="mt-2">
+                                <small class="text-success">
+                                    <i class="fas fa-globe"></i> Pública
+                                </small>
+                            </div>
+                            {% else %}
+                            <div class="mt-2">
+                                <small class="text-warning">
+                                    <i class="fas fa-lock"></i> Privada
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Paginação -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination-wrapper">
+        <nav aria-label="Navegação das minhas perguntas">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- Estado vazio -->
+    <div class="empty-state">
+        <i class="fas fa-question-circle fa-3x mb-3"></i>
+        <h3>Você ainda não fez nenhuma pergunta</h3>
+        <p>Faça sua primeira pergunta e nossa equipe responderá rapidamente!</p>
+        <a href="{% url 'perguntas:nova' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus"></i> Fazer Primeira Pergunta
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

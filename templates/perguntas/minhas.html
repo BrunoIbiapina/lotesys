@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Minhas Perguntas - LoteSys{% endblock %}
+
+{% block content %}
+<!-- Cabeçalho -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="mb-4">
+            <a href="{% url 'perguntas:lista' %}" class="text-white hover:text-indigo-200 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar às Perguntas
+            </a>
+        </div>
+        <h1 class="text-4xl font-bold mb-4">
+            <i class="fas fa-user-circle mr-3"></i>
+            Minhas Perguntas
+        </h1>
+        <p class="text-xl text-indigo-100 mb-8">Acompanhe o status das suas perguntas</p>
+        
+        <div class="mt-6">
+            <a href="{% url 'perguntas:nova' %}" 
+               class="inline-block px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>Nova Pergunta
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if page_obj %}
+    <!-- Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6 text-center">
+            <h3 class="text-3xl font-bold">{{ page_obj.paginator.count }}</h3>
+            <p class="text-blue-100">Total de Perguntas</p>
+        </div>
+        <div class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg p-6 text-center">
+            <h3 class="text-3xl font-bold">
+                {% with pendentes=0 %}
+                    {% for pergunta in page_obj.object_list %}
+                        {% if not pergunta.resposta %}
+                            {% widthratio pendentes 1 1 as pendentes %}
+                        {% endif %}
+                    {% endfor %}
+                    {{ pendentes|default:0 }}
+                {% endwith %}
+            </h3>
+            <p class="text-yellow-100">Pendentes</p>
+        </div>
+        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-6 text-center">
+            <h3 class="text-3xl font-bold">
+                {% with respondidas=0 %}
+                    {% for pergunta in page_obj.object_list %}
+                        {% if pergunta.resposta %}
+                            {% widthratio respondidas 1 1 as respondidas %}
+                        {% endif %}
+                    {% endfor %}
+                    {{ respondidas|default:0 }}
+                {% endwith %}
+            </h3>
+            <p class="text-green-100">Respondidas</p>
+        </div>
+        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg p-6 text-center">
+            <h3 class="text-3xl font-bold">0</h3>
+            <p class="text-gray-100">Arquivadas</p>
+        </div>
+    </div>
+    
+    <!-- Lista de perguntas -->
+    <div class="space-y-6">
+        {% for pergunta in page_obj %}
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between">
+                    <!-- Conteúdo principal -->
+                    <div class="flex-1 lg:pr-6">
+                        <!-- Status e categoria -->
+                        <div class="flex flex-wrap items-center gap-2 mb-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
+                                {% if pergunta.resposta %}
+                                    bg-green-100 text-green-800
+                                {% else %}
+                                    bg-yellow-100 text-yellow-800
+                                {% endif %}">
+                                {% if pergunta.resposta %}
+                                    <i class="fas fa-check mr-1"></i>Respondida
+                                {% else %}
+                                    <i class="fas fa-clock mr-1"></i>Pendente
+                                {% endif %}
+                            </span>
+                            
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold text-white" 
+                                  style="background-color: {{ pergunta.categoria.cor }};">
+                                <i class="{{ pergunta.categoria.icone }} mr-1"></i>{{ pergunta.categoria.nome }}
+                            </span>
+                        </div>
+                        
+                        <!-- Título e descrição -->
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ pergunta.titulo }}</h3>
+                        <p class="text-gray-600 mb-4">{{ pergunta.pergunta|truncatewords:25 }}</p>
+                        
+                        <!-- Timeline -->
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 w-4 h-4 bg-blue-500 rounded-full mt-1 mr-3"></div>
+                                <div class="text-sm text-gray-600">
+                                    <span class="font-medium">Pergunta feita</span><br>
+                                    <span class="text-gray-500">{{ pergunta.criado_em|date:"d/m/Y à\s H:i" }}</span>
+                                </div>
+                            </div>
+                            
+                            {% if pergunta.resposta %}
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 w-4 h-4 bg-green-500 rounded-full mt-1 mr-3"></div>
+                                <div class="text-sm text-gray-600">
+                                    <span class="font-medium">Respondida por {{ pergunta.nome_respondente }}</span><br>
+                                    <span class="text-gray-500">{{ pergunta.respondido_em|date:"d/m/Y à\s H:i" }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Ações e informações laterais -->
+                    <div class="mt-4 lg:mt-0 lg:ml-6 flex-shrink-0">
+                        <div class="text-sm text-gray-500 mb-4">
+                            <i class="fas fa-calendar mr-1"></i>{{ pergunta.criado_em|date:"d/m/Y" }}
+                        </div>
+                        
+                        {% if pergunta.resposta %}
+                        <a href="{% url 'perguntas:detalhes' pergunta.pk %}" 
+                           class="inline-block px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors mb-3">
+                            <i class="fas fa-eye mr-2"></i>Ver Resposta
+                        </a>
+                        {% else %}
+                        <div class="inline-block px-4 py-2 bg-gray-100 text-gray-600 rounded-lg mb-3">
+                            <i class="fas fa-hourglass-half mr-2"></i>Aguardando resposta
+                        </div>
+                        {% endif %}
+                        
+                        <div class="text-sm">
+                            {% if pergunta.publica %}
+                            <span class="text-green-600">
+                                <i class="fas fa-globe mr-1"></i>Pública
+                            </span>
+                            {% else %}
+                            <span class="text-orange-600">
+                                <i class="fas fa-lock mr-1"></i>Privada
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Paginação -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8 flex justify-center">
+        <nav class="flex space-x-2">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}"
+                   class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-3 py-2 bg-blue-500 text-white rounded-lg">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}"
+                       class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}"
+                   class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- Estado vazio -->
+    <div class="text-center py-12">
+        <div class="max-w-md mx-auto">
+            <i class="fas fa-question-circle text-6xl text-gray-300 mb-6"></i>
+            <h3 class="text-2xl font-semibold text-gray-900 mb-4">Você ainda não fez nenhuma pergunta</h3>
+            <p class="text-gray-600 mb-6">Faça sua primeira pergunta e nossa equipe responderá rapidamente!</p>
+            <a href="{% url 'perguntas:nova' %}" 
+               class="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>Fazer Primeira Pergunta
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -435,58 +435,53 @@ def extrato_pdf(request):
     # ---------------- KPIs em "cards" (grade 3x) ----------------
     kpis = [
         ("Parcelas PAGAS",             _brl(ctx["total_parcelas_pagas"])),
-        # ("Entradas brutas (vendas)",   _brl(ctx["total_entradas_brutas"])),
+        ("Entradas brutas (vendas)",   _brl(ctx["total_entradas_brutas"])),
         ("Comissões sobre entradas",   _brl(ctx["total_comissoes"])),
         ("Entradas líquidas",          _brl(ctx["total_entradas_liquidas"])),
         ("Total de Receitas",          _brl(ctx["total_receitas"])),
         ("Despesas PAGAS (contábil)",  _brl(ctx["total_despesas_pagas"])),
-        # ("Despesas p/ FLUXO",          _brl(ctx["total_despesas_pagas_fluxo"])),
-        # ("Caixa no período",           _brl(ctx["caixa_no_periodo"])),
-        # ("Saldo em caixa desde o início",   _brl(ctx["caixa_ate_fim"])),
+        ("Despesas p/ FLUXO",          _brl(ctx["total_despesas_pagas_fluxo"])),
+        ("Caixa no período",           _brl(ctx["caixa_no_periodo"])),
+        ("Saldo em caixa desde o início",   _brl(ctx["caixa_ate_fim"])),
     ]
 
-    story.append(Spacer(1, 8))
-
-    kpi_cards = []
-    for title, value in kpis:
-        card = Table(
-            [
-                [Paragraph(title, ParagraphStyle(
-                    name="kpiTitle", fontName="Helvetica", fontSize=10, textColor=text_muted, spaceAfter=4
-                ))],
-                [Paragraph(value, ParagraphStyle(
-                    name="kpiValue", fontName="Helvetica-Bold", fontSize=16, textColor=brand_text, spaceBefore=2
-                ))]
-            ],
-            colWidths=[180]
+    def _kpi_card(title: str, value: str):
+        t = Table(
+            [[Paragraph(title, ParagraphStyle(
+                name="kpiTitle", fontName="Helvetica", fontSize=8.8, textColor=text_muted
+            ))],
+             [Paragraph(value, ParagraphStyle(
+                 name="kpiValue", fontName="Helvetica-Bold", fontSize=13, textColor=brand_text
+             ))]],
+            colWidths=[170]
         )
-        card.setStyle(TableStyle([
+        t.setStyle(TableStyle([
             ("BACKGROUND", (0,0), (-1,-1), brand_lighter),
-            ("BOX", (0,0), (-1,-1), 1, brand_light),
-            ("LEFTPADDING", (0,0), (-1,-1), 18),
-            ("RIGHTPADDING",(0,0), (-1,-1), 18),
-            ("TOPPADDING",  (0,0), (-1,-1), 14),
-            ("BOTTOMPADDING",(0,0), (-1,-1), 14),
-            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-            ("ALIGN", (0,1), (-1,-1), "CENTER"),  # <-- Centraliza a linha dos valores
+            ("BOX", (0,0), (-1,-1), 0.5, brand_light),
+            ("INNERGRID", (0,0), (-1,-1), 0.0, colors.white),
+            ("LEFTPADDING", (0,0), (-1,-1), 8),
+            ("RIGHTPADDING",(0,0), (-1,-1), 8),
+            ("TOPPADDING",  (0,0), (-1,-1), 6),
+            ("BOTTOMPADDING",(0,0), (-1,-1), 8),
         ]))
-        kpi_cards.append(card)
+        return t
 
-    # Agrupa em linhas de 3 cards
-    for i in range(0, len(kpi_cards), 3):
-        row = kpi_cards[i:i+3]
-        # Preenche até 3 cards por linha
+    # organiza em linhas de 3 cards
+    rows_cards = []
+    row = []
+    for idx, (t, v) in enumerate(kpis, 1):
+        row.append(_kpi_card(t, v))
+        if idx % 3 == 0:
+            rows_cards.append(row)
+            row = []
+    if row:
         while len(row) < 3:
-            row.append(Spacer(1, 1))
-        story.append(Table([row], colWidths=[190, 190, 190], style=[
-            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-            ("ALIGN", (0,0), (-1,-1), "CENTER"),
-            ("LEFTPADDING", (0,0), (-1,-1), 0),
-            ("RIGHTPADDING",(0,0), (-1,-1), 0),
-            ("TOPPADDING",  (0,0), (-1,-1), 0),
-            ("BOTTOMPADDING",(0,0), (-1,-1), 0),
-        ]))
-        story.append(Spacer(1, 10))
+            row.append(Table([[""]], colWidths=[170], rowHeights=[0]))
+        rows_cards.append(row)
+
+    cards_tbl = Table(rows_cards, colWidths=[170, 170, 170], hAlign="LEFT", spaceBefore=2, spaceAfter=12)
+    cards_tbl.setStyle(TableStyle([("VALIGN", (0,0), (-1,-1), "TOP")]))
+    story.append(cards_tbl)
 
     # ---------------- Helper para seções (tabelas) ----------------
     def _section_table(title: str, header: list[str], rows: list[list], col_widths: list[int], scheme: str):

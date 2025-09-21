@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "financeiro",
     "mural.apps.MuralConfig",
     "notificacoes",
+    "perguntas",
 ]
 
 # ===================== MIDDLEWARE =====================
@@ -170,8 +171,10 @@ JAZZMIN_SETTINGS = {
         "financeiro.ReceitaExtra": "fas fa-plus-circle",
         "vendas.Venda": "fas fa-shopping-cart",
         "vendas.Parcela": "fas fa-money-check-alt",
+        "perguntas.Categoria": "fas fa-tags",
+        "perguntas.Pergunta": "fas fa-question-circle",
     },
-    "order_with_respect_to": ["auth", "cadastros", "financeiro", "vendas"],
+    "order_with_respect_to": ["auth", "cadastros", "financeiro", "vendas", "perguntas"],
     "topmenu_links": [
         {"name": "Dashboard", "url": "/", "permissions": ["auth.view_user"]},
         {"name": "Extrato", "url": "/financeiro/extrato/"},

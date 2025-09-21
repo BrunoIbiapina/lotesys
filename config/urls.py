@@ -15,6 +15,7 @@ urlpatterns = [
     path("usuarios/", include(("usuarios.urls", "usuarios"), namespace="usuarios")),
     path("vendas/", include(("vendas.urls", "vendas"), namespace="vendas")),
     path("mural/", include(("mural.urls", "mural"), namespace="mural")),
+    path("perguntas/", include(("perguntas.urls", "perguntas"), namespace="perguntas")),
     path("relatorios/", include(("relatorios.urls", "relatorios"), namespace="relatorios")),
     path("telegram/<str:secret>/", telegram_webhook, name="telegram_webhook"),
     # <<< SEM CONDICIONAL >>>

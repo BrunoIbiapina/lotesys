@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nova Pergunta - LoteSys{% endblock %}
+
+{% block content %}
+<!-- Cabeçalho -->
+<div class="bg-gradient-to-r from-green-600 to-blue-600 text-white py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl font-bold mb-4">
+            <i class="fas fa-plus-circle mr-3"></i>
+            Nova Pergunta
+        </h1>
+        <p class="text-xl text-green-100">Faça sua pergunta e nossa equipe responderá em breve</p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Formulário -->
+        <div class="lg:col-span-2">
+            <!-- Informações sobre o processo -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-r-lg">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-lg font-medium text-blue-900 mb-2">Como funciona?</h3>
+                        <div class="text-blue-700 space-y-2">
+                            <div class="flex items-center">
+                                <i class="fas fa-check mr-2"></i>
+                                <span>Sua pergunta será analisada pela nossa equipe</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-check mr-2"></i>
+                                <span>Responderemos em até 24 horas</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-check mr-2"></i>
+                                <span>A resposta ficará disponível no FAQ para outros usuários</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulário principal -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Nome do usuário -->
+                    <div>
+                        <label for="{{ form.nome_usuario.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2"></i>{{ form.nome_usuario.label }}
+                        </label>
+                        <input type="text" 
+                               name="{{ form.nome_usuario.name }}" 
+                               id="{{ form.nome_usuario.id_for_label }}"
+                               value="{{ form.nome_usuario.value|default:'' }}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Digite seu nome completo">
+                        {% if form.nome_usuario.errors %}
+                            <div class="mt-2 text-sm text-red-600">
+                                {% for error in form.nome_usuario.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.nome_usuario.help_text }}</p>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="{{ form.email_usuario.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-envelope mr-2"></i>{{ form.email_usuario.label }}
+                        </label>
+                        <input type="email" 
+                               name="{{ form.email_usuario.name }}" 
+                               id="{{ form.email_usuario.id_for_label }}"
+                               value="{{ form.email_usuario.value|default:'' }}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Digite seu email">
+                        {% if form.email_usuario.errors %}
+                            <div class="mt-2 text-sm text-red-600">
+                                {% for error in form.email_usuario.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.email_usuario.help_text }}</p>
+                    </div>
+
+                    <!-- Categoria -->
+                    <div>
+                        <label for="{{ form.categoria.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-tags mr-2"></i>{{ form.categoria.label }}
+                        </label>
+                        <select name="{{ form.categoria.name }}" 
+                                id="{{ form.categoria.id_for_label }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                            <option value="">Selecione uma categoria</option>
+                            {% for choice in form.categoria.field.choices %}
+                                {% if choice.0 %}
+                                    <option value="{{ choice.0 }}" {% if form.categoria.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        {% if form.categoria.errors %}
+                            <div class="mt-2 text-sm text-red-600">
+                                {% for error in form.categoria.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.categoria.help_text }}</p>
+                    </div>
+
+                    <!-- Título -->
+                    <div>
+                        <label for="{{ form.titulo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-heading mr-2"></i>{{ form.titulo.label }}
+                        </label>
+                        <input type="text" 
+                               name="{{ form.titulo.name }}" 
+                               id="{{ form.titulo.id_for_label }}"
+                               value="{{ form.titulo.value|default:'' }}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Digite um título claro e direto">
+                        {% if form.titulo.errors %}
+                            <div class="mt-2 text-sm text-red-600">
+                                {% for error in form.titulo.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.titulo.help_text }}</p>
+                    </div>
+
+                    <!-- Pergunta -->
+                    <div>
+                        <label for="{{ form.pergunta.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-question-circle mr-2"></i>{{ form.pergunta.label }}
+                        </label>
+                        <textarea name="{{ form.pergunta.name }}" 
+                                  id="{{ form.pergunta.id_for_label }}"
+                                  rows="6"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                                  placeholder="Descreva sua pergunta com o máximo de detalhes possível">{{ form.pergunta.value|default:'' }}</textarea>
+                        {% if form.pergunta.errors %}
+                            <div class="mt-2 text-sm text-red-600">
+                                {% for error in form.pergunta.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.pergunta.help_text }}</p>
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                        <button type="submit" 
+                                class="flex-1 sm:flex-none px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Enviar Pergunta
+                        </button>
+                        
+                        <a href="{% url 'perguntas:lista' %}" 
+                           class="flex-1 sm:flex-none px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-center focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Voltar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar com dicas -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Dicas -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-lg">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-lightbulb text-yellow-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-lg font-medium text-yellow-900 mb-2">Dicas para uma boa pergunta</h3>
+                        <div class="text-yellow-700 space-y-2">
+                            <div class="flex items-start">
+                                <i class="fas fa-check mr-2 mt-1 text-sm"></i>
+                                <span>Seja específico e claro no título</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check mr-2 mt-1 text-sm"></i>
+                                <span>Descreva o problema com detalhes na pergunta</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check mr-2 mt-1 text-sm"></i>
+                                <span>Escolha a categoria mais adequada</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check mr-2 mt-1 text-sm"></i>
+                                <span>Verifique se a pergunta já não foi feita</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categorias -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-tags mr-2"></i>Categorias Disponíveis
+                </h3>
+                <div class="space-y-3">
+                    {% for categoria in categorias %}
+                    <div class="flex items-center p-3 rounded-lg border-2 border-transparent hover:border-gray-200 transition-colors"
+                         style="background-color: {{ categoria.cor }}10;">
+                        <i class="{{ categoria.icone }} text-xl mr-3" style="color: {{ categoria.cor }};"></i>
+                        <div>
+                            <div class="font-medium text-gray-900">{{ categoria.nome }}</div>
+                            {% if categoria.descricao %}
+                            <div class="text-sm text-gray-500">{{ categoria.descricao }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Como funciona -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-info-circle mr-2 text-blue-500"></i>Como funciona?
+                </h3>
+                <ol class="text-sm text-gray-600 space-y-2">
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</span>
+                        <span>Você faz uma pergunta</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</span>
+                        <span>Nossa equipe analisa</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">3</span>
+                        <span>Respondemos rapidamente</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">4</span>
+                        <span>A pergunta fica disponível para todos</span>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

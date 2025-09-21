@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ pergunta.titulo }} - LoteSys{% endblock %}
+
+{% block content %}
+<!-- Cabeçalho -->
+<div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-4">
+            <a href="{% url 'perguntas:lista' %}" class="text-white hover:text-purple-200 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar às Perguntas
+            </a>
+        </div>
+        <div class="mt-4">
+            <span class="inline-block px-4 py-2 rounded-full text-sm font-semibold text-white mb-4" 
+                  style="background-color: {{ pergunta.categoria.cor }};">
+                <i class="{{ pergunta.categoria.icone }} mr-2"></i>{{ pergunta.categoria.nome }}
+            </span>
+            <h1 class="text-4xl font-bold">{{ pergunta.titulo }}</h1>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Conteúdo principal -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Card da pergunta -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <!-- Cabeçalho da pergunta -->
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-lg font-bold mr-4">
+                            {{ pergunta.nome_usuario|first|upper }}
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold">{{ pergunta.nome_usuario }}</h3>
+                            <p class="text-blue-200">
+                                <i class="fas fa-calendar mr-1"></i>
+                                Perguntado em {{ pergunta.criado_em|date:"d/m/Y à\s H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conteúdo da pergunta -->
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-question-circle text-blue-500 mr-2"></i>Pergunta
+                    </h3>
+                    <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+                        {{ pergunta.pergunta|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Resposta -->
+            {% if pergunta.resposta %}
+            <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-lg font-bold mr-4">
+                        {{ pergunta.nome_respondente|first|upper }}
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold">{{ pergunta.nome_respondente }}</h3>
+                        <p class="text-green-200">
+                            <i class="fas fa-reply mr-1"></i>
+                            Respondeu em {{ pergunta.respondido_em|date:"d/m/Y à\s H:i" }}
+                        </p>
+                    </div>
+                </div>
+                
+                <h3 class="text-lg font-semibold mb-4">
+                    <i class="fas fa-check-circle mr-2"></i>Resposta
+                </h3>
+                <div class="prose prose-lg max-w-none text-white leading-relaxed">
+                    {{ pergunta.resposta|linebreaks }}
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-clock text-yellow-500 text-xl mr-3"></i>
+                    <div>
+                        <h3 class="text-lg font-medium text-yellow-900">Aguardando resposta</h3>
+                        <p class="text-yellow-700">Nossa equipe está analisando esta pergunta e responderá em breve.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Seção de compartilhamento -->
+            <div class="bg-gray-50 rounded-lg p-6 text-center">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-share-alt mr-2"></i>Compartilhar esta pergunta
+                </h3>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="shareWhatsApp()" 
+                            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
+                        <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                    </button>
+                    <button onclick="shareTelegram()" 
+                            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+                        <i class="fab fa-telegram mr-2"></i>Telegram
+                    </button>
+                    <button onclick="shareEmail()" 
+                            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors">
+                        <i class="fas fa-envelope mr-2"></i>E-mail
+                    </button>
+                    <button onclick="copyLink()" 
+                            class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors">
+                        <i class="fas fa-copy mr-2"></i>Copiar Link
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Informações adicionais -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-info-circle mr-2"></i>Informações
+                    </h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Status</p>
+                        <div class="font-semibold {% if pergunta.resposta %}text-green-600{% else %}text-yellow-600{% endif %}">
+                            {% if pergunta.resposta %}
+                                <i class="fas fa-check-circle mr-1"></i>Respondida
+                            {% else %}
+                                <i class="fas fa-clock mr-1"></i>Aguardando resposta
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Categoria</p>
+                        <div class="font-semibold" style="color: {{ pergunta.categoria.cor }};">
+                            <i class="{{ pergunta.categoria.icone }} mr-1"></i>{{ pergunta.categoria.nome }}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Data da pergunta</p>
+                        <div class="font-semibold text-gray-900">{{ pergunta.criado_em|date:"d/m/Y" }}</div>
+                    </div>
+                    
+                    {% if pergunta.respondido_em %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500 mb-1">Tempo de resposta</p>
+                        <div class="font-semibold text-gray-900">
+                            {% with dias=pergunta.respondido_em|timeuntil:pergunta.criado_em %}
+                                {{ dias }}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Ações -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-6 text-center">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Tem uma pergunta?</h3>
+                    <div class="space-y-3">
+                        <a href="{% url 'perguntas:nova' %}" 
+                           class="block w-full px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Fazer Pergunta
+                        </a>
+                        <a href="{% url 'perguntas:lista' %}" 
+                           class="block w-full px-4 py-3 border border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold rounded-lg transition-colors">
+                            <i class="fas fa-list mr-2"></i>Ver Todas
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Perguntas relacionadas -->
+            {% if perguntas_relacionadas %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-link mr-2"></i>Perguntas Relacionadas
+                    </h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    {% for relacionada in perguntas_relacionadas %}
+                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                        <h4 class="font-medium">
+                            <a href="{% url 'perguntas:detalhes' relacionada.pk %}" 
+                               class="text-blue-600 hover:text-blue-800 transition-colors">
+                                {{ relacionada.titulo|truncatechars:60 }}
+                            </a>
+                        </h4>
+                        <p class="text-sm text-gray-500 mt-2">
+                            <i class="fas fa-user mr-1"></i>{{ relacionada.nome_usuario }}
+                            <span class="ml-2">
+                                <i class="fas fa-calendar mr-1"></i>{{ relacionada.criado_em|date:"d/m/Y" }}
+                            </span>
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+const currentUrl = window.location.href;
+const title = "{{ pergunta.titulo|escapejs }}";
+const text = "Confira esta pergunta no LoteSys: " + title;
+
+function shareWhatsApp() {
+    const url = `https://wa.me/?text=${encodeURIComponent(text + " " + currentUrl)}`;
+    window.open(url, '_blank');
+}
+
+function shareTelegram() {
+    const url = `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+}
+
+function shareEmail() {
+    const subject = encodeURIComponent("Pergunta interessante no LoteSys");
+    const body = encodeURIComponent(text + "\n\n" + currentUrl);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(currentUrl).then(function() {
+        // Criar uma notificação visual
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        notification.innerHTML = '<i class="fas fa-check mr-2"></i>Link copiado!';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }).catch(function() {
+        alert('Erro ao copiar link. Tente novamente.');
+    });
+}
+</script>
+{% endblock %}

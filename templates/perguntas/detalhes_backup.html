@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ pergunta.titulo }} - LoteSys{% endblock %}
+
+{% block extra_css %}
+<style>
+.detail-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.question-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.question-header {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 15px 15px 0 0;
+}
+
+.answer-section {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 15px;
+    margin: 1.5rem 0;
+}
+
+.meta-info {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.category-badge {
+    border-radius: 20px;
+    font-size: 0.9rem;
+    padding: 8px 16px;
+    border: none;
+    font-weight: bold;
+}
+
+.related-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.related-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.back-link {
+    color: white;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+}
+
+.back-link:hover {
+    opacity: 0.8;
+    color: white;
+}
+
+.question-text {
+    line-height: 1.6;
+    font-size: 1.1rem;
+}
+
+.answer-text {
+    line-height: 1.7;
+    font-size: 1.1rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.timestamp {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.share-section {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.share-btn {
+    border-radius: 50px;
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+}
+
+.whatsapp { background-color: #25D366; }
+.telegram { background-color: #0088cc; }
+.email { background-color: #ea4335; }
+.copy { background-color: #6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Cabeçalho -->
+<div class="detail-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <a href="{% url 'perguntas:lista' %}" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Voltar às Perguntas
+                </a>
+                <div class="mt-3">
+                    <span class="category-badge text-white d-inline-block mb-3" 
+                          style="background-color: {{ pergunta.categoria.cor }};">
+                        <i class="{{ pergunta.categoria.icone }}"></i>
+                        {{ pergunta.categoria.nome }}
+                    </span>
+                    <h1 class="display-5 mb-0">{{ pergunta.titulo }}</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Card da pergunta -->
+            <div class="card question-card">
+                <div class="question-header">
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar">
+                            {{ pergunta.nome_usuario|first|upper }}
+                        </div>
+                        <div>
+                            <h5 class="mb-1">{{ pergunta.nome_usuario }}</h5>
+                            <small class="opacity-75">
+                                <i class="fas fa-calendar"></i> 
+                                Perguntado em {{ pergunta.criado_em|date:"d/m/Y à\s H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-question-circle text-primary"></i>
+                        Pergunta
+                    </h5>
+                    <div class="question-text">
+                        {{ pergunta.pergunta|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Resposta -->
+            {% if pergunta.resposta %}
+            <div class="answer-section">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="user-avatar" style="background: rgba(255,255,255,0.2);">
+                        {{ pergunta.nome_respondente|first|upper }}
+                    </div>
+                    <div>
+                        <h5 class="mb-1">{{ pergunta.nome_respondente }}</h5>
+                        <small class="opacity-75">
+                            <i class="fas fa-reply"></i> 
+                            Respondeu em {{ pergunta.respondido_em|date:"d/m/Y à\s H:i" }}
+                        </small>
+                    </div>
+                </div>
+                
+                <h5 class="mb-3">
+                    <i class="fas fa-check-circle"></i>
+                    Resposta
+                </h5>
+                <div class="answer-text">
+                    {{ pergunta.resposta|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Seção de compartilhamento -->
+            <div class="share-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-share-alt"></i>
+                    Compartilhar esta pergunta
+                </h5>
+                <div>
+                    <button class="btn share-btn whatsapp" onclick="shareWhatsApp()">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </button>
+                    <button class="btn share-btn telegram" onclick="shareTelegram()">
+                        <i class="fab fa-telegram"></i> Telegram
+                    </button>
+                    <button class="btn share-btn email" onclick="shareEmail()">
+                        <i class="fas fa-envelope"></i> E-mail
+                    </button>
+                    <button class="btn share-btn copy" onclick="copyLink()">
+                        <i class="fas fa-copy"></i> Copiar Link
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Informações adicionais -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Informações
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="meta-info">
+                        <small class="text-muted">Status</small>
+                        <div class="fw-bold text-success">
+                            <i class="fas fa-check-circle"></i> Respondida
+                        </div>
+                    </div>
+                    
+                    <div class="meta-info">
+                        <small class="text-muted">Categoria</small>
+                        <div class="fw-bold" style="color: {{ pergunta.categoria.cor }};">
+                            <i class="{{ pergunta.categoria.icone }}"></i>
+                            {{ pergunta.categoria.nome }}
+                        </div>
+                    </div>
+                    
+                    <div class="meta-info">
+                        <small class="text-muted">Data da pergunta</small>
+                        <div class="fw-bold">{{ pergunta.criado_em|date:"d/m/Y" }}</div>
+                    </div>
+                    
+                    {% if pergunta.respondido_em %}
+                    <div class="meta-info">
+                        <small class="text-muted">Tempo de resposta</small>
+                        <div class="fw-bold">
+                            {% with dias=pergunta.respondido_em|timeuntil:pergunta.criado_em %}
+                                {{ dias }}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Ações -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Tem uma pergunta?</h6>
+                    <a href="{% url 'perguntas:nova' %}" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-plus"></i> Fazer Pergunta
+                    </a>
+                    <a href="{% url 'perguntas:lista' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-list"></i> Ver Todas
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Perguntas relacionadas -->
+            {% if perguntas_relacionadas %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-link"></i>
+                        Perguntas Relacionadas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for relacionada in perguntas_relacionadas %}
+                    <div class="card related-card mb-3">
+                        <div class="card-body p-3">
+                            <h6 class="card-title">
+                                <a href="{% url 'perguntas:detalhes' relacionada.pk %}" 
+                                   class="text-decoration-none">
+                                    {{ relacionada.titulo|truncatechars:60 }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">
+                                <i class="fas fa-user"></i> {{ relacionada.nome_usuario }}
+                                <span class="ms-2">
+                                    <i class="fas fa-calendar"></i> {{ relacionada.criado_em|date:"d/m/Y" }}
+                                </span>
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+const currentUrl = window.location.href;
+const title = "{{ pergunta.titulo|escapejs }}";
+const text = "Confira esta pergunta no LoteSys: " + title;
+
+function shareWhatsApp() {
+    const url = `https://wa.me/?text=${encodeURIComponent(text + " " + currentUrl)}`;
+    window.open(url, '_blank');
+}
+
+function shareTelegram() {
+    const url = `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+}
+
+function shareEmail() {
+    const subject = encodeURIComponent("Pergunta interessante no LoteSys");
+    const body = encodeURIComponent(text + "\n\n" + currentUrl);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(currentUrl).then(function() {
+        alert('Link copiado para a área de transferência!');
+    });
+}
+</script>
+{% endblock %}
