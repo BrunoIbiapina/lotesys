@@ -7,32 +7,83 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ====== Mobile Sidebar Toggle ======
     function initMobileSidebar() {
-        const sidebarToggle = document.querySelector('[data-widget="pushmenu"]');
+        const sidebarToggle = document.querySelector('[data-widget="pushmenu"]') || 
+                             document.querySelector('.navbar-toggler') ||
+                             document.querySelector('[data-toggle="sidebar"]');
         const body = document.body;
         
-        // Criar overlay para mobile
+        // Criar overlay para mobile se não existir
         if (!document.querySelector('.sidebar-overlay')) {
             const overlay = document.createElement('div');
             overlay.className = 'sidebar-overlay';
+            overlay.style.cssText = `
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: rgba(0, 0, 0, 0.5) !important;
+                z-index: 999 !important;
+                display: none !important;
+                opacity: 0 !important;
+                transition: opacity 0.3s ease !important;
+            `;
             overlay.addEventListener('click', () => {
-                body.classList.remove('sidebar-open');
+                closeSidebar();
             });
             document.body.appendChild(overlay);
+        }
+        
+        function openSidebar() {
+            body.classList.add('sidebar-open');
+            const overlay = document.querySelector('.sidebar-overlay');
+            if (overlay) {
+                overlay.style.display = 'block';
+                setTimeout(() => overlay.style.opacity = '1', 10);
+            }
+            
+            // Focar no primeiro link do menu
+            setTimeout(() => {
+                const firstNavLink = document.querySelector('.nav-sidebar .nav-link');
+                if (firstNavLink) {
+                    firstNavLink.focus();
+                }
+            }, 300);
+            
+            // Prevenir scroll do body
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeSidebar() {
+            body.classList.remove('sidebar-open');
+            const overlay = document.querySelector('.sidebar-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 300);
+            }
+            
+            // Restaurar scroll do body
+            document.body.style.overflow = '';
+        }
+        
+        function toggleSidebar() {
+            if (body.classList.contains('sidebar-open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
         }
         
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', function(e) {
                 e.preventDefault();
-                body.classList.toggle('sidebar-open');
+                e.stopPropagation();
                 
-                // Focar no primeiro link do menu quando abrir no mobile
-                if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
-                    setTimeout(() => {
-                        const firstNavLink = document.querySelector('.nav-sidebar .nav-link');
-                        if (firstNavLink) {
-                            firstNavLink.focus();
-                        }
-                    }, 300);
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                } else {
+                    // Comportamento padrão para desktop
+                    body.classList.toggle('sidebar-collapse');
                 }
             });
         }
@@ -40,36 +91,48 @@ document.addEventListener('DOMContentLoaded', function() {
         // Fechar sidebar com ESC no mobile
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && window.innerWidth <= 768) {
-                body.classList.remove('sidebar-open');
+                closeSidebar();
             }
         });
         
         // Melhorar scroll da sidebar no mobile
-        const sidebar = document.querySelector('.main-sidebar .sidebar');
+        const sidebar = document.querySelector('.main-sidebar .sidebar') ||
+                       document.querySelector('.main-sidebar .nav-sidebar') ||
+                       document.querySelector('.main-sidebar');
+        
         if (sidebar) {
-            // Prevenir scroll do body quando scrollando a sidebar
-            sidebar.addEventListener('touchmove', function(e) {
-                e.stopPropagation();
-            });
+            // Fix scroll no mobile
+            sidebar.addEventListener('touchstart', function(e) {
+                const startY = e.touches[0].clientY;
+                const scrollTop = sidebar.scrollTop;
+                const maxScroll = sidebar.scrollHeight - sidebar.clientHeight;
+                
+                // Se no topo e tentando scrollar para cima, ou no final e tentando scrollar para baixo
+                if ((scrollTop <= 0 && startY < e.touches[0].clientY) || 
+                    (scrollTop >= maxScroll && startY > e.touches[0].clientY)) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
             
             // Scroll suave para links ativos
             const activeLink = sidebar.querySelector('.nav-link.active');
             if (activeLink) {
                 setTimeout(() => {
-                    activeLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
+                    activeLink.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                }, 500);
             }
         }
         
-        function closeSidebarOnOutsideClick(e) {
-            const sidebar = document.querySelector('.main-sidebar');
-            const toggle = document.querySelector('[data-widget="pushmenu"]');
-            
-            if (sidebar && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
-                body.classList.remove('sidebar-open');
-                document.removeEventListener('click', closeSidebarOnOutsideClick);
+        // Fechar sidebar ao redimensionar janela
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                closeSidebar();
             }
-        }
+        });
     }
     
     // ====== Enhanced Form Interactions ======
@@ -78,6 +141,47 @@ document.addEventListener('DOMContentLoaded', function() {
         const firstInput = document.querySelector('.form-row:first-child input:not([readonly]):not([disabled])');
         if (firstInput) {
             firstInput.focus();
+        }
+        
+        // Corrigir problemas de foco em mobile
+        if (window.innerWidth <= 768) {
+            // Prevenir zoom no iOS
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (input.style.fontSize !== '16px') {
+                    input.style.fontSize = '16px';
+                }
+                
+                // Fix para campos que não respondem ao toque
+                input.addEventListener('touchstart', function(e) {
+                    e.stopPropagation();
+                    this.focus();
+                }, { passive: false });
+                
+                // Melhorar resposta ao toque
+                input.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!this.matches(':focus')) {
+                        this.focus();
+                    }
+                });
+            });
+            
+            // Fix para selects que não abrem
+            const selects = document.querySelectorAll('select');
+            selects.forEach(select => {
+                select.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    this.focus();
+                    // Simular click para abrir o select
+                    const event = new MouseEvent('mousedown', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    });
+                    this.dispatchEvent(event);
+                }, { passive: false });
+            });
         }
         
         // Add loading state to submit buttons

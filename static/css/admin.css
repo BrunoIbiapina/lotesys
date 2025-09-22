@@ -23,26 +23,62 @@
 
 /* ====== Mobile-First Responsive Design ====== */
 @media (max-width: 768px) {
-  .main-sidebar {
+  /* Forçar configurações para mobile independente do Jazzmin */
+  .main-sidebar,
+  .sidebar-dark-primary,
+  .elevation-4 {
     position: fixed !important;
     z-index: 1000 !important;
     transform: translateX(-100%) !important;
     transition: transform 0.3s ease !important;
     height: 100vh !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
     width: 280px !important;
+    top: 0 !important;
+    left: 0 !important;
+    overflow: visible !important;
   }
   
-  /* Área de conteúdo da sidebar deve ser scrollável */
-  .main-sidebar .sidebar {
-    height: calc(100vh - 60px) !important;
+  /* Área de conteúdo da sidebar */
+  .main-sidebar .sidebar,
+  .main-sidebar .os-content,
+  .main-sidebar .sidebar-wrapper {
+    height: 100vh !important;
     overflow-y: auto !important;
-    padding-bottom: 20px !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 60px !important;
+    box-sizing: border-box !important;
   }
   
-  .sidebar-open .main-sidebar {
+  /* Menu de navegação */
+  .nav-sidebar {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: calc(100vh - 120px) !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 40px !important;
+  }
+  
+  /* Remover overlay scrollbars no mobile */
+  .os-scrollbar,
+  .os-scrollbar-horizontal,
+  .os-scrollbar-vertical {
+    display: none !important;
+  }
+  
+  /* Estado aberto */
+  .sidebar-open .main-sidebar,
+  .sidebar-open .sidebar-dark-primary,
+  .sidebar-open .elevation-4 {
     transform: translateX(0) !important;
+  }
+  
+  /* Brand/logo área */
+  .brand-link {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1001 !important;
+    background: inherit !important;
   }
   
   .content-wrapper {
@@ -81,10 +117,52 @@
   }
   
   /* Mobile form improvements */
-  .form-control {
+  .form-control,
+  .vTextField,
+  .vURLField,
+  .vEmailField,
+  .vNumberField,
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="password"],
+  textarea,
+  select {
     min-height: 44px !important;
     font-size: 16px !important; /* Prevents zoom on iOS */
     border-radius: var(--border-radius) !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Fix input focus issues on mobile */
+  .form-control:focus,
+  .vTextField:focus,
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    transform: none !important;
+    -webkit-transform: none !important;
+  }
+  
+  /* Prevent iOS zoom on form fields */
+  @supports (-webkit-touch-callout: none) {
+    .form-control,
+    .vTextField,
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="password"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
   }
   
   .input-group .form-control {
@@ -145,6 +223,48 @@
   
   .sidebar-open .sidebar-overlay {
     display: block !important;
+  }
+  
+  /* Fix específico para scroll no mobile */
+  body.sidebar-open {
+    overflow: hidden !important;
+  }
+  
+  /* Garantir que a sidebar tenha scroll nativo */
+  .main-sidebar {
+    overflow: hidden !important;
+  }
+  
+  .main-sidebar * {
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Fix para Jazzmin específico */
+  @media (max-width: 768px) {
+    .layout-fixed .main-sidebar {
+      position: fixed !important;
+      overflow: hidden !important;
+    }
+    
+    .layout-fixed .main-sidebar .sidebar {
+      overflow-y: scroll !important;
+      overflow-x: hidden !important;
+      height: 100vh !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* Forçar scroll nativo no iOS */
+    .main-sidebar .nav-sidebar {
+      -webkit-overflow-scrolling: touch !important;
+      overflow-y: scroll !important;
+      height: calc(100vh - 100px) !important;
+    }
+    
+    /* Desabilitar smooth scroll problemático no mobile */
+    .main-sidebar,
+    .main-sidebar * {
+      scroll-behavior: auto !important;
+    }
   }
 }
 
