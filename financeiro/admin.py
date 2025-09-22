@@ -5,7 +5,7 @@ from .models import Despesa, ReceitaExtra
 
 @admin.register(Despesa)
 class DespesaAdmin(admin.ModelAdmin):
-    list_display = ('data', 'categoria', 'descricao_truncated', 'valor_formatted', 'status_colored', 'origem_colored')
+    list_display = ('data', 'categoria', 'descricao_truncated', 'valor_formatted', 'status_colored', 'comprovante_status', 'origem_colored')
     list_filter = ('categoria', 'status', 'origem', 'data')
     search_fields = ('descricao', 'valor')
     date_hierarchy = 'data'
@@ -21,7 +21,12 @@ class DespesaAdmin(admin.ModelAdmin):
             'fields': ('valor', 'status'),
             'classes': ('wide',)
         }),
-        ('🔄 Sistema', {
+        ('� Comprovante', {
+            'fields': ('comprovante',),
+            'classes': ('wide',),
+            'description': 'Anexe o comprovante da despesa (PDF, imagem, etc.)'
+        }),
+        ('�🔄 Sistema', {
             'fields': ('origem',),
             'classes': ('collapse',)
         })
@@ -79,10 +84,20 @@ class DespesaAdmin(admin.ModelAdmin):
             obj.origem or 'Manual'
         )
     origem_colored.short_description = '🏷️ Origem'
+    
+    def comprovante_status(self, obj):
+        if obj.tem_comprovante():
+            return format_html(
+                '<span style="color: #10b981; font-weight: bold;">📎 Anexado</span>'
+            )
+        return format_html(
+            '<span style="color: #ef4444; font-weight: bold;">📎 Sem anexo</span>'
+        )
+    comprovante_status.short_description = '📎 Comprovante'
 
 @admin.register(ReceitaExtra)
 class ReceitaExtraAdmin(admin.ModelAdmin):
-    list_display = ('data', 'descricao_truncated', 'valor_formatted', 'data_cadastro')
+    list_display = ('data', 'descricao_truncated', 'valor_formatted', 'comprovante_status', 'data_cadastro')
     search_fields = ('descricao',)
     date_hierarchy = 'data'
     ordering = ('-data',)
@@ -92,6 +107,11 @@ class ReceitaExtraAdmin(admin.ModelAdmin):
         ('📋 Informações da Receita', {
             'fields': ('data', 'descricao', 'valor'),
             'classes': ('wide',)
+        }),
+        ('📎 Comprovante', {
+            'fields': ('comprovante',),
+            'classes': ('wide',),
+            'description': 'Anexe o comprovante da receita (PDF, imagem, etc.)'
         }),
     )
     
@@ -113,6 +133,16 @@ class ReceitaExtraAdmin(admin.ModelAdmin):
             f"{obj.valor:,.2f}"
         )
     valor_formatted.short_description = '💚 Valor'
+    
+    def comprovante_status(self, obj):
+        if obj.tem_comprovante():
+            return format_html(
+                '<span style="color: #10b981; font-weight: bold;">📎 Anexado</span>'
+            )
+        return format_html(
+            '<span style="color: #ef4444; font-weight: bold;">📎 Sem anexo</span>'
+        )
+    comprovante_status.short_description = '📎 Comprovante'
     
     def data_cadastro(self, obj):
         if hasattr(obj, 'data_criacao'):

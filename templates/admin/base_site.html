@@ -1,0 +1,27 @@
+{% extends "admin/base.html" %}
+
+{% load static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    
+    <!-- Mobile Override - Força comportamento nativo no mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- CSS Override para Mobile -->
+    <link rel="stylesheet" href="{% static 'css/mobile-override.css' %}">
+    
+    <!-- JavaScript Override para Mobile -->
+    <script>
+        // Detectar mobile e carregar override
+        if (window.innerWidth <= 768) {
+            console.log('📱 Mobile detectado - carregando override');
+            
+            // Carregar JavaScript override
+            var script = document.createElement('script');
+            script.src = "{% static 'js/mobile-override.js' %}";
+            script.async = false;
+            document.head.appendChild(script);
+        }
+    </script>
+{% endblock %}
