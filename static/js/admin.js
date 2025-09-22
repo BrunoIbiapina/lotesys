@@ -10,18 +10,55 @@ document.addEventListener('DOMContentLoaded', function() {
         const sidebarToggle = document.querySelector('[data-widget="pushmenu"]');
         const body = document.body;
         
+        // Criar overlay para mobile
+        if (!document.querySelector('.sidebar-overlay')) {
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            overlay.addEventListener('click', () => {
+                body.classList.remove('sidebar-open');
+            });
+            document.body.appendChild(overlay);
+        }
+        
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 body.classList.toggle('sidebar-open');
                 
-                // Close sidebar when clicking outside on mobile
-                if (window.innerWidth <= 768) {
+                // Focar no primeiro link do menu quando abrir no mobile
+                if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
                     setTimeout(() => {
-                        document.addEventListener('click', closeSidebarOnOutsideClick);
-                    }, 100);
+                        const firstNavLink = document.querySelector('.nav-sidebar .nav-link');
+                        if (firstNavLink) {
+                            firstNavLink.focus();
+                        }
+                    }, 300);
                 }
             });
+        }
+        
+        // Fechar sidebar com ESC no mobile
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && window.innerWidth <= 768) {
+                body.classList.remove('sidebar-open');
+            }
+        });
+        
+        // Melhorar scroll da sidebar no mobile
+        const sidebar = document.querySelector('.main-sidebar .sidebar');
+        if (sidebar) {
+            // Prevenir scroll do body quando scrollando a sidebar
+            sidebar.addEventListener('touchmove', function(e) {
+                e.stopPropagation();
+            });
+            
+            // Scroll suave para links ativos
+            const activeLink = sidebar.querySelector('.nav-link.active');
+            if (activeLink) {
+                setTimeout(() => {
+                    activeLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
         }
         
         function closeSidebarOnOutsideClick(e) {

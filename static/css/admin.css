@@ -28,6 +28,17 @@
     z-index: 1000 !important;
     transform: translateX(-100%) !important;
     transition: transform 0.3s ease !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 280px !important;
+  }
+  
+  /* Área de conteúdo da sidebar deve ser scrollável */
+  .main-sidebar .sidebar {
+    height: calc(100vh - 60px) !important;
+    overflow-y: auto !important;
+    padding-bottom: 20px !important;
   }
   
   .sidebar-open .main-sidebar {
@@ -90,6 +101,50 @@
   .submit-row input[type="submit"],
   .submit-row .btn {
     width: 100% !important;
+  }
+  
+  /* Mobile sidebar menu improvements */
+  .nav-sidebar .nav-item {
+    margin: 0.25rem 0 !important;
+  }
+  
+  .nav-sidebar .nav-link {
+    padding: 12px 16px !important;
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    border-radius: 8px !important;
+    margin: 2px 8px !important;
+  }
+  
+  .nav-sidebar .nav-treeview {
+    padding-left: 0 !important;
+  }
+  
+  .nav-sidebar .nav-treeview .nav-link {
+    padding-left: 48px !important;
+  }
+  
+  /* Hamburger menu button */
+  .navbar-toggler {
+    border: none !important;
+    padding: 8px 12px !important;
+  }
+  
+  /* Overlay para fechar sidebar */
+  .sidebar-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    z-index: 999 !important;
+    display: none !important;
+  }
+  
+  .sidebar-open .sidebar-overlay {
+    display: block !important;
   }
 }
 
