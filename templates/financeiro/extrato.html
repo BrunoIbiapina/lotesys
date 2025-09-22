@@ -4,6 +4,7 @@
 {% endblock %}
 {% block content %}
   {% load ui %}
+  {% load vendas_ui %}
 
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
     <h1 class="text-2xl sm:text-3xl font-semibold">Extrato Financeiro</h1>
@@ -442,6 +443,7 @@
             <th class="text-left p-2">Venda</th>
             <th class="text-left p-2">Cliente</th>
             <th class="text-left p-2">#</th>
+            <th class="text-left p-2">% Pago</th>
             <th class="text-left p-2">Valor</th>
             <th class="text-left p-2">Status</th>
           </tr>
@@ -455,6 +457,17 @@
               <td class="p-2">
                 <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full whitespace-nowrap">{{ p.numero }}/{{ p.venda.parcelas_total }}</span>
               </td>
+              <td class="p-2">
+                {% with porcentagem=p.venda|parcelas_pagas_porcentagem pagas=p.venda|parcelas_pagas_count %}
+                  <div class="flex items-center gap-2">
+                    <div class="w-12 bg-gray-200 rounded-full h-2">
+                      <div class="bg-emerald-500 h-2 rounded-full" style="width: {{ porcentagem }}%"></div>
+                    </div>
+                    <span class="text-xs font-medium text-gray-600">{{ pagas }}/{{ p.venda.parcelas_total }}</span>
+                    <span class="text-xs font-medium text-emerald-600">{{ porcentagem }}%</span>
+                  </div>
+                {% endwith %}
+              </td>
               <td class="p-2">{{ p.valor|brl }}</td>
               <td class="p-2">
                 {% badge_status p.status %}
@@ -462,7 +475,7 @@
             </tr>
           {% empty %}
             <tr>
-              <td class="p-4" colspan="6">Nenhuma parcela pendente.</td>
+              <td class="p-4" colspan="7">Nenhuma parcela pendente.</td>
             </tr>
           {% endfor %}
         </tbody>

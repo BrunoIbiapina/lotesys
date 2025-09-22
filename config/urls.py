@@ -23,10 +23,12 @@ urlpatterns = [
    path("run/", task_notify, name="task_notify"),
 ]
 
+# Servir arquivos media em desenvolvimento
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-if os.getenv("SERVE_MEDIA", "False") == "True":
+# Servir arquivos media em produção (quando SERVE_MEDIA=True)
+if os.getenv("SERVE_MEDIA", "False") == "True" or not settings.DEBUG:
     urlpatterns += [
         re_path(r"^media/(?P<path>.*)$", media_serve, {"document_root": settings.MEDIA_ROOT}),
     ]

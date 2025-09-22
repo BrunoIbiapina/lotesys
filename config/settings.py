@@ -142,7 +142,13 @@ STORAGES = {
 
 # ===================== MEDIA (uploads) =====================
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+
+# Em produção (Render), usar o disk montado
+if os.getenv("RENDER_EXTERNAL_HOSTNAME"):
+    MEDIA_ROOT = "/opt/render/project/src/media"
+else:
+    # Em desenvolvimento, usar pasta local
+    MEDIA_ROOT = BASE_DIR / "media"
 
 # ===================== DEFAULTS =====================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

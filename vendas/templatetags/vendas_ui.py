@@ -1,29 +1,32 @@
-# mural/templatetags/mural_ui.py
+# vendas/templatetags/vendas_ui.py
 from django import template
 from django.utils import timezone
 from datetime import timedelta
-from mural.models import Mensagem
 
 register = template.Library()
 
-@register.simple_tag(takes_context=True)
-def mural_novas_qtd(context, recentes_dias=7):
+@register.filter
+def parcelas_pagas_porcentagem(venda):
     """
-    Retorna um número com a quantidade de mensagens 'novas' (criada nos últimos X dias).
-    Você pode sofisticar depois para per-user (não lidas), etc.
+    Calcula a porcentagem de parcelas pagas de uma venda.
+    Retorna um número entre 0 e 100.
     """
-    try:
-        dias = int(recentes_dias)
-    except Exception:
-        dias = 7
-    limite = timezone.now() - timedelta(days=dias)
-    return Mensagem.objects.filter(created_at__gte=limite).count()
+    if not venda or not hasattr(venda, 'parcelas'):
+        return 0
+    
+    total_parcelas = venda.parcelas_total or 0
+    if total_parcelas == 0:
+        return 0
+    
+    parcelas_pagas = venda.parcelas.filter(status='PAGO').count()
+    porcentagem = (parcelas_pagas * 100) // total_parcelas
+    return porcentagem
 
-@register.inclusion_tag("mural/_badge.html", takes_context=True)
-def mural_badge(context, recentes_dias=7):
+@register.filter  
+def parcelas_pagas_count(venda):
     """
-    Renderiza o badge (bolinha vermelha) com a contagem.
-    Usa o mesmo critério de 'novas' dos últimos X dias.
+    Retorna a quantidade de parcelas pagas de uma venda.
     """
-    qtd = mural_novas_qtd(context, recentes_dias=recentes_dias)
-    return {"qtd": qtd}
+    if not venda or not hasattr(venda, 'parcelas'):
+        return 0
+    return venda.parcelas.filter(status='PAGO').count()

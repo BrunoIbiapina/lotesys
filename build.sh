@@ -8,7 +8,10 @@ python manage.py collectstatic --noinput || true
 echo "🗃️ migrate…"
 python manage.py migrate --noinput
 
-echo "👤 Garantindo superusuário…"
+echo "� Preparando estrutura de media…"
+python manage.py setup_media
+
+echo "�👤 Garantindo superusuário…"
 python manage.py shell <<'PY'
 import os
 from django.contrib.auth import get_user_model
