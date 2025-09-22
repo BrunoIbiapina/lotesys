@@ -3,97 +3,89 @@
 {% load ui %}
 {% block content %}
 
-<div class="flex items-center justify-between mb-4">
-  <h1 class="text-3xl font-semibold">Dashboard</h1>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+  <h1 class="text-2xl sm:text-3xl font-semibold">Dashboard</h1>
   <a href="/financeiro/extrato/"
-     class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition">
+     class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition text-center">
      📊 Ver Extrato Detalhado
   </a>
 </div>
 
-<form method="get" class="bg-white p-5 rounded-2xl shadow mb-8 border border-gray-100">
-  <div class="grid sm:grid-cols-4 gap-4 items-end">
-    <div>
-      <label class="block text-xs font-semibold text-gray-700 mb-1">Início</label>
-      <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}"
-        class="w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-800 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition text-sm shadow-sm">
-    </div>
-    <div>
-      <label class="block text-xs font-semibold text-gray-700 mb-1">Fim</label>
-      <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}"
-        class="w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-800 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition text-sm shadow-sm">
-    </div>
-    <div class="sm:col-span-2 flex gap-3 items-end">
-      <button class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-        Aplicar filtros
-      </button>
-      <a href="?" class="text-sm text-gray-500 underline hover:text-emerald-700 transition">Limpar</a>
-    </div>
-  </div>  <a
-    href="{% url 'financeiro:extrato' %}?inicio={{ hoje|date:'Y-m-d' }}&fim={{ hoje|date:'Y-m-d' }}#vencendo-hoje"
-    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 font-semibold text-sm shadow hover:bg-blue-600 hover:text-white transition ml-auto"
-  >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10"/>
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/>
-    </svg>
-    Ver no extrato
-  </a>
-</form>
+<!-- Removido formulário de filtros conforme solicitado -->
 
 {# ===================== RESUMO DE HOJE ===================== #}
-<div class="grid md:grid-cols-3 gap-4 mb-6">
-  <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow relative">
-    <div class="flex items-center gap-2">
-      <div class="text-xs font-medium text-emerald-700">Entradas HOJE</div>
-      <div class="relative group">
-        <button type="button" tabindex="0" class="ml-1 text-emerald-400 hover:text-emerald-700 focus:outline-none">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/>
-          </svg>
-        </button>
-        <div class="absolute left-1/2 z-10 hidden group-hover:block group-focus:block w-56 -translate-x-1/2 mt-2 px-3 py-2 rounded-lg bg-white border border-emerald-200 text-xs text-gray-700 shadow-lg">
-          Parcelas pagas hoje + entradas líquidas de vendas de hoje
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+  <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm hover:shadow-md transition-all">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100">
+        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="text-xs font-medium text-emerald-700 uppercase tracking-wide">Entradas HOJE</div>
+        <div class="relative group">
+          <button type="button" tabindex="0" class="text-emerald-400 hover:text-emerald-700 focus:outline-none">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/>
+            </svg>
+          </button>
+          <div class="absolute left-1/2 z-10 hidden group-hover:block group-focus:block w-56 -translate-x-1/2 mt-2 px-3 py-2 rounded-lg bg-white border border-emerald-200 text-xs text-gray-700 shadow-lg">
+            Parcelas pagas hoje + entradas líquidas de vendas de hoje
+          </div>
         </div>
       </div>
     </div>
-    <div class="mt-1 text-2xl font-bold text-emerald-900">{{ entradas_hoje|brl }}</div>
+    <div class="text-2xl font-bold text-emerald-900">{{ entradas_hoje|brl }}</div>
   </div>
-  <div class="rounded-2xl border border-rose-100 bg-rose-50 p-5 shadow">
-    <div class="text-xs font-medium text-rose-700">Despesas PAGAS HOJE</div>
-    <div class="mt-1 text-2xl font-bold text-rose-900">{{ despesas_hoje|brl }}</div>
-    
+  
+  <div class="rounded-2xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-5 shadow-sm hover:shadow-md transition-all">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-red-100">
+        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/>
+        </svg>
+      </div>
+      <div class="text-xs font-medium text-red-700 uppercase tracking-wide">Despesas HOJE</div>
+    </div>
+    <div class="text-2xl font-bold text-red-900">{{ despesas_hoje|brl }}</div>
   </div>
-  <div class="rounded-2xl border border-sky-100 bg-sky-50 p-5 shadow">
-    <div class="text-xs font-medium text-sky-700">Valor Líquido HOJE na conta</div>
-    <div class="mt-1 text-2xl font-bold text-sky-900">{{ fluxo_hoje|brl }}</div>
+  
+  <div class="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm hover:shadow-md transition-all sm:col-span-2 lg:col-span-1">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100">
+        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+      </div>
+      <div class="text-xs font-medium text-blue-700 uppercase tracking-wide">Valor Líquido HOJE</div>
+    </div>
+    <div class="text-2xl font-bold text-blue-900">{{ fluxo_hoje|brl }}</div>
   </div>
 </div>
 
 {# ===================== ALERTAS (Vencidas / Hoje / Próx. 7 dias) ===================== #}
 {% if vencidas_qtd or vencem_hoje_count or prox7_qtd %}
-<div
-  class="grid gap-4 mb-6
-  {% if alerts_count == 1 %}md:grid-cols-1{% elif alerts_count == 2 %}md:grid-cols-2{% else %}md:grid-cols-3{% endif %}">
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
   
   {# ---- VENCIDAS ---- #}
   {% if vencidas_qtd %}
   <div class="relative overflow-hidden rounded-2xl shadow border border-red-200 bg-gradient-to-br from-red-50 via-white to-red-100 p-0">
-    <div class="flex items-center gap-2 px-5 py-4 border-b border-red-100 bg-red-100/60">
-      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-200 text-red-700">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2 px-4 sm:px-5 py-4 border-b border-red-100 bg-red-100/60">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-200 text-red-700 flex-shrink-0">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728"/>
         </svg>
       </span>
-      <div>
-        <div class="font-bold text-red-800 text-lg">Parcelas vencidas</div>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-red-800 text-base sm:text-lg">Parcelas vencidas</div>
         <div class="text-sm text-red-700">{{ vencidas_qtd }} em atraso — total {{ vencidas_valor|brl }}</div>
       </div>
-      <a href="/financeiro/extrato/?inicio=&fim=" class="ml-auto text-sm underline text-red-700 hover:text-red-900 transition">Ver no extrato</a>
+      <a href="/financeiro/extrato/?inicio=&fim=" class="text-sm underline text-red-700 hover:text-red-900 transition">Ver no extrato</a>
     </div>
     {% if vencidas_list %}
-    <details class="px-5 py-3">
+    <details class="px-4 sm:px-5 py-3">
       <summary class="flex items-center gap-1 cursor-pointer text-sm font-semibold text-red-700 hover:text-white hover:bg-red-500 px-3 py-1.5 rounded-lg transition w-max mb-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01"/>
@@ -103,8 +95,8 @@
       </summary>
       <ul class="mt-3 divide-y divide-red-100 bg-white rounded-xl overflow-hidden border border-red-100">
         {% for p in vencidas_list %}
-          <li class="px-3 py-2 flex items-center justify-between gap-3">
-            <div class="min-w-0">
+          <li class="px-3 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
               <div class="font-medium text-red-800">
                 <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="hover:underline">
                   Venda #{{ p.venda_id }}
@@ -117,7 +109,7 @@
                 {{ p.venda.cliente.nome }}
               </div>
             </div>
-            <div class="shrink-0 text-right">
+            <div class="shrink-0 text-right sm:text-right">
               <div class="font-semibold text-red-700">{{ p.valor|brl }}</div>
               <div class="text-xs text-gray-500">{{ p.vencimento|date:"d/m/Y" }}</div>
             </div>
@@ -135,28 +127,28 @@
   {# ---- VENCEM HOJE ---- #}
   {% if vencem_hoje_count %}
   <div class="relative overflow-hidden rounded-2xl shadow border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-0">
-    <div class="flex items-center gap-2 px-5 py-4 border-b border-blue-100 bg-blue-100/60">
-      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-200 text-blue-800">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2 px-4 sm:px-5 py-4 border-b border-blue-100 bg-blue-100/60">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-200 text-blue-800 flex-shrink-0">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/>
         </svg>
       </span>
-      <div>
-        <div class="font-bold text-blue-900 text-lg">Vencem HOJE</div>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-blue-900 text-base sm:text-lg">Vencem HOJE</div>
         <div class="text-sm text-blue-800">{{ vencem_hoje_count }} parcela(s) — total {{ total_vencem_hoje|brl }}</div>
       </div>
       <a
         href="{% url 'financeiro:extrato' %}?inicio={{ hoje|date:'Y-m-d' }}&fim={{ hoje|date:'Y-m-d' }}#vencendo-hoje"
-        class="ml-auto text-sm underline text-blue-800 hover:text-blue-900 transition"
+        class="text-sm underline text-blue-800 hover:text-blue-900 transition"
       >Ver no extrato</a>
     </div>
-    <details class="px-5 py-3">
+    <details class="px-4 sm:px-5 py-3">
       <summary class="cursor-pointer text-sm underline text-blue-800">Ver detalhes</summary>
       <ul class="mt-3 divide-y divide-blue-100 bg-white rounded-xl overflow-hidden border border-blue-100">
         {% for p in vencem_hoje %}
-          <li class="px-3 py-2 flex items-center justify-between gap-3">
-            <div class="min-w-0">
+          <li class="px-3 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
               <div class="font-medium text-blue-900">
                 <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="hover:underline">
                   Venda #{{ p.venda_id }}
@@ -183,26 +175,26 @@
   {# ---- VENCEM EM 7 DIAS ---- #}
   {% if prox7_qtd %}
   <div class="relative overflow-hidden rounded-2xl shadow border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-amber-100 p-0">
-    <div class="flex items-center gap-2 px-5 py-4 border-b border-amber-100 bg-amber-100/60">
-      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-200 text-amber-800">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2 px-4 sm:px-5 py-4 border-b border-amber-100 bg-amber-100/60">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-200 text-amber-800 flex-shrink-0">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/>
           <circle cx="12" cy="12" r="10"/>
         </svg>
       </span>
-      <div>
-        <div class="font-bold text-amber-900 text-lg">Vencem em 7 dias</div>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-amber-900 text-base sm:text-lg">Vencem em 7 dias</div>
         <div class="text-sm text-amber-800">{{ prox7_qtd }} parcela(s) — total {{ prox7_valor|brl }}</div>
       </div>
-      <a href="/financeiro/extrato/?inicio=&fim=" class="ml-auto text-sm underline text-amber-800 hover:text-amber-900 transition">Ver no extrato</a>
+      <a href="/financeiro/extrato/?inicio=&fim=" class="text-sm underline text-amber-800 hover:text-amber-900 transition">Ver no extrato</a>
     </div>
     {% if prox7_list %}
-    <details class="px-5 py-3">
+    <details class="px-4 sm:px-5 py-3">
       <summary class="cursor-pointer text-sm underline text-amber-800">Ver detalhes</summary>
       <ul class="mt-3 divide-y divide-amber-100 bg-white rounded-xl overflow-hidden border border-amber-100">
         {% for p in prox7_list %}
-          <li class="px-3 py-2 flex items-center justify-between gap-3">
-            <div class="min-w-0">
+          <li class="px-3 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
               <div class="font-medium text-amber-900">
                 <a href="{% url 'vendas:venda_detail' p.venda_id %}" class="hover:underline">
                   Venda #{{ p.venda_id }}
@@ -233,21 +225,21 @@
 {% endif %}
 
 {# ===================== KPIs DO PERÍODO ===================== #}
-<div class="grid lg:grid-cols-3 gap-4 mb-8">
-  <div class="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+  <div class="rounded-2xl border border-amber-100 bg-amber-50 p-4 sm:p-5 shadow">
     <div class="text-xs font-medium text-amber-700">À receber ({{ inicio|date:'d/m/Y' }}–{{ fim|date:'d/m/Y' }})</div>
-    <div class="mt-1 text-3xl font-bold text-amber-900">{{ a_receber|brl }}</div>
+    <div class="mt-1 text-2xl sm:text-3xl font-bold text-amber-900">{{ a_receber|brl }}</div>
   </div>
-  <div class="rounded-2xl border border-stone-200 bg-stone-50 p-5 shadow">
+  <div class="rounded-2xl border border-stone-200 bg-stone-50 p-4 sm:p-5 shadow">
     <div class="text-xs font-medium text-stone-700">Vencidas (até hoje)</div>
-    <div class="mt-1 text-3xl font-bold text-stone-900">{{ vencidas|brl }}</div>
+    <div class="mt-1 text-2xl sm:text-3xl font-bold text-stone-900">{{ vencidas|brl }}</div>
   </div>
-  <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow">
+  <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 sm:p-5 shadow sm:col-span-2 lg:col-span-1">
     <div class="text-xs font-medium text-emerald-700">Pagas no período</div>
-    <div class="mt-1 text-3xl font-bold text-emerald-900">{{ pagas|brl }}</div>
+    <div class="mt-1 text-2xl sm:text-3xl font-bold text-emerald-900">{{ pagas|brl }}</div>
   </div>
-  <div class="rounded-2xl border border-indigo-100 bg-indigo-50 p-5 shadow relative">
-    <div class="flex items-center gap-2">
+  <div class="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 sm:p-5 shadow relative">
+    <div class="flex items-center gap-2 flex-wrap">
       <div class="text-xs font-medium text-indigo-700">Entradas líquidas (vendas)</div>
       <div class="relative group">
         <button type="button" tabindex="0" class="ml-1 text-indigo-400 hover:text-indigo-700 focus:outline-none">
@@ -261,10 +253,10 @@
         </div>
       </div>
     </div>
-    <div class="mt-1 text-3xl font-bold text-indigo-900">{{ entradas_liquidas|brl }}</div>
+    <div class="mt-1 text-2xl sm:text-3xl font-bold text-indigo-900">{{ entradas_liquidas|brl }}</div>
   </div>
-  <div class="rounded-2xl border border-rose-100 bg-rose-50 p-5 shadow relative">
-    <div class="flex items-center gap-2">
+  <div class="rounded-2xl border border-rose-100 bg-rose-50 p-4 sm:p-5 shadow relative">
+    <div class="flex items-center gap-2 flex-wrap">
       <div class="text-xs font-medium text-rose-700">Despesas PAGAS no período</div>
       <div class="relative group">
         <button type="button" tabindex="0" class="ml-1 text-rose-400 hover:text-rose-700 focus:outline-none">
@@ -278,11 +270,11 @@
         </div>
       </div>
     </div>
-    <div class="mt-1 text-3xl font-bold text-rose-900">{{ despesas_pagas|brl }}</div>
+    <div class="mt-1 text-2xl sm:text-3xl font-bold text-rose-900">{{ despesas_pagas|brl }}</div>
     <div class="mt-1 text-[11px] text-rose-700/80">Previstas: {{ despesas_previstas|brl }}</div>
   </div>
-  <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow relative">
-    <div class="flex items-center gap-2">
+  <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 sm:p-5 shadow relative sm:col-span-2 lg:col-span-1">
+    <div class="flex items-center gap-2 flex-wrap">
       <div class="text-xs font-medium text-emerald-700">Fluxo líquido do período</div>
       <div class="relative group">
         <button type="button" tabindex="0" class="ml-1 text-emerald-400 hover:text-emerald-700 focus:outline-none">
@@ -296,37 +288,41 @@
         </div>
       </div>
     </div>
-    <div class="mt-1 text-3xl font-bold text-emerald-900">{{ fluxo_liquido|brl }}</div>
+    <div class="mt-1 text-2xl sm:text-3xl font-bold text-emerald-900">{{ fluxo_liquido|brl }}</div>
   </div>
 </div>
 
-<div class="grid lg:grid-cols-2 gap-6 mb-8">
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <h3 class="font-semibold mb-3">✔️ Recebido vs ❌ Despesa (últimos 6 meses)</h3>
-    <canvas id="barChart"></canvas>
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+  <div class="bg-white p-4 sm:p-5 rounded-2xl shadow">
+    <h3 class="font-semibold mb-3 text-sm sm:text-base">✔️ Recebido vs ❌ Despesa (últimos 6 meses)</h3>
+    <div class="w-full overflow-hidden">
+      <canvas id="barChart" class="max-w-full h-auto"></canvas>
+    </div>
   </div>
-  <div class="bg-white p-5 rounded-2xl shadow">
-    <h3 class="font-semibold mb-3">📈 Fluxo Líquido (últimos 6 meses)</h3>
-    <canvas id="lineChart"></canvas>
+  <div class="bg-white p-4 sm:p-5 rounded-2xl shadow">
+    <h3 class="font-semibold mb-3 text-sm sm:text-base">📈 Fluxo Líquido (últimos 6 meses)</h3>
+    <div class="w-full overflow-hidden">
+      <canvas id="lineChart" class="max-w-full h-auto"></canvas>
+    </div>
   </div>
 </div>
 
 {# ===================== ÚLTIMAS PARCELAS ===================== #}
 <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100 rounded-2xl shadow-lg border border-emerald-100 p-0 mb-8 overflow-hidden">
-  <div class="flex items-center justify-between px-6 py-4 bg-emerald-100/60 border-b border-emerald-100">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-4 bg-emerald-100/60 border-b border-emerald-100 gap-2">
     <div class="flex items-center gap-2">
       <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10" />
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
       </svg>
-      <h2 class="text-lg font-bold text-emerald-900">Últimas parcelas</h2>
+      <h2 class="text-base sm:text-lg font-bold text-emerald-900">Últimas parcelas</h2>
     </div>
     <a href="{% url 'financeiro:extrato' %}" class="text-sm text-emerald-700 underline hover:text-emerald-900 transition">Ver todas</a>
   </div>
   <ul>
     {% for p in ultimas_parcelas %}
-      <li class="flex items-center justify-between px-6 py-4 border-b last:border-0 border-emerald-50 hover:bg-emerald-50/60 transition">
-        <div>
+      <li class="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-4 border-b last:border-0 border-emerald-50 hover:bg-emerald-50/60 transition gap-3">
+        <div class="flex-1 min-w-0">
           <div class="font-semibold text-gray-800">
             {{ p.venda.cliente.nome }}
             <span class="text-xs text-gray-500 ml-2">Venda #{{ p.venda_id }}</span>
@@ -335,7 +331,7 @@
             Parcela {{ p.numero }}/{{ p.venda.parcelas_total }} &middot; Venc: <span class="font-medium text-gray-700">{{ p.vencimento|date:"d/m/Y" }}</span>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-row sm:flex-row items-start sm:items-center gap-3 justify-between sm:justify-end">
           <span class="font-bold text-emerald-700 text-lg">{{ p.valor|brl }}</span>
           {% if p.status == "PAGO" %}
             <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold gap-1 shadow-sm">

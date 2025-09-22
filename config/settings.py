@@ -157,40 +157,110 @@ JAZZMIN_SETTINGS = {
     "site_title": "LoteSys Admin",
     "site_header": "LoteSys",
     "site_brand": "LoteSys",
+    "site_url": "/",
     "welcome_sign": "Bem-vindo ao LoteSys",
-    "site_logo": None,
-    "custom_css": "css/admin.css",
-    "show_ui_builder": False,
+    "copyright": "LoteSys © 2025",
+    "user_avatar": None,
+    
+    # Top Menu
+    "topmenu_links": [
+        {"name": "🏠 Home", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "📊 Dashboard", "url": "/", "permissions": ["auth.view_user"]},
+        {"name": "💰 Extrato", "url": "/financeiro/extrato/"},
+        {"name": "🛒 Vendas", "url": "/vendas/"},
+        {"model": "auth.User"},
+        {"app": "cadastros"},
+    ],
+    
+    # User Menu
+    "usermenu_links": [
+        {"name": "Dashboard Principal", "url": "/", "icon": "fas fa-home"},
+        {"model": "auth.user"}
+    ],
+    
+    # Side Menu ordering
+    "order_with_respect_to": ["auth", "cadastros", "vendas", "financeiro", "notificacoes", "mural"],
+    
+    # Icons for models
     "icons": {
+        "auth": "fas fa-users-cog",
         "auth.User": "fas fa-user",
-        "auth.Group": "fas fa-users-cog",
-        "cadastros.Cliente": "fas fa-id-card",
+        "auth.Group": "fas fa-users",
+        "cadastros": "fas fa-address-book",
+        "cadastros.Cliente": "fas fa-user-tie", 
         "cadastros.Empreendimento": "fas fa-city",
         "cadastros.Lote": "fas fa-th-large",
+        "financeiro": "fas fa-money-bill-wave",
         "financeiro.Despesa": "fas fa-receipt",
         "financeiro.ReceitaExtra": "fas fa-plus-circle",
-        "vendas.Venda": "fas fa-shopping-cart",
+        "vendas": "fas fa-shopping-cart",
+        "vendas.Venda": "fas fa-handshake",
         "vendas.Parcela": "fas fa-money-check-alt",
-        "perguntas.Categoria": "fas fa-tags",
-        "perguntas.Pergunta": "fas fa-question-circle",
+        "notificacoes": "fas fa-bell",
+        "mural": "fas fa-bullhorn",
+        "usuarios": "fas fa-user-circle",
     },
-    "order_with_respect_to": ["auth", "cadastros", "financeiro", "vendas", "perguntas"],
-    "topmenu_links": [
-        {"name": "Dashboard", "url": "/", "permissions": ["auth.view_user"]},
-        {"name": "Extrato", "url": "/financeiro/extrato/"},
-        {"name": "Vendas", "url": "/vendas/"},
-        {"name": "Dashboard", "url": "/"},
-        {"name": "Extrato", "url": "/financeiro/extrato/"},
-        {"name": "Comissões", "url": "/relatorios/comissoes/"},
-    ],
-    "copyright": "LoteSys",
+    
+    # Custom styling
+    "custom_css": "css/admin.css",
+    "custom_js": "js/admin.js",
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": False,
+    
+    # Hide these apps
+    "hide_apps": [],
+    "hide_models": [],
+    
+    # Custom links in the user menu dropdown
+    "related_modal_active": False,
+    
+    # Use modals instead of popups
+    "related_modal_active": False,
+    
+    # Change form styles
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {"auth.user": "collapsible", "auth.group": "vertical_tabs"},
+    
+    # Default icon parents
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    
+    # Sidebar
+    "navigation_expanded": True,
+    
+    # Language chooser
+    "language_chooser": False,
 }
 
 JAZZMIN_UI_TWEAKS = {
-    "theme": "darkly",
-    "navbar": "navbar-dark",
-    "no_navbar_border": True,
-    "sidebar_fixed": True,
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-primary",
+    "accent": "accent-primary",
+    "navbar": "navbar-primary navbar-dark",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
     "layout_fixed": True,
-    "show_sidebar": True,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "default",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    },
+    "actions_sticky_top": False
 }

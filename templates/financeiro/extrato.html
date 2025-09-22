@@ -5,9 +5,9 @@
 {% block content %}
   {% load ui %}
 
-  <div class="flex items-center justify-between mb-4">
-    <h1 class="text-3xl font-semibold">Extrato Financeiro</h1>
-    <a href="/" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium shadow transition">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <h1 class="text-2xl sm:text-3xl font-semibold">Extrato Financeiro</h1>
+    <a href="/" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium shadow transition justify-center sm:justify-start">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
@@ -15,32 +15,32 @@
     </a>
   </div>
 
-  <div class="bg-white p-4 rounded-2xl shadow mb-6">
+  <div class="bg-white p-4 sm:p-6 rounded-2xl shadow mb-6 border border-gray-100">
     <form method="get">
-      <div class="grid md:grid-cols-4 gap-4 items-end">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Início</label>
-          <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+          <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Fim</label>
-          <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+          <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm" />
         </div>
-        <div class="md:col-span-2 flex flex-wrap gap-2 items-end">
-          <button class="px-5 py-2 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition flex items-center gap-2" type="submit">
+        <div class="sm:col-span-2 lg:col-span-2 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+          <button class="px-5 py-2 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition flex items-center justify-center gap-2" type="submit">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
             Aplicar
           </button>
           <a href="{% url 'financeiro:extrato_pdf' %}?inicio={{ inicio|date:'Y-m-d' }}&fim={{ fim|date:'Y-m-d' }}"
-             class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 transition flex items-center gap-2">
+             class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 transition flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
-            Baixar PDF
+            <span class="hidden sm:inline">Baixar</span> PDF
           </a>
-          <a href="?" class="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition text-sm font-medium">
+          <a href="?" class="inline-flex items-center justify-center gap-1 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition text-sm font-medium">
             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
             </svg>

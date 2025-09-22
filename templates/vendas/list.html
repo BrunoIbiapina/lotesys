@@ -3,14 +3,14 @@
 {% block title %}Vendas{% endblock %}
 {% block content %}
 
-<div class="flex items-center justify-between mb-6">
-  <h1 class="text-3xl font-bold text-gray-900">Vendas</h1>
-  <a href="/" class="text-sm text-emerald-700 underline hover:text-emerald-900 transition">← Voltar ao Dashboard</a>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+  <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Vendas</h1>
+  <a href="/" class="text-sm text-emerald-700 underline hover:text-emerald-900 transition text-center sm:text-right">← Voltar ao Dashboard</a>
 </div>
 
-<form method="get" action="{% url 'vendas:vendas_list' %}" class="bg-white p-5 rounded-2xl shadow mb-8 border border-gray-100">
-  <div class="grid md:grid-cols-6 gap-4 items-end">
-    <div class="md:col-span-2">
+<form method="get" action="{% url 'vendas:vendas_list' %}" class="bg-white p-4 sm:p-5 rounded-2xl shadow mb-8 border border-gray-100">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+    <div class="sm:col-span-2 lg:col-span-2">
       <label class="block text-xs font-semibold text-gray-700 mb-1">Buscar (cliente / lote)</label>
       <input type="text" name="q" value="{{ q }}" placeholder="ex.: Maria, Q3, Lote 10"
              class="w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-800 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition text-sm shadow-sm">
@@ -33,16 +33,17 @@
         {% endfor %}
       </select>
     </div>
-    <div class="md:col-span-2 flex gap-3 items-end">
+    <div class="sm:col-span-2 lg:col-span-2 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
       <button class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
         Aplicar
       </button>
-      <a href="{% url 'vendas:vendas_list' %}" class="text-sm text-gray-500 underline hover:text-emerald-700 transition">Limpar</a>
+      <a href="{% url 'vendas:vendas_list' %}" class="text-sm text-gray-500 underline hover:text-emerald-700 transition text-center">Limpar</a>
     </div>
   </div>
 </form>
 
-<div class="overflow-auto bg-white rounded-2xl shadow border border-gray-100">
+{# Desktop Table - Hidden on mobile #}
+<div class="hidden lg:block overflow-auto bg-white rounded-2xl shadow border border-gray-100">
   <table class="min-w-full text-sm">
     <thead class="bg-emerald-50 text-emerald-800">
       <tr>
@@ -78,7 +79,44 @@
   </table>
 </div>
 
-{% endblock %}
+{# Mobile Cards - Hidden on desktop #}
+<div class="lg:hidden space-y-4">
+  {% for v in vendas %}
+    <div class="bg-white rounded-2xl shadow border border-gray-100 p-4 hover:shadow-lg transition">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex-1 min-w-0">
+          <h3 class="font-semibold text-gray-900 truncate">{{ v.cliente.nome }}</h3>
+          <p class="text-sm text-gray-600">Q{{ v.lote.quadra }} - Lote {{ v.lote.numero }}</p>
+        </div>
+        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full ml-2">
+          {{ v.data_venda|date:'d/m/Y' }}
+        </span>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <div class="text-xs text-gray-500 font-medium">Valor Total</div>
+          <div class="text-lg font-bold text-emerald-700">{{ v.valor_total|brl }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 font-medium">Entrada Líquida</div>
+          <div class="text-lg font-bold text-blue-700">{{ v.entrada_liquida|brl }}</div>
+        </div>
+      </div>
+      
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-600">
+          <span class="font-medium">{{ v.parcelas_total }}</span> parcelas
+        </div>
+        <a class="inline-block px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold text-sm shadow hover:bg-emerald-700 transition"
+           href="{% url 'vendas:venda_detail' v.id %}">Ver detalhes</a>
+      </div>
+    </div>
+  {% empty %}
+    <div class="bg-white rounded-2xl shadow border border-gray-100 p-8 text-center">
+      <div class="text-gray-500">Nenhuma venda encontrada.</div>
+    </div>
+  {% endfor %}
+</div>
 
-print("Mês:", request.GET.get("mes"))
-print("Ano:", request.GET.get("ano"))
+{% endblock %}

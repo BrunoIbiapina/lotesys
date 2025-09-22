@@ -3,63 +3,120 @@
 {% block title %}Venda #{{ venda.id }}{% endblock %}
 {% block content %}
 
-<div class="flex items-center justify-between mb-4">
-  <h1 class="text-3xl font-semibold">Venda #{{ venda.id }}</h1>
-  <a href="{% url 'vendas:vendas_list' %}" class="text-sm underline">← Voltar para Vendas</a>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+  <h1 class="text-2xl sm:text-3xl font-semibold">Venda #{{ venda.id }}</h1>
+  <a href="{% url 'vendas:vendas_list' %}" class="text-sm underline text-center sm:text-right">← Voltar para Vendas</a>
 </div>
 
-<div class="grid lg:grid-cols-3 gap-6">
-  <div class="lg:col-span-2 space-y-4">
-    <div class="bg-white p-4 rounded-2xl shadow">
-      <h3 class="font-semibold mb-2">Resumo</h3>
-      <div class="grid md:grid-cols-2 gap-2 text-sm">
-        <div><span class="text-gray-500">Cliente:</span> {{ venda.cliente.nome }}</div>
-        <div><span class="text-gray-500">Data:</span> {{ venda.data_venda|date:'d/m/Y' }}</div>
-        <div><span class="text-gray-500">Empreendimento:</span> {{ venda.lote.empreendimento.nome }}</div>
-        <div><span class="text-gray-500">Quadra/Lote:</span> Q{{ venda.lote.quadra }} / L{{ venda.lote.numero }}</div>
-        <div><span class="text-gray-500">Forma:</span>
-          {% if venda.forma_pagamento == 'AVISTA' %}À vista{% else %}Parcelado ({{ venda.parcelas_total }}){% endif %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    {# Resumo da Venda #}
+    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow border border-gray-100">
+      <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Resumo da Venda
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Cliente</span>
+          <div class="mt-1 font-semibold text-gray-900">{{ venda.cliente.nome }}</div>
         </div>
-        <div><span class="text-gray-500">Valor total:</span> {{ venda.valor_total|brl }}</div>
-        <div><span class="text-gray-500">Entrada bruta:</span> {{ venda.entrada_bruta|brl }}</div>
-        <div><span class="text-gray-500">Desconto:</span> {{ venda.desconto|brl }}</div>
-        <div><span class="text-gray-500">Comissão (%):</span> {{ venda.comissao_percent }}%</div>
-        <div><span class="text-gray-500">Comissão (R$):</span> {{ venda.comissao_valor|brl }}</div>
-        <div><span class="text-gray-500">Entrada líquida:</span> {{ venda.entrada_liquida|brl }}</div>
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Data</span>
+          <div class="mt-1 font-semibold text-gray-900">{{ venda.data_venda|date:'d/m/Y' }}</div>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Empreendimento</span>
+          <div class="mt-1 font-semibold text-gray-900">{{ venda.lote.empreendimento.nome }}</div>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Quadra/Lote</span>
+          <div class="mt-1 font-semibold text-gray-900">Q{{ venda.lote.quadra }} / L{{ venda.lote.numero }}</div>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Forma de Pagamento</span>
+          <div class="mt-1 font-semibold text-gray-900">
+            {% if venda.forma_pagamento == 'AVISTA' %}À vista{% else %}Parcelado ({{ venda.parcelas_total }}){% endif %}
+          </div>
+        </div>
+        <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+          <span class="text-xs font-medium text-emerald-600 uppercase tracking-wide">Valor Total</span>
+          <div class="mt-1 text-lg font-bold text-emerald-700">{{ venda.valor_total|brl }}</div>
+        </div>
+      </div>
+      
+      {# Detalhes Financeiros #}
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <h4 class="text-md font-semibold mb-3 text-gray-700">Detalhes Financeiros</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+          <div class="bg-blue-50 p-3 rounded-lg">
+            <span class="text-xs font-medium text-blue-600 uppercase tracking-wide">Entrada Bruta</span>
+            <div class="mt-1 font-semibold text-blue-700">{{ venda.entrada_bruta|brl }}</div>
+          </div>
+          <div class="bg-red-50 p-3 rounded-lg">
+            <span class="text-xs font-medium text-red-600 uppercase tracking-wide">Desconto</span>
+            <div class="mt-1 font-semibold text-red-700">{{ venda.desconto|brl }}</div>
+          </div>
+          <div class="bg-amber-50 p-3 rounded-lg">
+            <span class="text-xs font-medium text-amber-600 uppercase tracking-wide">Comissão</span>
+            <div class="mt-1 font-semibold text-amber-700">{{ venda.comissao_percent }}% ({{ venda.comissao_valor|brl }})</div>
+          </div>
+          <div class="bg-emerald-50 p-3 rounded-lg sm:col-span-2 lg:col-span-3">
+            <span class="text-xs font-medium text-emerald-600 uppercase tracking-wide">Entrada Líquida</span>
+            <div class="mt-1 text-xl font-bold text-emerald-700">{{ venda.entrada_liquida|brl }}</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="bg-white p-4 rounded-2xl shadow">
-      <h3 class="font-semibold mb-3">Parcelas</h3>
-      <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+    {# Parcelas #}
+    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow border border-gray-100">
+      <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+        </svg>
+        Parcelas ({{ parcelas|length }})
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {% for p in parcelas %}
-          <div class="border rounded-xl p-3">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-xs text-gray-600">#{{ p.numero }}/{{ venda.parcelas_total }}</span>
+          <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition bg-white">
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                #{{ p.numero }}/{{ venda.parcelas_total }}
+              </span>
               {% badge_status p.status %}
             </div>
-            <div class="text-sm text-gray-500">Venc: {{ p.vencimento|date:'d/m/Y' }}</div>
-            {% if p.status == 'PAGO' and p.data_pagamento %}
-              <div class="text-xs text-emerald-700">Pago em {{ p.data_pagamento|date:'d/m/Y' }}</div>
-            {% endif %}
-            <div class="text-lg font-bold mt-2">{{ p.valor|brl }}</div>
+            
+            <div class="space-y-2 mb-4">
+              <div class="text-sm text-gray-600">
+                <span class="font-medium">Vencimento:</span> {{ p.vencimento|date:'d/m/Y' }}
+              </div>
+              {% if p.status == 'PAGO' and p.data_pagamento %}
+                <div class="text-xs text-emerald-700 bg-emerald-50 px-2 py-1 rounded">
+                  ✓ Pago em {{ p.data_pagamento|date:'d/m/Y' }}
+                </div>
+              {% endif %}
+              <div class="text-xl font-bold text-gray-900">{{ p.valor|brl }}</div>
+            </div>
 
             {% if user.is_staff %}
-              <div class="mt-2">
+              <div class="mt-4 pt-3 border-t border-gray-100">
                 {% if p.status == 'PENDENTE' %}
                   <form action="{% url 'vendas:parcela_pagar' p.id %}" method="post">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button class="w-full px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
-                      Marcar como Pago
+                    <button class="w-full px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
+                      ✓ Marcar como Pago
                     </button>
                   </form>
                 {% elif p.status == 'PAGO' %}
                   <form action="{% url 'vendas:parcela_desfazer' p.id %}" method="post">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button class="w-full px-3 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700">
-                      Desfazer
+                    <button class="w-full px-4 py-2 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium">
+                      ↻ Desfazer Pagamento
                     </button>
                   </form>
                 {% endif %}
@@ -67,16 +124,63 @@
             {% endif %}
           </div>
         {% empty %}
-          <p class="col-span-full text-gray-500">Sem parcelas.</p>
+          <div class="col-span-full text-center py-8">
+            <div class="text-gray-400 mb-2">
+              <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <p class="text-gray-500">Nenhuma parcela encontrada.</p>
+          </div>
         {% endfor %}
       </div>
     </div>
   </div>
 
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-2xl shadow">
-      <h3 class="font-semibold mb-2">Ações</h3>
-      <a href="{% url 'vendas:vendas_list' %}" class="text-sm underline">Voltar à lista</a>
+  {# Sidebar com ações #}
+  <div class="space-y-6">
+    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow border border-gray-100">
+      <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
+        </svg>
+        Ações
+      </h3>
+      <div class="space-y-3">
+        <a href="{% url 'vendas:vendas_list' %}" 
+           class="block w-full px-4 py-2 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition font-medium">
+          ← Voltar à Lista
+        </a>
+        {% if user.is_staff %}
+          <button class="block w-full px-4 py-2 text-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium" disabled>
+            📄 Gerar Relatório
+          </button>
+        {% endif %}
+      </div>
+    </div>
+    
+    {# Status Summary Card #}
+    <div class="bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6 rounded-2xl border border-slate-200">
+      <h4 class="text-md font-semibold mb-3 text-slate-700">Status das Parcelas</h4>
+      {% regroup parcelas by status as status_groups %}
+      <div class="space-y-2">
+        {% for status_group in status_groups %}
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-slate-600">
+              {% if status_group.grouper == 'PAGO' %}
+                ✓ Pagas
+              {% elif status_group.grouper == 'PENDENTE' %}
+                ⏱ Pendentes
+              {% elif status_group.grouper == 'VENCIDO' %}
+                ⚠ Vencidas
+              {% else %}
+                {{ status_group.grouper }}
+              {% endif %}
+            </span>
+            <span class="font-semibold text-slate-900">{{ status_group.list|length }}</span>
+          </div>
+        {% endfor %}
+      </div>
     </div>
   </div>
 </div>
