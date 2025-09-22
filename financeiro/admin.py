@@ -5,7 +5,16 @@ from .models import Despesa, ReceitaExtra
 
 @admin.register(Despesa)
 class DespesaAdmin(admin.ModelAdmin):
-    list_display = ('data', 'categoria', 'descricao_truncated', 'valor_formatted', 'status_colored', 'comprovante_status', 'origem_colored')
+    list_display = [
+        'id',
+        'categoria', 
+        'descricao', 
+        'valor_formatted',
+        'has_comprovante',
+        'data',
+        'status_colored',
+        'criado_em'
+    ]
     list_filter = ('categoria', 'status', 'origem', 'data')
     search_fields = ('descricao', 'valor')
     date_hierarchy = 'data'
@@ -51,22 +60,15 @@ class DespesaAdmin(admin.ModelAdmin):
     
     def status_colored(self, obj):
         colors = {
-            'PAGO': '#10b981',
-            'PENDENTE': '#f59e0b',
-            'CANCELADO': '#6b7280'
+            'PREVISTA': '#f59e0b',  # amarelo
+            'PAGA': '#10b981',      # verde
         }
-        icons = {
-            'PAGO': '✅',
-            'PENDENTE': '⏱️', 
-            'CANCELADO': '❌'
-        }
+        color = colors.get(obj.status, '#6b7280')
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{} {}</span>',
-            colors.get(obj.status, '#6b7280'),
-            icons.get(obj.status, '●'),
-            obj.get_status_display()
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, obj.get_status_display()
         )
-    status_colored.short_description = '📊 Status'
+    status_colored.short_description = '🎯 Status'
     
     def origem_colored(self, obj):
         colors = {
@@ -85,19 +87,15 @@ class DespesaAdmin(admin.ModelAdmin):
         )
     origem_colored.short_description = '🏷️ Origem'
     
-    def comprovante_status(self, obj):
-        if obj.tem_comprovante():
-            return format_html(
-                '<span style="color: #10b981; font-weight: bold;">📎 Anexado</span>'
-            )
-        return format_html(
-            '<span style="color: #ef4444; font-weight: bold;">📎 Sem anexo</span>'
-        )
-    comprovante_status.short_description = '📎 Comprovante'
+    def has_comprovante(self, obj):
+        """Indicador simples se tem comprovante"""
+        return obj.comprovante and obj.comprovante.name
+    has_comprovante.boolean = True
+    has_comprovante.short_description = '📎'
 
 @admin.register(ReceitaExtra)
 class ReceitaExtraAdmin(admin.ModelAdmin):
-    list_display = ('data', 'descricao_truncated', 'valor_formatted', 'comprovante_status', 'data_cadastro')
+    list_display = ('data', 'descricao_truncated', 'valor_formatted', 'data_cadastro')
     search_fields = ('descricao',)
     date_hierarchy = 'data'
     ordering = ('-data',)
@@ -134,15 +132,11 @@ class ReceitaExtraAdmin(admin.ModelAdmin):
         )
     valor_formatted.short_description = '💚 Valor'
     
-    def comprovante_status(self, obj):
-        if obj.tem_comprovante():
-            return format_html(
-                '<span style="color: #10b981; font-weight: bold;">📎 Anexado</span>'
-            )
-        return format_html(
-            '<span style="color: #ef4444; font-weight: bold;">📎 Sem anexo</span>'
-        )
-    comprovante_status.short_description = '📎 Comprovante'
+    def has_comprovante(self, obj):
+        """Indicador simples se tem comprovante"""
+        return obj.comprovante and obj.comprovante.name
+    has_comprovante.boolean = True
+    has_comprovante.short_description = '📎'
     
     def data_cadastro(self, obj):
         if hasattr(obj, 'data_criacao'):
