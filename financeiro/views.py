@@ -272,9 +272,9 @@ def relatorio_mensal_api(request):
     Parâmetros: ?mes=2024-09 (formato YYYY-MM)
     Retorna: PDF do extrato mensal
     """
-    # Verificação de token opcional
-    token = request.GET.get('token')
-    if token != 'SeuTokenSecreto123':  # Configure no Render como variável
+    # Verificação de token no header Authorization
+    auth_header = request.META.get('HTTP_AUTHORIZATION')
+    if not auth_header or auth_header != 'Token SeuTokenSecreto123':
         return HttpResponse('Unauthorized', status=401)
     
     import calendar
