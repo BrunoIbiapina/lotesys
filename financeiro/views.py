@@ -5,9 +5,10 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.db.models.functions import Coalesce, TruncMonth
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import Despesa
 from vendas.models import Parcela, Venda
@@ -262,6 +263,68 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
 @login_required
 def ping(request):
     return HttpResponse("financeiro ok")
+
+
+@csrf_exempt
+def relatorio_mensal_api(request):
+    """
+    API para gerar relatório mensal automatizado
+    Parâmetros: ?mes=2024-09 (formato YYYY-MM)
+    Retorna: PDF do extrato mensal
+    """
+    import calendar
+    from datetime import datetime
+    
+    # Nomes dos meses em português
+    meses_pt = [
+        '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ]
+    
+    # Pega o mês solicitado ou mês anterior se não especificado
+    mes_param = request.GET.get('mes')
+    if mes_param:
+        try:
+            ano, mes = map(int, mes_param.split('-'))
+        except:
+            return HttpResponse("Formato inválido. Use ?mes=2024-09", status=400)
+    else:
+        # Mês anterior por padrão
+        hoje = timezone.localdate()
+        if hoje.month == 1:
+            mes, ano = 12, hoje.year - 1
+        else:
+            mes, ano = hoje.month - 1, hoje.year
+    
+    # Primeiro e último dia do mês
+    inicio = date(ano, mes, 1)
+    ultimo_dia = calendar.monthrange(ano, mes)[1]
+    fim = date(ano, mes, ultimo_dia)
+    
+    # Gera contexto do extrato
+    ctx = _monta_contexto_extrato(inicio, fim)
+    
+    # Se for requisição GET normal, retorna JSON com dados
+    if request.GET.get('format') != 'pdf':
+        return JsonResponse({
+            'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
+            'mes_ano': f"{meses_pt[mes]} {ano}",
+            'total_receitas': str(ctx['total_receitas']),
+            'total_despesas_pagas': str(ctx['total_despesas_pagas']),
+            'total_despesas_previstas': str(ctx['total_despesas_previstas']),
+            'fluxo_liquido': str(ctx['fluxo_liquido']),
+            'caixa_ate_fim': str(ctx['caixa_ate_fim']),
+            'url_pdf': f"/financeiro/relatorio-mensal/?mes={ano}-{mes:02d}&format=pdf"
+        })
+    
+    # Gera PDF usando a mesma lógica do extrato_pdf
+    # Simula uma nova requisição com os parâmetros corretos
+    from django.test import RequestFactory
+    factory = RequestFactory()
+    pdf_request = factory.get(f'/financeiro/extrato/pdf/?inicio={inicio}&fim={fim}')
+    pdf_request.user = request.user if hasattr(request, 'user') else None
+    
+    return extrato_pdf(pdf_request)
 
 
 @login_required
