@@ -310,40 +310,7 @@ def relatorio_mensal_api(request):
     ctx = _monta_contexto_extrato(inicio, fim)
     
     # Se for requisição GET normal, retorna JSON com dados
-    if request.GET.get('format') == 'base64':
-        # Gerar PDF e retornar em base64
-        import base64
-        from django.test import RequestFactory
-        factory = RequestFactory()
-        pdf_request = factory.get(f'/financeiro/extrato/pdf/?inicio={inicio}&fim={fim}')
-        
-        # Criar usuário temporário se necessário
-        if hasattr(request, 'user') and request.user:
-            pdf_request.user = request.user
-        else:
-            from django.contrib.auth.models import User
-            try:
-                api_user = User.objects.get(username='api_user')
-            except User.DoesNotExist:
-                api_user = User.objects.create_user('api_user', 'api@lotesys.com', 'temp123')
-            pdf_request.user = api_user
-        
-        pdf_response = extrato_pdf(pdf_request)
-        pdf_b64 = base64.b64encode(pdf_response.content).decode('utf-8')
-        
-        return JsonResponse({
-            'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
-            'mes_ano': f"{meses_pt[mes]} {ano}",
-            'total_receitas': _brl(ctx['total_receitas']),
-            'total_despesas_pagas': _brl(ctx['total_despesas_pagas']),
-            'total_despesas_previstas': _brl(ctx['total_despesas_previstas']),
-            'fluxo_liquido': _brl(ctx['fluxo_liquido']),
-            'caixa_ate_fim': _brl(ctx['caixa_ate_fim']),
-            'pdf_base64': pdf_b64,
-            'pdf_filename': f'relatorio_{mes:02d}_{ano}.pdf',
-            'pdf_mimetype': 'application/pdf'
-        })
-    elif request.GET.get('format') != 'pdf':
+    if request.GET.get('format') != 'pdf':
         return JsonResponse({
             'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
             'mes_ano': f"{meses_pt[mes]} {ano}",
@@ -374,7 +341,16 @@ def relatorio_mensal_api(request):
             api_user = User.objects.create_user('api_user', 'api@lotesys.com', 'temp123')
         pdf_request.user = api_user
     
-    return extrato_pdf(pdf_request)
+    pdf_response = extrato_pdf(pdf_request)
+    
+    # Forçar headers para melhor compatibilidade com ActivePieces
+    filename = f'relatorio_{mes:02d}_{ano}.pdf'
+    pdf_response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    pdf_response['Content-Type'] = 'application/pdf'
+    pdf_response['Cache-Control'] = 'no-cache'
+    pdf_response['X-Filename'] = filename
+    
+    return pdf_response
 @login_required
 def extrato(request):
     hoje = timezone.localdate()
