@@ -338,12 +338,8 @@ def relatorio_mensal_api(request):
             despesas_texto += f"• {despesa.descricao}\n"
             despesas_texto += f"  💰 {_brl(despesa.valor)} | 📅 {despesa.data.strftime('%d/%m/%Y')} | 🏷️ {categoria_display} | ✅ {status_display}\n\n"
         
-        # Campos individuais para as primeiras despesas (fallback)
-        primeira_despesa = lista_despesas[0] if lista_despesas else {}
-        segunda_despesa = lista_despesas[1] if len(lista_despesas) > 1 else {}
-        terceira_despesa = lista_despesas[2] if len(lista_despesas) > 2 else {}
-        
-        return JsonResponse({
+        # Campos individuais para TODAS as despesas (para ActivePieces fazer cards bonitos)
+        response_data = {
             'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
             'mes_ano': f"{meses_pt[mes]} {ano}",
             'total_receitas': _brl(ctx['total_receitas']),
@@ -354,11 +350,18 @@ def relatorio_mensal_api(request):
             'despesas': lista_despesas,
             'despesas_texto': despesas_texto.strip(),  # Texto formatado completo
             'total_despesas': len(lista_despesas),
-            # Despesas individuais (fallback para ActivePieces)
-            'primeira_despesa': primeira_despesa,
-            'segunda_despesa': segunda_despesa,
-            'terceira_despesa': terceira_despesa
-        })
+        }
+        
+        # Adicionar cada despesa como campo individual (despesa_1, despesa_2, etc.)
+        for i, despesa in enumerate(lista_despesas):
+            response_data[f'despesa_{i+1}'] = despesa
+        
+        # Campos legados para compatibilidade
+        response_data['primeira_despesa'] = lista_despesas[0] if lista_despesas else {}
+        response_data['segunda_despesa'] = lista_despesas[1] if len(lista_despesas) > 1 else {}
+        response_data['terceira_despesa'] = lista_despesas[2] if len(lista_despesas) > 2 else {}
+        
+        return JsonResponse(response_data)
     
     # Gera PDF usando a mesma lógica do extrato_pdf
     # Simula uma nova requisição com os parâmetros corretos
