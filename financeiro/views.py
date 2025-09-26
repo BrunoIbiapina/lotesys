@@ -846,8 +846,12 @@ def telegram_callback(request):
                     
             elif callback_data == 'voltar':
                 # Retornar ao menu principal
-                return JsonResponse({
-                    'method': 'editMessageText',
+                import requests
+                
+                bot_token = "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
+                telegram_url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
+                
+                payload = {
                     'chat_id': chat_id,
                     'message_id': message_id,
                     'text': f"""📊 <b>RELATÓRIO FINANCEIRO</b>
@@ -871,7 +875,13 @@ def telegram_callback(request):
                             ]
                         ]
                     }
-                })
+                }
+                
+                try:
+                    telegram_response = requests.post(telegram_url, json=payload, timeout=10)
+                    return JsonResponse({'status': 'success', 'telegram_response': telegram_response.json()})
+                except Exception as telegram_error:
+                    return JsonResponse({'status': 'telegram_error', 'error': str(telegram_error)})
             
             # Para outros botões, adicionar botão "Voltar"
             if callback_data in ['receitas', 'despesas', 'saldo']:
@@ -883,8 +893,13 @@ def telegram_callback(request):
             else:
                 reply_markup = None
             
-            response_data = {
-                'method': 'editMessageText',
+            # Fazer requisição direta à API do Telegram
+            import requests
+            
+            bot_token = "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
+            telegram_url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
+            
+            payload = {
                 'chat_id': chat_id,
                 'message_id': message_id,
                 'text': texto,
@@ -892,9 +907,14 @@ def telegram_callback(request):
             }
             
             if reply_markup:
-                response_data['reply_markup'] = reply_markup
-                
-            return JsonResponse(response_data)
+                payload['reply_markup'] = reply_markup
+            
+            # Enviar para o Telegram
+            try:
+                telegram_response = requests.post(telegram_url, json=payload, timeout=10)
+                return JsonResponse({'status': 'success', 'telegram_response': telegram_response.json()})
+            except Exception as telegram_error:
+                return JsonResponse({'status': 'telegram_error', 'error': str(telegram_error)})
         
         return JsonResponse({'status': 'ok'})
         
