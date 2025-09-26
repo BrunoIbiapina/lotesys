@@ -313,11 +313,11 @@ def relatorio_mensal_api(request):
         return JsonResponse({
             'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
             'mes_ano': f"{meses_pt[mes]} {ano}",
-            'total_receitas': str(ctx['total_receitas']),
-            'total_despesas_pagas': str(ctx['total_despesas_pagas']),
-            'total_despesas_previstas': str(ctx['total_despesas_previstas']),
-            'fluxo_liquido': str(ctx['fluxo_liquido']),
-            'caixa_ate_fim': str(ctx['caixa_ate_fim']),
+            'total_receitas': _brl(ctx['total_receitas']),
+            'total_despesas_pagas': _brl(ctx['total_despesas_pagas']),
+            'total_despesas_previstas': _brl(ctx['total_despesas_previstas']),
+            'fluxo_liquido': _brl(ctx['fluxo_liquido']),
+            'caixa_ate_fim': _brl(ctx['caixa_ate_fim']),
             'url_pdf': f"/financeiro/relatorio-mensal/?mes={ano}-{mes:02d}&format=pdf"
         })
     
