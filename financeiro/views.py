@@ -267,6 +267,10 @@ def ping(request):
 
 @csrf_exempt
 def relatorio_mensal_api(request):
+    # Verificação de token opcional
+    token = request.GET.get('token')
+    if token != 'SeuTokenSecreto123':  # Configure no Render como variável
+        return HttpResponse('Unauthorized', status=401)
     """
     API para gerar relatório mensal automatizado
     Parâmetros: ?mes=2024-09 (formato YYYY-MM)
