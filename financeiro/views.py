@@ -267,15 +267,16 @@ def ping(request):
 
 @csrf_exempt
 def relatorio_mensal_api(request):
-    # Verificação de token opcional
-    token = request.GET.get('token')
-    if token != 'SeuTokenSecreto123':  # Configure no Render como variável
-        return HttpResponse('Unauthorized', status=401)
     """
     API para gerar relatório mensal automatizado
     Parâmetros: ?mes=2024-09 (formato YYYY-MM)
     Retorna: PDF do extrato mensal
     """
+    # Verificação de token opcional
+    token = request.GET.get('token')
+    if token != 'SeuTokenSecreto123':  # Configure no Render como variável
+        return HttpResponse('Unauthorized', status=401)
+    
     import calendar
     from datetime import datetime
     
@@ -309,7 +310,40 @@ def relatorio_mensal_api(request):
     ctx = _monta_contexto_extrato(inicio, fim)
     
     # Se for requisição GET normal, retorna JSON com dados
-    if request.GET.get('format') != 'pdf':
+    if request.GET.get('format') == 'base64':
+        # Gerar PDF e retornar em base64
+        import base64
+        from django.test import RequestFactory
+        factory = RequestFactory()
+        pdf_request = factory.get(f'/financeiro/extrato/pdf/?inicio={inicio}&fim={fim}')
+        
+        # Criar usuário temporário se necessário
+        if hasattr(request, 'user') and request.user:
+            pdf_request.user = request.user
+        else:
+            from django.contrib.auth.models import User
+            try:
+                api_user = User.objects.get(username='api_user')
+            except User.DoesNotExist:
+                api_user = User.objects.create_user('api_user', 'api@lotesys.com', 'temp123')
+            pdf_request.user = api_user
+        
+        pdf_response = extrato_pdf(pdf_request)
+        pdf_b64 = base64.b64encode(pdf_response.content).decode('utf-8')
+        
+        return JsonResponse({
+            'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
+            'mes_ano': f"{meses_pt[mes]} {ano}",
+            'total_receitas': _brl(ctx['total_receitas']),
+            'total_despesas_pagas': _brl(ctx['total_despesas_pagas']),
+            'total_despesas_previstas': _brl(ctx['total_despesas_previstas']),
+            'fluxo_liquido': _brl(ctx['fluxo_liquido']),
+            'caixa_ate_fim': _brl(ctx['caixa_ate_fim']),
+            'pdf_base64': pdf_b64,
+            'pdf_filename': f'relatorio_{mes:02d}_{ano}.pdf',
+            'pdf_mimetype': 'application/pdf'
+        })
+    elif request.GET.get('format') != 'pdf':
         return JsonResponse({
             'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
             'mes_ano': f"{meses_pt[mes]} {ano}",
@@ -324,13 +358,23 @@ def relatorio_mensal_api(request):
     # Gera PDF usando a mesma lógica do extrato_pdf
     # Simula uma nova requisição com os parâmetros corretos
     from django.test import RequestFactory
+    from django.contrib.auth.models import AnonymousUser
     factory = RequestFactory()
     pdf_request = factory.get(f'/financeiro/extrato/pdf/?inicio={inicio}&fim={fim}')
-    pdf_request.user = request.user if hasattr(request, 'user') else None
+    
+    # Criar um usuário temporário para a requisição (necessário para @login_required)
+    if hasattr(request, 'user') and request.user:
+        pdf_request.user = request.user
+    else:
+        # Para API externa, criar usuário temporário
+        from django.contrib.auth.models import User
+        try:
+            api_user = User.objects.get(username='api_user')
+        except User.DoesNotExist:
+            api_user = User.objects.create_user('api_user', 'api@lotesys.com', 'temp123')
+        pdf_request.user = api_user
     
     return extrato_pdf(pdf_request)
-
-
 @login_required
 def extrato(request):
     hoje = timezone.localdate()
