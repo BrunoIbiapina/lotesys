@@ -309,29 +309,26 @@ def relatorio_mensal_api(request):
     # Gera contexto do extrato
     ctx = _monta_contexto_extrato(inicio, fim)
     
-    # Se for formato activepieces, retorna dados + PDF em base64
-    if request.GET.get('format') == 'activepieces':
-        # Gerar o PDF
-        from django.test import RequestFactory
-        factory = RequestFactory()
-        pdf_request = factory.get(f'/financeiro/extrato/pdf/?inicio={inicio}&fim={fim}')
+    # Se for requisição GET normal, retorna JSON com dados + lista de despesas
+    if request.GET.get('format') != 'pdf':
+        # Buscar todas as despesas do mês
+        despesas_mes = Despesa.objects.filter(
+            data__range=[inicio, fim]
+        ).order_by('-data', 'categoria')
         
-        # Criar usuário temporário se necessário
-        if hasattr(request, 'user') and request.user:
-            pdf_request.user = request.user
-        else:
-            from django.contrib.auth.models import User
-            try:
-                api_user = User.objects.get(username='api_user')
-            except User.DoesNotExist:
-                api_user = User.objects.create_user('api_user', 'api@lotesys.com', 'temp123')
-            pdf_request.user = api_user
-        
-        pdf_response = extrato_pdf(pdf_request)
-        
-        # Converter PDF para base64 
-        import base64
-        pdf_base64 = base64.b64encode(pdf_response.content).decode('utf-8')
+        # Preparar lista de despesas para o email
+        lista_despesas = []
+        for despesa in despesas_mes:
+            categoria_display = despesa.get_categoria_display()
+            status_display = despesa.get_status_display()
+            lista_despesas.append({
+                'data': despesa.data.strftime('%d/%m/%Y'),
+                'categoria': categoria_display,
+                'descricao': despesa.descricao,
+                'valor': _brl(despesa.valor),
+                'status': status_display,
+                'status_class': 'paga' if despesa.status == 'PAGA' else 'prevista'
+            })
         
         return JsonResponse({
             'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
@@ -341,22 +338,9 @@ def relatorio_mensal_api(request):
             'total_despesas_previstas': _brl(ctx['total_despesas_previstas']),
             'fluxo_liquido': _brl(ctx['fluxo_liquido']),
             'caixa_ate_fim': _brl(ctx['caixa_ate_fim']),
-            # Formato que ActivePieces aceita
-            'attachment': f"data:application/pdf;base64,{pdf_base64}",
-            'filename': f'relatorio_{mes:02d}_{ano}.pdf'
-        })
-    
-    # Se for requisição GET normal, retorna JSON com dados
-    elif request.GET.get('format') != 'pdf':
-        return JsonResponse({
-            'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
-            'mes_ano': f"{meses_pt[mes]} {ano}",
-            'total_receitas': _brl(ctx['total_receitas']),
-            'total_despesas_pagas': _brl(ctx['total_despesas_pagas']),
-            'total_despesas_previstas': _brl(ctx['total_despesas_previstas']),
-            'fluxo_liquido': _brl(ctx['fluxo_liquido']),
-            'caixa_ate_fim': _brl(ctx['caixa_ate_fim']),
-            'url_pdf': f"/financeiro/relatorio-mensal/?mes={ano}-{mes:02d}&format=pdf"
+            'url_pdf': f"/financeiro/relatorio-mensal/?mes={ano}-{mes:02d}&format=pdf",
+            'despesas': lista_despesas,
+            'total_despesas': len(lista_despesas)
         })
     
     # Gera PDF usando a mesma lógica do extrato_pdf
