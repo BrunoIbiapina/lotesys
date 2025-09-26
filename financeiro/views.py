@@ -846,7 +846,9 @@ def telegram_callback(request):
                     
             elif callback_data == 'voltar':
                 # Retornar ao menu principal
-                import requests
+                import urllib.request
+                import urllib.parse
+                import json as json_lib
                 
                 bot_token = "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
                 telegram_url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
@@ -878,8 +880,11 @@ def telegram_callback(request):
                 }
                 
                 try:
-                    telegram_response = requests.post(telegram_url, json=payload, timeout=10)
-                    return JsonResponse({'status': 'success', 'telegram_response': telegram_response.json()})
+                    data = json_lib.dumps(payload).encode('utf-8')
+                    req = urllib.request.Request(telegram_url, data=data, headers={'Content-Type': 'application/json'})
+                    with urllib.request.urlopen(req, timeout=10) as response:
+                        result = json_lib.loads(response.read().decode('utf-8'))
+                    return JsonResponse({'status': 'success', 'telegram_response': result})
                 except Exception as telegram_error:
                     return JsonResponse({'status': 'telegram_error', 'error': str(telegram_error)})
             
@@ -894,7 +899,9 @@ def telegram_callback(request):
                 reply_markup = None
             
             # Fazer requisição direta à API do Telegram
-            import requests
+            import urllib.request
+            import urllib.parse
+            import json as json_lib
             
             bot_token = "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
             telegram_url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
@@ -911,8 +918,11 @@ def telegram_callback(request):
             
             # Enviar para o Telegram
             try:
-                telegram_response = requests.post(telegram_url, json=payload, timeout=10)
-                return JsonResponse({'status': 'success', 'telegram_response': telegram_response.json()})
+                data = json_lib.dumps(payload).encode('utf-8')
+                req = urllib.request.Request(telegram_url, data=data, headers={'Content-Type': 'application/json'})
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    result = json_lib.loads(response.read().decode('utf-8'))
+                return JsonResponse({'status': 'success', 'telegram_response': result})
             except Exception as telegram_error:
                 return JsonResponse({'status': 'telegram_error', 'error': str(telegram_error)})
         
