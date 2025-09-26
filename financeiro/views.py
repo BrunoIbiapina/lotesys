@@ -757,3 +757,146 @@ def extrato_pdf(request):
     resp = HttpResponse(pdf_bytes, content_type="application/pdf")
     resp["Content-Disposition"] = f'inline; filename="{filename}"'
     return resp
+
+
+@csrf_exempt
+def telegram_callback(request):
+    """
+    Endpoint para receber callbacks dos botões do Telegram
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método não permitido'}, status=405)
+    
+    try:
+        import json
+        data = json.loads(request.body)
+        
+        # Verificar se é um callback query (clique em botão)
+        if 'callback_query' in data:
+            callback_query = data['callback_query']
+            callback_data = callback_query['data']
+            chat_id = callback_query['message']['chat']['id']
+            message_id = callback_query['message']['message_id']
+            
+            # Buscar os dados financeiros do mês atual
+            hoje = timezone.now().date()
+            mes_str = hoje.strftime('%Y-%m')
+            
+            # Obter dados usando a mesma lógica do relatorio_mensal_api
+            inicio = hoje.replace(day=1)
+            fim = inicio.replace(month=inicio.month % 12 + 1, day=1) - timedelta(days=1) if inicio.month < 12 else inicio.replace(year=inicio.year + 1, month=1, day=1) - timedelta(days=1)
+            
+            # Dados principais
+            vendas = Venda.objects.filter(data_venda__range=[inicio, fim])
+            total_receitas = Decimal("0.00")
+            
+            for venda in vendas:
+                parcelas_pagas = Parcela.objects.filter(
+                    venda=venda,
+                    data_pagamento__isnull=False,
+                    data_pagamento__range=[inicio, fim]
+                ).aggregate(total=Coalesce(Sum('valor'), Decimal('0')))['total']
+                total_receitas += parcelas_pagas + venda.entrada_liquida
+            
+            despesas_queryset = Despesa.objects.filter(data__range=[inicio, fim]).order_by('-valor')
+            total_despesas = despesas_queryset.aggregate(total=Coalesce(Sum('valor'), Decimal('0')))['total']
+            saldo = total_receitas - total_despesas
+            
+            # Preparar resposta baseada no botão clicado
+            if callback_data == 'receitas':
+                texto = f"💰 <b>RECEITAS DO MÊS</b>\n\n"
+                texto += f"💵 <b>Total:</b> {_brl(total_receitas)}\n\n"
+                
+                for venda in vendas:
+                    parcelas_pagas = Parcela.objects.filter(
+                        venda=venda,
+                        data_pagamento__isnull=False,
+                        data_pagamento__range=[inicio, fim]
+                    ).aggregate(total=Coalesce(Sum('valor'), Decimal('0')))['total']
+                    
+                    if parcelas_pagas > 0 or venda.entrada_liquida > 0:
+                        texto += f"🏷️ <b>{venda.cliente}</b>\n"
+                        if venda.entrada_liquida > 0:
+                            texto += f"   💳 Entrada: {_brl(venda.entrada_liquida)}\n"
+                        if parcelas_pagas > 0:
+                            texto += f"   📅 Parcelas: {_brl(parcelas_pagas)}\n"
+                        texto += "\n"
+                        
+            elif callback_data == 'despesas':
+                texto = f"💸 <b>DESPESAS DO MÊS</b>\n\n"
+                texto += f"💵 <b>Total:</b> {_brl(total_despesas)}\n\n"
+                
+                for despesa in despesas_queryset[:10]:  # Top 10 despesas
+                    texto += f"📄 <b>{despesa.descricao}</b>\n"
+                    texto += f"   💰 {_brl(despesa.valor)}\n"
+                    texto += f"   📅 {despesa.data.strftime('%d/%m/%Y')}\n\n"
+                    
+            elif callback_data == 'saldo':
+                emoji = "✅" if saldo >= 0 else "❌"
+                texto = f"{emoji} <b>SALDO DO MÊS</b>\n\n"
+                texto += f"💰 <b>Receitas:</b> {_brl(total_receitas)}\n"
+                texto += f"💸 <b>Despesas:</b> {_brl(total_despesas)}\n"
+                texto += f"━━━━━━━━━━━━━━━\n"
+                texto += f"💵 <b>Saldo:</b> {_brl(saldo)}\n\n"
+                
+                if saldo >= 0:
+                    texto += "🎉 <i>Mês positivo!</i>"
+                else:
+                    texto += "⚠️ <i>Atenção: saldo negativo</i>"
+                    
+            elif callback_data == 'voltar':
+                # Retornar ao menu principal
+                return JsonResponse({
+                    'method': 'editMessageText',
+                    'chat_id': chat_id,
+                    'message_id': message_id,
+                    'text': f"""📊 <b>RELATÓRIO FINANCEIRO</b>
+🗓️ <b>Período:</b> {inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}
+
+💰 <b>Receitas:</b> {_brl(total_receitas)}
+💸 <b>Despesas:</b> {_brl(total_despesas)}
+━━━━━━━━━━━━━━━
+💵 <b>Saldo:</b> {_brl(saldo)}
+
+<i>Escolha uma opção abaixo:</i>""",
+                    'parse_mode': 'HTML',
+                    'reply_markup': {
+                        'inline_keyboard': [
+                            [
+                                {'text': '💰 Ver Receitas', 'callback_data': 'receitas'},
+                                {'text': '💸 Ver Despesas', 'callback_data': 'despesas'}
+                            ],
+                            [
+                                {'text': '💵 Saldo Detalhado', 'callback_data': 'saldo'}
+                            ]
+                        ]
+                    }
+                })
+            
+            # Para outros botões, adicionar botão "Voltar"
+            if callback_data in ['receitas', 'despesas', 'saldo']:
+                reply_markup = {
+                    'inline_keyboard': [
+                        [{'text': '⬅️ Voltar ao Menu', 'callback_data': 'voltar'}]
+                    ]
+                }
+            else:
+                reply_markup = None
+            
+            response_data = {
+                'method': 'editMessageText',
+                'chat_id': chat_id,
+                'message_id': message_id,
+                'text': texto,
+                'parse_mode': 'HTML'
+            }
+            
+            if reply_markup:
+                response_data['reply_markup'] = reply_markup
+                
+            return JsonResponse(response_data)
+        
+        return JsonResponse({'status': 'ok'})
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

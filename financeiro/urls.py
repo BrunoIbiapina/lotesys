@@ -10,5 +10,6 @@ urlpatterns = [
     path("extrato/", views.extrato, name="extrato"),
     path("extrato/pdf/", views.extrato_pdf, name="extrato_pdf"),
     path("relatorio-mensal/", views.relatorio_mensal_api, name="relatorio_mensal_api"),
+    path("telegram-callback/", views.telegram_callback, name="telegram_callback"),
     path("debug-media/", debug_media, name="debug_media"),
 ]
