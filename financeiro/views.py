@@ -338,7 +338,6 @@ def relatorio_mensal_api(request):
             'total_despesas_previstas': _brl(ctx['total_despesas_previstas']),
             'fluxo_liquido': _brl(ctx['fluxo_liquido']),
             'caixa_ate_fim': _brl(ctx['caixa_ate_fim']),
-            'url_pdf': f"/financeiro/relatorio-mensal/?mes={ano}-{mes:02d}&format=pdf",
             'despesas': lista_despesas,
             'total_despesas': len(lista_despesas)
         })
