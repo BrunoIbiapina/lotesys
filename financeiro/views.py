@@ -783,32 +783,84 @@ def telegram_callback(request):
         chat_id = callback_query['message']['chat']['id']
         message_id = callback_query['message']['message_id']
         
-        # Fazer requisição simples ao Telegram
+                # Importar requests
         import requests
         
         bot_token = "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
         url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
         
-        # Texto baseado no botão
+        # Buscar dados financeiros do mês atual
+        hoje = date.today()
+        dados = _relatorio_mensal(hoje.year, hoje.month)
+        
+        # Gerar resposta baseada no botão clicado
         if callback_data == 'receitas':
-            text = "✅ <b>FUNCIONOU!</b>\n\n💰 Botão Receitas clicado!"
+            text = f"""💰 <b>RECEITAS - {hoje.strftime('%B/%Y').upper()}</b>
+
+� <b>Parcelas Pagas:</b> {_brl(dados['parcelas_pagas'])}
+💵 <b>Entradas Líquidas:</b> {_brl(dados['entradas_liquidas'])}
+
+<b>TOTAL RECEITAS:</b> {_brl(dados['total_receitas'])}"""
+
         elif callback_data == 'despesas':
-            text = "✅ <b>FUNCIONOU!</b>\n\n💸 Botão Despesas clicado!"
+            text = f"""💸 <b>DESPESAS - {hoje.strftime('%B/%Y').upper()}</b>
+
+💰 <b>Total Pago:</b> {_brl(dados['total_despesas_pagas'])}
+
+<b>📋 PRINCIPAIS DESPESAS:</b>"""
+            
+            # Listar as 5 maiores despesas do período
+            despesas_mes = Despesa.objects.filter(
+                data_vencimento__year=hoje.year,
+                data_vencimento__month=hoje.month,
+                pago=True
+            ).order_by('-valor')[:5]
+            
+            for i, desp in enumerate(despesas_mes, 1):
+                text += f"\n{i}. {desp.descricao[:25]} - {_brl(desp.valor)}"
+            
+            if not despesas_mes:
+                text += "\n<i>Nenhuma despesa paga neste período</i>"
+
         elif callback_data == 'saldo':
-            text = "✅ <b>FUNCIONOU!</b>\n\n💵 Botão Saldo clicado!"
+            saldo = dados['total_receitas'] - dados['total_despesas_pagas']
+            emoji_saldo = "💚" if saldo >= 0 else "❌"
+            
+            text = f"""💵 <b>SALDO - {hoje.strftime('%B/%Y').upper()}</b>
+
+� <b>Receitas:</b> {_brl(dados['total_receitas'])}
+💸 <b>Despesas:</b> {_brl(dados['total_despesas_pagas'])}
+
+{emoji_saldo} <b>SALDO FINAL:</b> {_brl(saldo)}"""
+
         else:
-            text = "✅ <b>FUNCIONOU!</b>\n\nBotão clicado!"
+            text = "❓ Opção não reconhecida. Tente novamente."
+        
+        # Adicionar botões de navegação
+        keyboard = [
+            [
+                {"text": "💰 Receitas", "callback_data": "receitas"},
+                {"text": "💸 Despesas", "callback_data": "despesas"}
+            ],
+            [
+                {"text": "💵 Saldo", "callback_data": "saldo"}
+            ]
+        ]
         
         payload = {
             'chat_id': chat_id,
             'message_id': message_id,
             'text': text,
-            'parse_mode': 'HTML'
+            'parse_mode': 'HTML',
+            'reply_markup': {'inline_keyboard': keyboard}
         }
         
-        response = requests.post(url, json=payload, timeout=5)
+        response = requests.post(url, json=payload, timeout=10)
         
-        return JsonResponse({'status': 'success', 'telegram_ok': response.json().get('ok', False)})
+        return JsonResponse({
+            'status': 'success', 
+            'telegram_response': response.json() if response.status_code == 200 else f"Erro {response.status_code}"
+        })
             
         callback_query = data['callback_query']
         callback_data = callback_query['data']
