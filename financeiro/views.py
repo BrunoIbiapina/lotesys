@@ -776,6 +776,42 @@ def telegram_callback(request):
         
         data = json.loads(request.body)
         
+        # Verificar se é uma mensagem de texto normal
+        if 'message' in data and 'text' in data['message']:
+            # Responder a mensagens de texto
+            chat_id = data['message']['chat']['id']
+            message_text = data['message']['text'].lower()
+            
+            # Importar requests
+            import requests
+            
+            bot_token = "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
+            url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            
+            # Resposta baseada no texto digitado
+            if any(palavra in message_text for palavra in ['relatorio', 'relatório', 'financeiro', 'saldo', 'receita', 'despesa']):
+                # Se mencionou palavras-chave, envia relatório completo
+                response_text = "📊 <b>Gerando relatório...</b>\n\nClique no botão para ver os dados:"
+                keyboard = [[{"text": "📊 Ver Relatório Completo", "callback_data": "relatorio"}]]
+            else:
+                # Resposta genérica para outras mensagens
+                response_text = f"👋 Olá! Recebi sua mensagem: <i>'{data['message']['text'][:50]}...'</i>\n\nPara ver o relatório financeiro, use o botão abaixo:"
+                keyboard = [[{"text": "📊 Ver Relatório", "callback_data": "relatorio"}]]
+            
+            payload = {
+                'chat_id': chat_id,
+                'text': response_text,
+                'parse_mode': 'HTML',
+                'reply_markup': {'inline_keyboard': keyboard}
+            }
+            
+            response = requests.post(url, json=payload, timeout=10)
+            
+            return JsonResponse({
+                'status': 'message_processed',
+                'telegram_response': response.json() if response.status_code == 200 else f"Erro {response.status_code}"
+            })
+        
         # Se não for callback, apenas retorna OK
         if 'callback_query' not in data:
             return JsonResponse({'status': 'ok'})
