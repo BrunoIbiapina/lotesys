@@ -811,14 +811,13 @@ def telegram_callback(request):
             }
         }
         
-        # Enviar para o Telegram
-        payload_bytes = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(telegram_url, data=payload_bytes, headers={'Content-Type': 'application/json'})
-        
-        with urllib.request.urlopen(req, timeout=10) as response:
-            result = json.loads(response.read().decode('utf-8'))
-            
-        return JsonResponse({'status': 'success', 'telegram_response': result})
+        # Apenas retornar sucesso sem conectar com Telegram por enquanto
+        return JsonResponse({
+            'status': 'received', 
+            'callback_data': callback_data,
+            'message': 'Webhook funcionando - callback recebido com sucesso!',
+            'payload_que_seria_enviado': payload
+        })
         
     except Exception as e:
         print(f"Erro no webhook: {str(e)}")
