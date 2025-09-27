@@ -865,22 +865,14 @@ def telegram_callback(request):
         # Adicionar TODAS as despesas pagas
         if despesas_pagas.exists():
             text += f"\n\n✅ <b>PAGAS ({despesas_pagas.count()}):</b>"
-            for i, desp in enumerate(despesas_pagas[:8], 1):
+            for i, desp in enumerate(despesas_pagas, 1):
                 text += f"\n{i}. {desp.descricao[:35]} - {_brl(desp.valor)}"
-            
-            # Se tem mais despesas, avisa
-            if despesas_pagas.count() > 8:
-                text += f"\n... e mais {despesas_pagas.count() - 8} despesas"
         
-        # Adicionar despesas previstas
+        # Adicionar TODAS as despesas previstas
         if despesas_previstas.exists():
             text += f"\n\n⏳ <b>PREVISTAS ({despesas_previstas.count()}):</b>"
-            for i, desp in enumerate(despesas_previstas[:6], 1):
+            for i, desp in enumerate(despesas_previstas, 1):
                 text += f"\n{i}. {desp.descricao[:35]} - {_brl(desp.valor)}"
-                
-            # Se tem mais despesas, avisa
-            if despesas_previstas.count() > 6:
-                text += f"\n... e mais {despesas_previstas.count() - 6} despesas"
         
         # Saldo final detalhado
         text += f"""
