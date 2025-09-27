@@ -882,16 +882,20 @@ def telegram_callback(request):
         fim = date(hoje.year, hoje.month, ultimo_dia)
         ctx = _monta_contexto_extrato(inicio, fim)
         
+        # Calcular dados corretos para o fluxo
+        receitas_valor = ctx['total_receitas']
+        despesas_fluxo_valor = ctx['total_despesas_pagas_fluxo'] 
+        resultado_correto = receitas_valor - despesas_fluxo_valor
+        
         text += f"""
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💵 <b>SALDO DO PERÍODO</b>
-💰 Receitas: {dados['total_receitas']}
-💸 Despesas (Contábil): {dados['total_despesas_pagas']}
-💼 Despesas (p/ Fluxo): {_brl(ctx['total_despesas_pagas_fluxo'])}
-<b>🏦 RESULTADO: {dados.get('fluxo_liquido', 'R$ 0,00')}</b>
+💵 <b>FLUXO DE CAIXA</b>
+💰 Receitas: {_brl(receitas_valor)}
+💸 Despesas (p/ fluxo): {_brl(despesas_fluxo_valor)}
+<b>🏦 RESULTADO: {_brl(resultado_correto)}</b>
 
-ℹ️ <i>Fluxo = Receitas - Despesas sem comissões já abatidas</i>
+📝 <i>Despesas p/ fluxo = despesas pagas - comissões já abatidas nas vendas</i>
 📅 {hoje.strftime('%d/%m/%Y às %H:%M')}"""
 
         payload = {
