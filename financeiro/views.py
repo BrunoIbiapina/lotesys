@@ -771,7 +771,44 @@ def telegram_callback(request):
         if request.method != 'POST':
             return JsonResponse({'error': 'Método não permitido'}, status=405)
         
-        return JsonResponse({'status': 'webhook_funcionando', 'method': 'POST'})
+        data = json.loads(request.body)
+        
+        # Se não for callback, apenas retorna OK
+        if 'callback_query' not in data:
+            return JsonResponse({'status': 'ok'})
+        
+        # Extrair dados do callback
+        callback_query = data['callback_query']
+        callback_data = callback_query['data']
+        chat_id = callback_query['message']['chat']['id']
+        message_id = callback_query['message']['message_id']
+        
+        # Fazer requisição simples ao Telegram
+        import requests
+        
+        bot_token = "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
+        url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
+        
+        # Texto baseado no botão
+        if callback_data == 'receitas':
+            text = "✅ <b>FUNCIONOU!</b>\n\n💰 Botão Receitas clicado!"
+        elif callback_data == 'despesas':
+            text = "✅ <b>FUNCIONOU!</b>\n\n💸 Botão Despesas clicado!"
+        elif callback_data == 'saldo':
+            text = "✅ <b>FUNCIONOU!</b>\n\n💵 Botão Saldo clicado!"
+        else:
+            text = "✅ <b>FUNCIONOU!</b>\n\nBotão clicado!"
+        
+        payload = {
+            'chat_id': chat_id,
+            'message_id': message_id,
+            'text': text,
+            'parse_mode': 'HTML'
+        }
+        
+        response = requests.post(url, json=payload, timeout=5)
+        
+        return JsonResponse({'status': 'success', 'telegram_ok': response.json().get('ok', False)})
             
         callback_query = data['callback_query']
         callback_data = callback_query['data']
