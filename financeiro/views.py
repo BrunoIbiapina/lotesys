@@ -851,27 +851,47 @@ def telegram_callback(request):
         despesas_previstas = despesas_mes.filter(status='PREVISTA')
         
         # Criar relatório COMPLETO (como email)
-        text = f"""�� <b>RELATÓRIO FINANCEIRO</b>
+        text = f"""�� <b>RELATÓRIO COMPLETO</b>
 <b>{dados['mes_ano']}</b>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 💰 <b>RECEITAS</b>
-• Total: {dados['total_receitas']}
+🏦 TOTAL: <b>{dados['total_receitas']}</b>
 
 💸 <b>DESPESAS</b>
-• Pagas: {dados['total_despesas_pagas']}
-• Previstas: {dados['total_despesas_previstas']}"""
+✅ Pagas: {dados['total_despesas_pagas']}
+⏳ Previstas: {dados['total_despesas_previstas']}"""
 
-        # Adicionar principais despesas
-        if despesas_mes:
-            text += "\n\n📋 <b>Principais:</b>"
-            for i, desp in enumerate(despesas_mes, 1):
-                text += f"\n{i}. {desp.descricao[:20]} - {_brl(desp.valor)}"
+        # Adicionar TODAS as despesas pagas
+        if despesas_pagas.exists():
+            text += f"\n\n✅ <b>PAGAS ({despesas_pagas.count()}):</b>"
+            for i, desp in enumerate(despesas_pagas[:8], 1):
+                text += f"\n{i}. {desp.descricao[:35]} - {_brl(desp.valor)}"
+            
+            # Se tem mais despesas, avisa
+            if despesas_pagas.count() > 8:
+                text += f"\n... e mais {despesas_pagas.count() - 8} despesas"
         
-        # Adicionar saldo final
+        # Adicionar despesas previstas
+        if despesas_previstas.exists():
+            text += f"\n\n⏳ <b>PREVISTAS ({despesas_previstas.count()}):</b>"
+            for i, desp in enumerate(despesas_previstas[:6], 1):
+                text += f"\n{i}. {desp.descricao[:35]} - {_brl(desp.valor)}"
+                
+            # Se tem mais despesas, avisa
+            if despesas_previstas.count() > 6:
+                text += f"\n... e mais {despesas_previstas.count() - 6} despesas"
+        
+        # Saldo final detalhado
         text += f"""
 
-💵 <b>SALDO PERÍODO</b>
-{dados['fluxo_liquido']}"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 <b>SALDO DO PERÍODO</b>
+💰 Receitas: {dados['total_receitas']}
+💸 Despesas Pagas: {dados['total_despesas_pagas']}
+<b>🏦 RESULTADO: {dados.get('fluxo_liquido', 'R$ 0,00')}</b>
+
+📅 {hoje.strftime('%d/%m/%Y às %H:%M')}"""
 
         payload = {
             'chat_id': chat_id,
