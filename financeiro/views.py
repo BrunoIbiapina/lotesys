@@ -900,7 +900,7 @@ def telegram_callback(request):
 💵 <b>FLUXO DE CAIXA</b>
 💰 Receitas: {_brl(receitas_valor)}
 💸 Despesas (p/ fluxo): {_brl(despesas_fluxo_valor)}
-<b>🏦 RESULTADO: {_brl(resultado_correto)}</b>
+<b>🏦 VALOR EM CAIXA: {_brl(resultado_correto)}</b>
 
 📝 <i>Despesas p/ fluxo = despesas pagas - comissões já abatidas nas vendas</i>
 📅 {hoje.strftime('%d/%m/%Y às %H:%M')}"""
