@@ -840,14 +840,17 @@ def telegram_callback(request):
         api_response = relatorio_mensal_api(api_request)
         dados = json.loads(api_response.content)
         
-        # Buscar principais despesas do mês
+        # Buscar TODAS as despesas do mês
         despesas_mes = Despesa.objects.filter(
             data__year=hoje.year,
-            data__month=hoje.month,
-            status='PAGA'
-        ).order_by('-valor')[:3]  # Top 3 despesas
+            data__month=hoje.month
+        ).order_by('-valor')  # TODAS as despesas
         
-        # Criar relatório completo resumido
+        # Separar por status
+        despesas_pagas = despesas_mes.filter(status='PAGA')
+        despesas_previstas = despesas_mes.filter(status='PREVISTA')
+        
+        # Criar relatório COMPLETO (como email)
         text = f"""�� <b>RELATÓRIO FINANCEIRO</b>
 <b>{dados['mes_ano']}</b>
 
