@@ -763,9 +763,12 @@ def extrato_pdf(request):
 
 
 @csrf_exempt
+
+
+@csrf_exempt
 def telegram_callback(request):
     """
-    Endpoint para receber callbacks dos botões do Telegram
+    Endpoint simples - sempre retorna relatório completo (sem botões)
     """
     try:
         if request.method != 'POST':
@@ -779,80 +782,63 @@ def telegram_callback(request):
         
         # Extrair dados do callback
         callback_query = data['callback_query']
-        callback_data = callback_query['data']
         chat_id = callback_query['message']['chat']['id']
         message_id = callback_query['message']['message_id']
         
-                # Importar requests
+        # Importar requests
         import requests
         
         bot_token = "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
         url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
         
-        # Buscar dados financeiros do mês atual
+        # Buscar dados financeiros do mês atual usando a API existente
         hoje = date.today()
-        dados = _relatorio_mensal(hoje.year, hoje.month)
         
-        # Gerar resposta baseada no botão clicado
-        if callback_data == 'receitas':
-            text = f"""💰 <b>RECEITAS - {hoje.strftime('%B/%Y').upper()}</b>
+        # Simular uma requisição para pegar os dados via API
+        from django.test import RequestFactory
+        factory = RequestFactory()
+        api_request = factory.get(f'/?mes={hoje.year}-{hoje.month:02d}')
+        api_request.META['HTTP_AUTHORIZATION'] = 'Token SeuTokenSecreto123'
+        
+        # Chamar a API interna
+        api_response = relatorio_mensal_api(api_request)
+        dados = json.loads(api_response.content)
+        
+        # Buscar principais despesas do mês
+        despesas_mes = Despesa.objects.filter(
+            data__year=hoje.year,
+            data__month=hoje.month,
+            status='PAGA'
+        ).order_by('-valor')[:3]  # Top 3 despesas
+        
+        # Criar relatório completo resumido
+        text = f"""�� <b>RELATÓRIO FINANCEIRO</b>
+<b>{dados['mes_ano']}</b>
 
-� <b>Parcelas Pagas:</b> {_brl(dados['parcelas_pagas'])}
-💵 <b>Entradas Líquidas:</b> {_brl(dados['entradas_liquidas'])}
+💰 <b>RECEITAS</b>
+• Total: {dados['total_receitas']}
 
-<b>TOTAL RECEITAS:</b> {_brl(dados['total_receitas'])}"""
+💸 <b>DESPESAS</b>
+• Pagas: {dados['total_despesas_pagas']}
+• Previstas: {dados['total_despesas_previstas']}"""
 
-        elif callback_data == 'despesas':
-            text = f"""💸 <b>DESPESAS - {hoje.strftime('%B/%Y').upper()}</b>
-
-💰 <b>Total Pago:</b> {_brl(dados['total_despesas_pagas'])}
-
-<b>📋 PRINCIPAIS DESPESAS:</b>"""
-            
-            # Listar as 5 maiores despesas do período
-            despesas_mes = Despesa.objects.filter(
-                data_vencimento__year=hoje.year,
-                data_vencimento__month=hoje.month,
-                pago=True
-            ).order_by('-valor')[:5]
-            
+        # Adicionar principais despesas
+        if despesas_mes:
+            text += "\n\n📋 <b>Principais:</b>"
             for i, desp in enumerate(despesas_mes, 1):
-                text += f"\n{i}. {desp.descricao[:25]} - {_brl(desp.valor)}"
-            
-            if not despesas_mes:
-                text += "\n<i>Nenhuma despesa paga neste período</i>"
-
-        elif callback_data == 'saldo':
-            saldo = dados['total_receitas'] - dados['total_despesas_pagas']
-            emoji_saldo = "💚" if saldo >= 0 else "❌"
-            
-            text = f"""💵 <b>SALDO - {hoje.strftime('%B/%Y').upper()}</b>
-
-� <b>Receitas:</b> {_brl(dados['total_receitas'])}
-💸 <b>Despesas:</b> {_brl(dados['total_despesas_pagas'])}
-
-{emoji_saldo} <b>SALDO FINAL:</b> {_brl(saldo)}"""
-
-        else:
-            text = "❓ Opção não reconhecida. Tente novamente."
+                text += f"\n{i}. {desp.descricao[:20]} - {_brl(desp.valor)}"
         
-        # Adicionar botões de navegação
-        keyboard = [
-            [
-                {"text": "💰 Receitas", "callback_data": "receitas"},
-                {"text": "💸 Despesas", "callback_data": "despesas"}
-            ],
-            [
-                {"text": "💵 Saldo", "callback_data": "saldo"}
-            ]
-        ]
-        
+        # Adicionar saldo final
+        text += f"""
+
+💵 <b>SALDO PERÍODO</b>
+{dados['fluxo_liquido']}"""
+
         payload = {
             'chat_id': chat_id,
             'message_id': message_id,
             'text': text,
-            'parse_mode': 'HTML',
-            'reply_markup': {'inline_keyboard': keyboard}
+            'parse_mode': 'HTML'
         }
         
         response = requests.post(url, json=payload, timeout=10)
@@ -860,45 +846,6 @@ def telegram_callback(request):
         return JsonResponse({
             'status': 'success', 
             'telegram_response': response.json() if response.status_code == 200 else f"Erro {response.status_code}"
-        })
-            
-        callback_query = data['callback_query']
-        callback_data = callback_query['data']
-        chat_id = callback_query['message']['chat']['id']
-        message_id = callback_query['message']['message_id']
-        
-        # Resposta simples para teste
-        bot_token = "8390754722:AAH_lZ6D0Xl9lZVJkmYyebRLKvX8Vpqp2_o"
-        telegram_url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
-        
-        # Texto baseado no botão clicado
-        if callback_data == 'receitas':
-            novo_texto = "✅ <b>FUNCIONOU!</b>\n\n� Botão Receitas clicado com sucesso!"
-        elif callback_data == 'despesas':
-            novo_texto = "✅ <b>FUNCIONOU!</b>\n\n� Botão Despesas clicado com sucesso!"
-        elif callback_data == 'saldo':
-            novo_texto = "✅ <b>FUNCIONOU!</b>\n\n� Botão Saldo clicado com sucesso!"
-        else:
-            novo_texto = "✅ <b>FUNCIONOU!</b>\n\nBotão clicado com sucesso!"
-        
-        payload = {
-            'chat_id': chat_id,
-            'message_id': message_id,
-            'text': novo_texto,
-            'parse_mode': 'HTML',
-            'reply_markup': {
-                'inline_keyboard': [
-                    [{'text': '⬅️ Teste Voltar', 'callback_data': 'voltar'}]
-                ]
-            }
-        }
-        
-        # Apenas retornar sucesso sem conectar com Telegram por enquanto
-        return JsonResponse({
-            'status': 'received', 
-            'callback_data': callback_data,
-            'message': 'Webhook funcionando - callback recebido com sucesso!',
-            'payload_que_seria_enviado': payload
         })
         
     except Exception as e:
