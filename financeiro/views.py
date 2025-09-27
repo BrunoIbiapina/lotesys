@@ -342,13 +342,20 @@ def relatorio_mensal_api(request):
             despesas_texto += f"  💰 {_brl(despesa.valor)} | 📅 {despesa.data.strftime('%d/%m/%Y')} | 🏷️ {categoria_display} | ✅ {status_display}\n\n"
         
         # Campos individuais para TODAS as despesas (para ActivePieces fazer cards bonitos)
+        # Cálculo correto usando dados do contexto (igual no Telegram)
+        receitas_valor = ctx['total_receitas']
+        despesas_fluxo_valor = ctx['total_despesas_pagas_fluxo']
+        resultado_correto = receitas_valor - despesas_fluxo_valor
+        
         response_data = {
             'periodo': f"{inicio.strftime('%d/%m/%Y')} - {fim.strftime('%d/%m/%Y')}",
             'mes_ano': f"{meses_pt[mes]} {ano}",
             'total_receitas': _brl(ctx['total_receitas']),
             'total_despesas_pagas': _brl(ctx['total_despesas_pagas']),
             'total_despesas_previstas': _brl(ctx['total_despesas_previstas']),
+            'total_despesas_pagas_fluxo': _brl(ctx['total_despesas_pagas_fluxo']),  # Novo campo
             'fluxo_liquido': _brl(ctx['fluxo_liquido']),
+            'resultado_correto': _brl(resultado_correto),  # Cálculo manual para garantir
             'caixa_ate_fim': _brl(ctx['caixa_ate_fim']),
             'despesas': lista_despesas,
             'despesas_texto': despesas_texto.strip(),  # Texto formatado completo
