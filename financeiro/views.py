@@ -874,15 +874,24 @@ def telegram_callback(request):
             for i, desp in enumerate(despesas_previstas, 1):
                 text += f"\n{i}. {desp.descricao[:35]} - {_brl(desp.valor)}"
         
-        # Saldo final detalhado
+        # Saldo final detalhado - usando mesma lógica do _monta_contexto_extrato
+        # Buscar dados corretos do contexto para o cálculo
+        import calendar
+        ultimo_dia = calendar.monthrange(hoje.year, hoje.month)[1]
+        inicio = date(hoje.year, hoje.month, 1)
+        fim = date(hoje.year, hoje.month, ultimo_dia)
+        ctx = _monta_contexto_extrato(inicio, fim)
+        
         text += f"""
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💵 <b>SALDO DO PERÍODO</b>
 💰 Receitas: {dados['total_receitas']}
-💸 Despesas Pagas: {dados['total_despesas_pagas']}
+💸 Despesas (Contábil): {dados['total_despesas_pagas']}
+💼 Despesas (p/ Fluxo): {_brl(ctx['total_despesas_pagas_fluxo'])}
 <b>🏦 RESULTADO: {dados.get('fluxo_liquido', 'R$ 0,00')}</b>
 
+ℹ️ <i>Fluxo = Receitas - Despesas sem comissões já abatidas</i>
 📅 {hoje.strftime('%d/%m/%Y às %H:%M')}"""
 
         payload = {
