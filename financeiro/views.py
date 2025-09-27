@@ -771,14 +771,7 @@ def telegram_callback(request):
         if request.method != 'POST':
             return JsonResponse({'error': 'Método não permitido'}, status=405)
         
-        data = json.loads(request.body)
-        
-        # Log para debug
-        print(f"Webhook recebido: {data}")
-        
-        # Verificar se é um callback query (clique em botão)
-        if 'callback_query' not in data:
-            return JsonResponse({'status': 'no_callback'})
+        return JsonResponse({'status': 'webhook_funcionando', 'method': 'POST'})
             
         callback_query = data['callback_query']
         callback_data = callback_query['data']
@@ -820,5 +813,4 @@ def telegram_callback(request):
         })
         
     except Exception as e:
-        print(f"Erro no webhook: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
