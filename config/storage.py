@@ -1,11 +1,12 @@
 from cloudinary_storage.storage import MediaCloudinaryStorage
 import cloudinary.uploader
+import cloudinary
 import mimetypes
 import os
 
 class CustomCloudinaryStorage(MediaCloudinaryStorage):
     """
-    Storage customizado para suportar PDFs e outros arquivos no Cloudinary
+    Storage customizado que gera URLs corretas para PDFs e outros arquivos
     """
     
     def _save(self, name, content):
@@ -17,10 +18,10 @@ class CustomCloudinaryStorage(MediaCloudinaryStorage):
         
         # Configurações de upload
         options = {
-            'public_id': self._get_public_id(name),
             'invalidate': True,
             'use_filename': True,
-            'unique_filename': False,
+            'unique_filename': True,
+            'folder': 'media',
         }
         
         # Para PDFs e outros arquivos não-imagem, usar resource_type='raw'
@@ -38,10 +39,27 @@ class CustomCloudinaryStorage(MediaCloudinaryStorage):
                 return response['public_id']
             raise e
     
-    def _get_public_id(self, name):
+    def url(self, name):
         """
-        Gerar public_id mantendo a estrutura de pastas
+        Gerar URL correta baseada no tipo de arquivo
         """
-        # Remover extensão para o public_id
-        public_id = os.path.splitext(name)[0]
-        return public_id
+        if not name:
+            return name
+            
+        # Detectar se é PDF ou outro tipo de arquivo
+        _, ext = os.path.splitext(name)
+        
+        try:
+            # Para PDFs, usar raw/upload para forçar download/visualização
+            if ext.lower() == '.pdf':
+                return cloudinary.CloudinaryResource(name).build_url(
+                    resource_type='raw',
+                    secure=True,
+                    flags='attachment'  # Força download em vez de tentar renderizar
+                )
+            else:
+                # Para imagens, usar o método padrão
+                return super().url(name)
+        except:
+            # Fallback para URL padrão
+            return super().url(name)
