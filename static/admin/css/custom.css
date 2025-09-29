@@ -1,0 +1,166 @@
+/* Custom Admin Styles - LoteSys */
+
+/* Ajustar cores do header da tabela */
+.admin-list .results table thead th {
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+    color: white !important;
+    font-weight: 500 !important;
+    padding: 8px 12px !important;
+    border: none !important;
+    font-size: 12px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    height: 38px !important;
+    line-height: 1.2 !important;
+}
+
+/* Melhorar hover do header */
+.admin-list .results table thead th:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important;
+}
+
+/* Ajustar altura das linhas */
+.admin-list .results table tbody tr {
+    height: 42px;
+}
+
+/* Melhorar células da tabela */
+.admin-list .results table tbody td {
+    padding: 6px 8px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    text-align: center !important;
+}
+
+/* Alinhar texto à esquerda para colunas específicas */
+.admin-list .results table tbody td:nth-child(2),  /* Título */
+.admin-list .results table tbody td:nth-child(3)   /* Usuário */
+{
+    text-align: left !important;
+}
+
+/* Zebrar linhas */
+.admin-list .results table tbody tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+.admin-list .results table tbody tr:hover {
+    background-color: #f3f4f6 !important;
+}
+
+/* Melhorar badges de status */
+.admin-list select {
+    background-color: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* Checkbox styling */
+.admin-list input[type="checkbox"] {
+    transform: scale(1.2);
+    margin: 0;
+}
+
+/* Melhorar botões de ação */
+.admin-list .actions select {
+    background-color: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+
+.admin-list .actions button {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: white !important;
+    border: none !important;
+    padding: 6px 16px !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    margin-left: 8px !important;
+}
+
+.admin-list .actions button:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+}
+
+/* Melhorar ícones de resposta */
+.admin-list td span[style*="color: green"] {
+    background-color: #dcfce7;
+    color: #166534 !important;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.admin-list td span[style*="color: red"] {
+    background-color: #fef2f2;
+    color: #dc2626 !important;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Melhorar títulos longos */
+.admin-list span[title] {
+    cursor: help;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .admin-list .results table {
+        font-size: 12px;
+    }
+    
+    .admin-list .results table thead th {
+        padding: 8px 4px !important;
+        font-size: 11px !important;
+    }
+}
+
+/* Customizar fieldsets no formulário */
+.module h2 {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+    color: white !important;
+    padding: 12px 15px !important;
+    margin: 0 !important;
+    font-size: 14px !important;
+    border-radius: 6px 6px 0 0 !important;
+}
+
+.module .form-row {
+    padding: 12px 15px;
+}
+
+/* Melhorar textarea de resposta */
+textarea[name="resposta"] {
+    border: 2px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    line-height: 1.5 !important;
+    resize: vertical !important;
+}
+
+textarea[name="resposta"]:focus {
+    border-color: #4f46e5 !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
+    outline: none !important;
+}
+
+/* Melhorar botões do formulário */
+.submit-row input[type="submit"] {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 6px !important;
+    color: white !important;
+    font-weight: 500 !important;
+}
+
+.submit-row input[type="submit"]:hover {
+    background: linear-gradient(135deg, #3730a3 0%, #5b21b6 100%) !important;
+}

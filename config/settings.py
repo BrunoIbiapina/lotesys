@@ -47,6 +47,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    
+    # Cloudinary (deve vir antes dos apps próprios)
+    "cloudinary_storage",
+    "cloudinary",
+    
     "usuarios",
     "dashboard",
     "cadastros",
@@ -141,13 +146,36 @@ STORAGES = {
 }
 
 # ===================== MEDIA (uploads) =====================
-MEDIA_URL = "/media/"
+# Configuração do Cloudinary para armazenamento em nuvem
+CLOUDINARY_URL = os.getenv("CLOUDINARY_URL", "")
 
-# Em produção (Render), usar o disk montado
-if os.getenv("RENDER_EXTERNAL_HOSTNAME"):
-    MEDIA_ROOT = "/opt/render/project/src/media"
+if CLOUDINARY_URL:
+    # Produção: usar Cloudinary para uploads permanentes
+    try:
+        import cloudinary
+        import cloudinary.uploader
+        import cloudinary.api
+        
+        cloudinary.config(secure=True)
+        
+        CLOUDINARY_STORAGE = {
+            'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', ''),
+            'API_KEY': os.getenv('CLOUDINARY_API_KEY', ''),
+            'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', ''),
+        }
+        
+        # Usar Cloudinary como storage padrão
+        DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+        MEDIA_URL = '/media/'  # Será sobrescrito pelo Cloudinary
+        
+    except ImportError:
+        # Se Cloudinary não estiver instalado, usar pasta local
+        MEDIA_URL = "/media/"
+        MEDIA_ROOT = BASE_DIR / "media"
+    
 else:
-    # Em desenvolvimento, usar pasta local
+    # Desenvolvimento: usar pasta local
+    MEDIA_URL = "/media/"
     MEDIA_ROOT = BASE_DIR / "media"
 
 # ===================== DEFAULTS =====================

@@ -16,4 +16,8 @@ pillow   # caso use imagens em models/avatars
 python-decouple  # se quiser ler variáveis .env (opcional)
 python-dotenv
 
+# Armazenamento em nuvem
+cloudinary>=1.36
+django-cloudinary-storage>=0.3
+
 # Outros (se você já usava)

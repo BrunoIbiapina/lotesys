@@ -1,6 +1,7 @@
 # usuarios/urls.py
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
+from . import views
 
 app_name = "usuarios"
 
@@ -15,4 +16,5 @@ urlpatterns = [
         LogoutView.as_view(next_page="usuarios:login"),
         name="logout",
     ),
+   
 ]
