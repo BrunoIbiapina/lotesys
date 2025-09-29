@@ -163,18 +163,19 @@ if CLOUDINARY_URL:
             'API_KEY': os.getenv('CLOUDINARY_API_KEY', ''),
             'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', ''),
             'SECURE': True,
+            'RESOURCE_TYPE': 'auto',  # Detecta automaticamente o tipo
         }
         
         # Usar Cloudinary como storage padrão - versão Django 4.2+
         STORAGES = {
             "default": {
-                "BACKEND": "config.storage.CustomCloudinaryStorage",
+                "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
             },
             "staticfiles": {
                 "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
             },
         }
-        DEFAULT_FILE_STORAGE = 'config.storage.CustomCloudinaryStorage'
+        DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
         MEDIA_URL = '/media/'  # Será sobrescrito pelo Cloudinary
         
     except ImportError:
