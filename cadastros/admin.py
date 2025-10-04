@@ -84,7 +84,7 @@ class LoteAdmin(admin.ModelAdmin):
             'fields': ('empreendimento', 'quadra', 'numero')
         }),
         ('Características', {
-            'fields': ('area_m2', 'preco_tabela', 'observacoes')
+            'fields': ('area_m2', 'preco_tabela')
         }),
         ('Status', {
             'fields': ('status',)
