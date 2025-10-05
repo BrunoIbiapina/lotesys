@@ -100,11 +100,9 @@ class VendaAdmin(admin.ModelAdmin):
         "cliente_link", 
         "lote_info",
         "valor_total_formatted",
-        "entrada_liquida_formatted",
         "parcelas_info",
         "data_venda",
         "status_venda",
-        "tem_comprovante_bool",
     )
     
     list_display_links = None  # Remove links automáticos
