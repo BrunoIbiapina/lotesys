@@ -100,9 +100,11 @@ class VendaAdmin(admin.ModelAdmin):
         "cliente_link", 
         "lote_info",
         "valor_total_formatted",
+        "entrada_liquida_formatted",
         "parcelas_info",
         "data_venda",
         "status_venda",
+        "tem_comprovante_bool",
     )
     
     list_display_links = None  # Remove links automáticos
@@ -217,6 +219,11 @@ class VendaAdmin(admin.ModelAdmin):
             )
         return "Nenhum arquivo enviado"
     link_comprovante_edit.short_description = "📎 Arquivo Atual"
+
+    class Media:
+        css = {
+            'all': ('admin/css/vendas_admin.css',)
+        }
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

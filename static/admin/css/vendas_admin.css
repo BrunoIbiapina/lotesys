@@ -1,0 +1,78 @@
+/* CSS customizado para admin de vendas - layout mais compacto */
+.model-venda .results table {
+    font-size: 13px;
+}
+
+.model-venda .results th,
+.model-venda .results td {
+    padding: 8px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.model-venda .results th:nth-child(1) { width: 5%; }   /* ID */
+.model-venda .results th:nth-child(2) { width: 25%; }  /* Cliente */
+.model-venda .results th:nth-child(3) { width: 15%; }  /* Lote */
+.model-venda .results th:nth-child(4) { width: 15%; }  /* Valor */
+.model-venda .results th:nth-child(5) { width: 20%; }  /* Status */
+
+.model-venda .results td:nth-child(2) {
+    max-width: 150px;
+}
+
+.model-venda .results td:nth-child(3) {
+    max-width: 100px;
+}
+
+.model-venda .results td:nth-child(4) {
+    max-width: 100px;
+}
+
+/* Fix para cabeçalho não cortar o conteúdo das linhas */
+.model-venda #changelist {
+    overflow: visible !important;
+}
+
+.model-venda .results {
+    overflow: visible !important;
+    margin-top: 0 !important;
+    position: relative !important;
+}
+
+.model-venda .results table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.model-venda .results thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+    background: #f8f9fa !important;
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+.model-venda .results tbody {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.model-venda .results tbody tr {
+    background: white !important;
+}
+
+.model-venda .results tbody tr:hover {
+    background: #f8f9fa !important;
+}
+
+@media (max-width: 1200px) {
+    .model-venda .results table {
+        font-size: 12px;
+    }
+    
+    .model-venda .results th,
+    .model-venda .results td {
+        padding: 6px 2px;
+    }
+}
