@@ -1,8 +1,15 @@
 /* CSS customizado para admin de vendas - layout mais compacto */
+
+/* Container principal com espaçamento adequado */
+.model-venda #changelist {
+    padding-top: 30px !important;
+}
+
 .model-venda .results table {
     font-size: 11px;
     table-layout: fixed;
     width: 100% !important;
+    margin-top: 0 !important;
 }
 
 .model-venda .results th,
@@ -13,6 +20,14 @@
     text-overflow: ellipsis;
     font-size: 11px !important;
     line-height: 1.2;
+}
+
+/* Reset de posicionamentos problemáticos */
+.model-venda .results thead th {
+    position: static !important;
+    z-index: auto !important;
+    background: #417690 !important;
+    color: white !important;
 }
 
 .model-venda .results th:nth-child(1) { width: 4%; }   /* ID */
@@ -37,22 +52,10 @@
     max-width: 100px;
 }
 
-/* Remover sticky header que está causando problemas */
-.model-venda .results thead th {
-    position: static !important;
-    background: #417690 !important;
-    color: white !important;
-    border-bottom: 1px solid #dee2e6 !important;
-}
-
-/* Garantir espaçamento adequado entre cabeçalho e conteúdo */
+/* Garantir espaçamento adequado da tabela */
 .model-venda .results table {
     border-collapse: collapse !important;
     border-spacing: 0 !important;
-}
-
-.model-venda .results tbody tr:first-child td {
-    border-top: 2px solid #dee2e6 !important;
 }
 
 /* Estilos de linhas da tabela */
