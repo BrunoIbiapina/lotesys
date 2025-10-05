@@ -37,53 +37,25 @@
     max-width: 100px;
 }
 
-/* Fix para cabeçalho não cortar o conteúdo das linhas */
-.model-venda #changelist {
-    overflow: visible !important;
+/* Remover sticky header que está causando problemas */
+.model-venda .results thead th {
+    position: static !important;
+    background: #417690 !important;
+    color: white !important;
+    border-bottom: 1px solid #dee2e6 !important;
 }
 
-.model-venda .results {
-    overflow: visible !important;
-    margin-top: 0 !important;
-    position: relative !important;
-    padding-top: 0 !important;
-}
-
-/* Adicionar espaço para o cabeçalho sticky */
-.model-venda .results tbody tr:first-child td {
-    padding-top: 15px !important;
-}
-
-/* Container da tabela com espaço para header */
-.model-venda #result_list {
-    margin-top: 10px !important;
-    position: relative !important;
-}
-
+/* Garantir espaçamento adequado entre cabeçalho e conteúdo */
 .model-venda .results table {
-    border-collapse: separate !important;
+    border-collapse: collapse !important;
     border-spacing: 0 !important;
 }
 
-.model-venda .results thead th {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 999 !important;
-    background: #f8f9fa !important;
-    border-bottom: 2px solid #dee2e6 !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+.model-venda .results tbody tr:first-child td {
+    border-top: 2px solid #dee2e6 !important;
 }
 
-.model-venda .results tbody {
-    position: relative !important;
-    z-index: 1 !important;
-}
-
-/* Alternativa: margin-top no tbody para evitar sobreposição */
-.model-venda .results table tbody {
-    margin-top: 0 !important;
-}
-
+/* Estilos de linhas da tabela */
 .model-venda .results tbody tr {
     background: white !important;
 }
@@ -92,10 +64,19 @@
     background: #f8f9fa !important;
 }
 
-/* Forçar tabela a não quebrar */
+.model-venda .results tbody tr.row1 {
+    background: #f9f9f9 !important;
+}
+
+.model-venda .results tbody tr.row2 {
+    background: white !important;
+}
+
+/* Container da tabela */
 .model-venda .results {
     overflow-x: auto !important;
     width: 100% !important;
+    margin-top: 10px !important;
 }
 
 .model-venda .results table {
