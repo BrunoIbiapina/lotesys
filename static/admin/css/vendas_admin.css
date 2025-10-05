@@ -1,21 +1,29 @@
 /* CSS customizado para admin de vendas - layout mais compacto */
 .model-venda .results table {
-    font-size: 13px;
+    font-size: 11px;
+    table-layout: fixed;
+    width: 100% !important;
 }
 
 .model-venda .results th,
 .model-venda .results td {
-    padding: 8px 4px;
+    padding: 4px 2px !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 11px !important;
+    line-height: 1.2;
 }
 
-.model-venda .results th:nth-child(1) { width: 5%; }   /* ID */
-.model-venda .results th:nth-child(2) { width: 25%; }  /* Cliente */
-.model-venda .results th:nth-child(3) { width: 15%; }  /* Lote */
-.model-venda .results th:nth-child(4) { width: 15%; }  /* Valor */
-.model-venda .results th:nth-child(5) { width: 20%; }  /* Status */
+.model-venda .results th:nth-child(1) { width: 4%; }   /* ID */
+.model-venda .results th:nth-child(2) { width: 18%; }  /* Cliente */
+.model-venda .results th:nth-child(3) { width: 12%; }  /* Lote */
+.model-venda .results th:nth-child(4) { width: 12%; }  /* Valor Total */
+.model-venda .results th:nth-child(5) { width: 10%; }  /* Entrada Líq */
+.model-venda .results th:nth-child(6) { width: 14%; }  /* Parcelas */
+.model-venda .results th:nth-child(7) { width: 8%; }   /* Data Venda */
+.model-venda .results th:nth-child(8) { width: 12%; }  /* Status */
+.model-venda .results th:nth-child(9) { width: 6%; }   /* Comp */
 
 .model-venda .results td:nth-child(2) {
     max-width: 150px;
@@ -38,6 +46,18 @@
     overflow: visible !important;
     margin-top: 0 !important;
     position: relative !important;
+    padding-top: 0 !important;
+}
+
+/* Adicionar espaço para o cabeçalho sticky */
+.model-venda .results tbody tr:first-child td {
+    padding-top: 15px !important;
+}
+
+/* Container da tabela com espaço para header */
+.model-venda #result_list {
+    margin-top: 10px !important;
+    position: relative !important;
 }
 
 .model-venda .results table {
@@ -48,14 +68,20 @@
 .model-venda .results thead th {
     position: sticky !important;
     top: 0 !important;
-    z-index: 10 !important;
+    z-index: 999 !important;
     background: #f8f9fa !important;
     border-bottom: 2px solid #dee2e6 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
 }
 
 .model-venda .results tbody {
     position: relative !important;
     z-index: 1 !important;
+}
+
+/* Alternativa: margin-top no tbody para evitar sobreposição */
+.model-venda .results table tbody {
+    margin-top: 0 !important;
 }
 
 .model-venda .results tbody tr {
@@ -66,13 +92,45 @@
     background: #f8f9fa !important;
 }
 
-@media (max-width: 1200px) {
+/* Forçar tabela a não quebrar */
+.model-venda .results {
+    overflow-x: auto !important;
+    width: 100% !important;
+}
+
+.model-venda .results table {
+    min-width: 100% !important;
+    max-width: none !important;
+}
+
+/* Truncar textos longos */
+.model-venda .results td a {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 1400px) {
     .model-venda .results table {
-        font-size: 12px;
+        font-size: 10px !important;
     }
     
     .model-venda .results th,
     .model-venda .results td {
-        padding: 6px 2px;
+        padding: 3px 1px !important;
+        font-size: 10px !important;
     }
+    
+    /* Reduzir ainda mais as larguras em telas menores */
+    .model-venda .results th:nth-child(1) { width: 3%; }
+    .model-venda .results th:nth-child(2) { width: 16%; }
+    .model-venda .results th:nth-child(3) { width: 10%; }
+    .model-venda .results th:nth-child(4) { width: 10%; }
+    .model-venda .results th:nth-child(5) { width: 8%; }
+    .model-venda .results th:nth-child(6) { width: 12%; }
+    .model-venda .results th:nth-child(7) { width: 7%; }
+    .model-venda .results th:nth-child(8) { width: 10%; }
+    .model-venda .results th:nth-child(9) { width: 4%; }
 }
