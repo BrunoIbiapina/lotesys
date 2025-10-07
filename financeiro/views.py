@@ -13,7 +13,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Despesa
+from .models import Despesa, ReceitaExtra
 from vendas.models import Parcela, Venda
 
 
@@ -95,7 +95,13 @@ def _saldo_caixa_ate(data_limite: date) -> dict:
         .aggregate(v=Coalesce(Sum("valor"), Decimal("0.00")))["v"] or Decimal("0.00")
     )
 
-    receitas_ate = parcelas_pagas_ate + entradas_liquidas_ate
+    # Receitas extras até a data
+    receitas_extras_ate = (
+        ReceitaExtra.objects.filter(data__lte=data_limite)
+        .aggregate(v=Coalesce(Sum("valor"), Decimal("0.00")))["v"] or Decimal("0.00")
+    )
+
+    receitas_ate = parcelas_pagas_ate + entradas_liquidas_ate + receitas_extras_ate
 
     # Despesas para fluxo (não desconta comissão duas vezes)
     despesas_fluxo_ate = despesas_pagas_ate - despesas_comissao_pagas_ate
@@ -177,8 +183,18 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
             total_comissoes         += comissao_entr
             total_entradas_liquidas += entrada_liq
 
-    # Receita do período
-    total_receitas = total_parcelas_pagas + total_entradas_liquidas
+    # --- Receitas extras no período
+    receitas_extras_qs = (
+        ReceitaExtra.objects
+        .filter(data__range=[inicio, fim])
+        .order_by("-data", "-id")
+    )
+    total_receitas_extras = receitas_extras_qs.aggregate(
+        v=Coalesce(Sum("valor"), Decimal("0.00"))
+    )["v"] or Decimal("0.00")
+
+    # Receita do período (incluindo receitas extras)
+    total_receitas = total_parcelas_pagas + total_entradas_liquidas + total_receitas_extras
 
     # Despesa para FLUXO no período (sem comissão já abatida nas entradas)
     total_despesas_pagas_fluxo = total_despesas_pagas - despesas_comissao_pagas_periodo
@@ -245,6 +261,8 @@ def _monta_contexto_extrato(inicio: date, fim: date) -> dict:
         total_entradas_brutas=total_entradas_brutas,
         total_comissoes=total_comissoes,
         total_entradas_liquidas=total_entradas_liquidas,
+        receitas_extras=receitas_extras_qs,
+        total_receitas_extras=total_receitas_extras,
         total_receitas=total_receitas,
 
         # Fluxo / Caixa
