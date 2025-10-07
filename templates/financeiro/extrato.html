@@ -174,6 +174,8 @@
               {% endif %}
             </div>
           </div>
+        {% else %}
+          <div class="text-xs text-purple-600 mt-1">Nenhuma receita extra</div>
         {% endif %}
       </div>
 
@@ -633,15 +635,27 @@
 
   // Função para mostrar/ocultar detalhes das receitas extras
   function toggleReceitasExtras() {
+    console.log('toggleReceitasExtras chamada'); // Debug
     const detalhes = document.getElementById('detalhesReceitasExtras');
     const botao = document.getElementById('btnVerMaisReceitas');
     
-    if (detalhes.classList.contains('hidden')) {
-      detalhes.classList.remove('hidden');
-      botao.textContent = 'Ver menos';
+    console.log('detalhes:', detalhes); // Debug
+    console.log('botao:', botao); // Debug
+    
+    if (detalhes && botao) {
+      if (detalhes.classList.contains('hidden')) {
+        detalhes.classList.remove('hidden');
+        detalhes.style.display = 'block'; // Forçar exibição
+        botao.textContent = 'Ver menos';
+        console.log('Mostrando detalhes'); // Debug
+      } else {
+        detalhes.classList.add('hidden');
+        detalhes.style.display = 'none'; // Forçar ocultação
+        botao.textContent = 'Ver mais';
+        console.log('Ocultando detalhes'); // Debug
+      }
     } else {
-      detalhes.classList.add('hidden');
-      botao.textContent = 'Ver mais';
+      console.error('Elementos não encontrados!'); // Debug
     }
   }
 </script>
