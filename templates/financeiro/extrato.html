@@ -149,6 +149,31 @@
         <div class="text-2xl font-bold text-purple-900">{{ total_receitas_extras|brl }}</div>
         {% if receitas_extras %}
           <div class="text-xs text-purple-600 mt-1">{{ receitas_extras|length }} receita(s)</div>
+          <button 
+            onclick="toggleReceitasExtras()" 
+            class="mt-2 text-xs text-purple-700 hover:text-purple-900 underline focus:outline-none"
+            id="btnVerMaisReceitas"
+          >
+            Ver mais
+          </button>
+          
+          <!-- Detalhes das receitas (inicialmente oculto) -->
+          <div id="detalhesReceitasExtras" class="hidden mt-3 w-full">
+            <div class="border-t border-purple-200 pt-2">
+              {% for r in receitas_extras|slice:":3" %}
+                <div class="flex justify-between items-start text-xs py-1">
+                  <div class="flex-1 pr-2">
+                    <div class="font-medium text-purple-800">{{ r.descricao|truncatechars:25 }}</div>
+                    <div class="text-purple-600">{{ r.data|date:'d/m/Y' }}</div>
+                  </div>
+                  <div class="font-semibold text-purple-900">{{ r.valor|brl }}</div>
+                </div>
+              {% endfor %}
+              {% if receitas_extras|length > 3 %}
+                <div class="text-xs text-purple-600 pt-1">+{{ receitas_extras|length|add:'-3' }} mais…</div>
+              {% endif %}
+            </div>
+          </div>
         {% endif %}
       </div>
 
@@ -604,5 +629,19 @@
   // Se a URL tiver #projecao, faz scroll suave até lá
   if (window.location.hash === "#projecao") {
     document.getElementById("projecao")?.scrollIntoView({behavior: "smooth"});
+  }
+
+  // Função para mostrar/ocultar detalhes das receitas extras
+  function toggleReceitasExtras() {
+    const detalhes = document.getElementById('detalhesReceitasExtras');
+    const botao = document.getElementById('btnVerMaisReceitas');
+    
+    if (detalhes.classList.contains('hidden')) {
+      detalhes.classList.remove('hidden');
+      botao.textContent = 'Ver menos';
+    } else {
+      detalhes.classList.add('hidden');
+      botao.textContent = 'Ver mais';
+    }
   }
 </script>
