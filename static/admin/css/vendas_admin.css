@@ -1,11 +1,13 @@
 /* CSS customizado para admin de vendas - layout mais compacto */
 
 /* Container principal com espaçamento adequado */
-.model-venda #changelist {
-    padding-top: 30px !important;
+.model-venda #changelist,
+.model-despesa #changelist {
+    padding-top: 80px !important;
 }
 
-.model-venda .results table {
+.model-venda .results table,
+.model-despesa .results table {
     font-size: 11px;
     table-layout: fixed;
     width: 100% !important;
@@ -13,7 +15,9 @@
 }
 
 .model-venda .results th,
-.model-venda .results td {
+.model-venda .results td,
+.model-despesa .results th,
+.model-despesa .results td {
     padding: 4px 2px !important;
     white-space: nowrap;
     overflow: hidden;
@@ -23,7 +27,8 @@
 }
 
 /* Reset de posicionamentos problemáticos */
-.model-venda .results thead th {
+.model-venda .results thead th,
+.model-despesa .results thead th {
     position: static !important;
     z-index: auto !important;
     background: #417690 !important;

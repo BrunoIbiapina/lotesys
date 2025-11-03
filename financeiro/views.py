@@ -95,13 +95,7 @@ def _saldo_caixa_ate(data_limite: date) -> dict:
         .aggregate(v=Coalesce(Sum("valor"), Decimal("0.00")))["v"] or Decimal("0.00")
     )
 
-    # Receitas extras até a data
-    receitas_extras_ate = (
-        ReceitaExtra.objects.filter(data__lte=data_limite)
-        .aggregate(v=Coalesce(Sum("valor"), Decimal("0.00")))["v"] or Decimal("0.00")
-    )
-
-    receitas_ate = parcelas_pagas_ate + entradas_liquidas_ate + receitas_extras_ate
+    receitas_ate = parcelas_pagas_ate + entradas_liquidas_ate
 
     # Despesas para fluxo (não desconta comissão duas vezes)
     despesas_fluxo_ate = despesas_pagas_ate - despesas_comissao_pagas_ate
