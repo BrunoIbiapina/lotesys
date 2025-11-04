@@ -111,6 +111,11 @@ class DespesaAdmin(admin.ModelAdmin):
         return "-"
     data_cadastro.short_description = "📅 Cadastro"
 
+    class Media:
+        css = {
+            'all': ('admin/css/vendas_admin.css',)
+        }
+
 
 # ==================== RECEITA EXTRA ====================
 
